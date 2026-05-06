@@ -1,0 +1,24 @@
+{
+  "last_processed_timestamp": "2026-05-01 00:00:00",
+  "metrics": {
+    "total_trades": 3.0,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "max_drawdown": 0.0015250889554137756,
+    "expectancy": -5.083629851379349,
+    "average_win": 0.0,
+    "average_loss": -5.083629851379349,
+    "gross_profit": 0,
+    "gross_loss": 15.250889554138048,
+    "total_cost": 15.257614240505317,
+    "swap_cost": 0.0,
+    "net_profit": -15.250889554138048,
+    "sharpe_ratio": -101.50711628225106,
+    "sortino_ratio": -15.746653656187558,
+    "calmar_ratio": -1691236.2695472399,
+    "consecutive_wins": 0.0,
+    "consecutive_losses": 3.0,
+    "max_consecutive_losses": 3.0,
+    "recovery_factor": -10000.000000000191
+  }
+}

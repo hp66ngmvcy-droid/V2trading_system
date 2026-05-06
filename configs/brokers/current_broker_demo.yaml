@@ -1,0 +1,149 @@
+broker_name: current_broker_demo
+account_currency: GBP
+max_leverage: 500
+paper_mode_only: true
+
+symbols:
+
+  BTCUSD:
+    contract_size: 1
+    min_lot_size: 0.01
+    lot_step: 0.01
+    max_lot_size: 100
+    spread_model: floating
+    slippage_model: high
+    margin_currency: BTC
+    profit_currency: USD
+    swap_type: percentage
+    swap_long: -30
+    swap_short: 10
+
+  ETHUSD:
+    contract_size: 1
+    min_lot_size: 0.01
+    lot_step: 0.01
+    max_lot_size: 100
+    spread_model: floating
+    slippage_model: high
+    margin_currency: ETH
+    profit_currency: USD
+    swap_type: percentage
+    swap_long: -43
+    swap_short: 10
+
+  XRPUSD:
+    contract_size: 10000
+    min_lot_size: 0.01
+    lot_step: 0.01
+    max_lot_size: 100
+    spread_model: floating
+    slippage_model: high
+    margin_currency: XRP
+    profit_currency: USD
+    swap_type: percentage
+    swap_long: -43
+    swap_short: 10
+
+  XAUUSD:
+    contract_size: 100
+    min_lot_size: 0.01
+    lot_step: 0.01
+    max_lot_size: 100
+    spread_model: floating
+    slippage_model: medium
+    margin_currency: USD
+    profit_currency: USD
+    swap_type: points
+    swap_long: -93.44
+    swap_short: 20.7
+
+  XAGUSD:
+    contract_size: 5000
+    min_lot_size: 0.01
+    lot_step: 0.01
+    max_lot_size: 100
+    spread_model: floating
+    slippage_model: medium
+    margin_currency: USD
+    profit_currency: USD
+    swap_type: points
+    swap_long: -24.67
+    swap_short: 8.57
+
+  USOUSD:
+    contract_size: 1000
+    min_lot_size: 0.01
+    lot_step: 0.01
+    max_lot_size: 20
+    spread_model: floating
+    slippage_model: medium_high
+    margin_currency: USD
+    profit_currency: USD
+    swap_type: points
+    swap_long: 24.597
+    swap_short: -134.5588
+
+  EURUSD:
+    contract_size: 100000
+    min_lot_size: 0.01
+    lot_step: 0.01
+    max_lot_size: 100
+    spread_model: floating
+    slippage_model: low
+    margin_currency: EUR
+    profit_currency: USD
+    swap_type: points
+    swap_long: -6.88
+    swap_short: 3.11
+
+  GBPUSD:
+    contract_size: 100000
+    min_lot_size: 0.01
+    lot_step: 0.01
+    max_lot_size: 100
+    spread_model: floating
+    slippage_model: low
+    margin_currency: GBP
+    profit_currency: USD
+    swap_type: points
+    swap_long: -0.81
+    swap_short: -1.36
+
+  USDJPY:
+    contract_size: 100000
+    min_lot_size: 0.01
+    lot_step: 0.01
+    max_lot_size: 100
+    spread_model: floating
+    slippage_model: low
+    margin_currency: USD
+    profit_currency: JPY
+    swap_type: points
+    swap_long: 7.52
+    swap_short: -16.82
+
+  USDCAD:
+    contract_size: 100000
+    min_lot_size: 0.01
+    lot_step: 0.01
+    max_lot_size: 100
+    spread_model: floating
+    slippage_model: low
+    margin_currency: USD
+    profit_currency: CAD
+    swap_type: points
+    swap_long: 2.13
+    swap_short: -7.00
+
+  AUDUSD:
+    contract_size: 100000
+    min_lot_size: 0.01
+    lot_step: 0.01
+    max_lot_size: 100
+    spread_model: floating
+    slippage_model: low
+    margin_currency: AUD
+    profit_currency: USD
+    swap_type: points
+    swap_long: 0.19
+    swap_short: -1.75

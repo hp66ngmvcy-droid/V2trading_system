@@ -1,0 +1,9 @@
+pandas
+numpy
+duckdb
+pyarrow
+python-dotenv
+ta
+scikit-learn
+streamlit
+plotly
