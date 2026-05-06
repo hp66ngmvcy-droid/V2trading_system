@@ -1,0 +1,12 @@
+{
+  "running": false,
+  "stop_requested": false,
+  "started_at": null,
+  "stopped_at": null,
+  "symbol": "AUDUSD",
+  "timeframe": "M30",
+  "strategy": "rsi_reversion_v1",
+  "mode": "forward_test",
+  "latest_message": "completed",
+  "latest_result_path": "data/results/rsi_reversion_v1_AUDUSD_M30_forward_test.json"
+}

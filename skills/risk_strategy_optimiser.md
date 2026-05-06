@@ -1,0 +1,12 @@
+# Risk Strategy Optimiser
+- Optimise for robustness, not just profit.
+- Rank by balanced score.
+- Prefer low drawdown and stable results.
+- Require out-of-sample validation.
+- Require Monte Carlo robustness.
+- Require parameter sensitivity checks.
+- Block or reduce risk in unsafe environments.
+- Use regime heatmaps.
+- Write every optimiser decision to audit/review log.
+- Never live trade.
+- Never auto-promote without approval.

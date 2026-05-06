@@ -1,0 +1,12 @@
+{
+  "last_processed_timestamp": "2026-02-27 23:45:00",
+  "metrics": {
+    "total_trades": 1228.0,
+    "win_rate": 0.4503257328990228,
+    "profit_factor": 0.9299450645565571,
+    "max_drawdown": 4.6018142892076e-05,
+    "expectancy": -3.079683654723122e-05,
+    "average_win": 0.0009078161409041592,
+    "average_loss": -0.0007997642091851851
+  }
+}

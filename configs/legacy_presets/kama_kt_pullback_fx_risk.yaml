@@ -1,0 +1,60 @@
+name: kama_kt_pullback_fx_risk
+status: research_only
+source: legacy_mt5_ea
+live_enabled: false
+requires_validation: true
+notes: >
+  Research-only extraction from legacy KAMA_KT_PullbackLimit_FX settings.
+  Contains risk, cost and lifecycle controls only. Entry, pending-order and
+  pullback trigger logic is intentionally excluded from TAR V2.
+
+applies_to:
+  asset_class: forex
+  symbols:
+    - AUDUSD
+    - EURUSD
+    - GBPUSD
+    - USDCAD
+    - USDJPY
+
+risk:
+  max_risk_per_trade_pct: 0.01
+  max_daily_loss_pct: 0.02
+  max_weekly_loss_pct: 0.05
+  max_drawdown_pct: 0.2
+  max_consecutive_losses: 3
+  max_exposure_pct: 0.3
+  leverage_safety_fraction: 0.1
+
+spread:
+  max_spread_pips: 2.0
+  high_spread_reduction_factor: 0.5
+
+stop_constraints:
+  min_stop_pips: 5.0
+  max_stop_pips: 80.0
+  atr_stop_multiplier: 1.5
+
+cooldown:
+  after_loss_bars: 3
+  after_daily_loss_bars: 24
+
+breakeven:
+  enabled: true
+  trigger_r_multiple: 1.0
+  lock_r_multiple: 0.05
+
+time_stop:
+  enabled: true
+  max_bars_in_trade: 96
+
+margin:
+  max_margin_utilisation: 0.3
+  warning_margin_utilisation: 0.2
+  never_use_full_leverage: true
+
+excluded_logic:
+  - pullback_entries
+  - pending_order_logic
+  - execution_triggers
+  - live_order_management

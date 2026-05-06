@@ -1,0 +1,24 @@
+{
+  "last_processed_timestamp": "2026-04-30 23:45:00",
+  "metrics": {
+    "total_trades": 0.0,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "max_drawdown": 0.0,
+    "expectancy": 0.0,
+    "average_win": 0.0,
+    "average_loss": 0.0,
+    "gross_profit": 0,
+    "gross_loss": 0,
+    "total_cost": 0,
+    "swap_cost": 0,
+    "net_profit": 0,
+    "sharpe_ratio": 0.0,
+    "sortino_ratio": 0.0,
+    "calmar_ratio": 0.0,
+    "consecutive_wins": 0.0,
+    "consecutive_losses": 0.0,
+    "max_consecutive_losses": 0.0,
+    "recovery_factor": 0.0
+  }
+}

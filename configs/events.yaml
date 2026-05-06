@@ -1,0 +1,14 @@
+events:
+  - date: "2026-06-12"
+    time: "13:30"
+    timezone: "Europe/London"
+    event_type: "CPI"
+    country: "US"
+    impact: "HIGH"
+    title: "US CPI"
+    affected_assets:
+      - XAUUSD
+      - EURUSD
+      - GBPUSD
+      - BTC
+      - ETH
