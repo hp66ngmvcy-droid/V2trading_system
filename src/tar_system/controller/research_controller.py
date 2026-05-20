@@ -12,6 +12,7 @@ from typing import Any, Callable
 
 from tar_system import settings
 from tar_system.audit.writer import append_audit_event
+from tar_system.cache import result_index as _result_index
 from tar_system.controller import job_queue
 from tar_system.environment.event_calendar import load_events
 from tar_system.environment.risk_state import evaluate_environment
@@ -89,6 +90,12 @@ def run_job(
         append_audit_event("research_controller", strategy, symbol, timeframe, "SKIPPED", "HOLD_TRADING_ANALYSIS_ONLY", {"job_id": job_id})
         return job_queue.update_job(job_id, status="SKIPPED", completed_at=_now(), recommendation="REVIEW", result_path=None)
 
+    require_wf = bool(job.get("require_walk_forward", True))
+    skip_wf = bool(job.get("skip_walk_forward", False))
+    if require_wf and skip_wf:
+        append_audit_event("research_controller", strategy, symbol, timeframe, "SKIPPED", "WALK_FORWARD_REQUIRED", {"job_id": job_id})
+        return job_queue.update_job(job_id, status="SKIPPED", completed_at=_now(), recommendation="REVIEW", result_path=None)
+
     append_audit_event("research_controller", strategy, symbol, timeframe, "STARTED", "CONTROLLER_JOB_STARTED", {"job_id": job_id})
     try:
         pipeline_runner(
@@ -97,7 +104,7 @@ def run_job(
                 symbol=symbol,
                 timeframe=timeframe,
                 file=job["file"],
-                skip_walk_forward=bool(job.get("skip_walk_forward", False)),
+                skip_walk_forward=skip_wf,
                 skip_forward_test=bool(job.get("skip_forward_test", False)) or str(job.get("research_stage") or "") == "smoke",
                 force=True,
                 broker=broker,
@@ -106,12 +113,38 @@ def run_job(
                 from_date=job.get("from_date"),
                 to_date=job.get("to_date"),
                 forward_from_date=job.get("forward_from_date"),
+                no_live=bool(job.get("no_live", True)),
+                no_mt5_promotion=bool(job.get("no_mt5_promotion", True)),
             )
         )
         cost = cost_runner(strategy, symbol, timeframe, broker)
         cost_dict = cost.to_dict() if hasattr(cost, "to_dict") else dict(cost)
         metrics = _load_metrics(strategy, symbol, timeframe)
+        if bool(job.get("require_min_trades", False)):
+            min_trades = int(job.get("min_trades") or 30)
+            total_trades = int(metrics.get("total_trades", 0))
+            if total_trades < min_trades:
+                append_audit_event("research_controller", strategy, symbol, timeframe, "SKIPPED", "MIN_TRADES_NOT_MET", {"job_id": job_id, "trades": total_trades, "required": min_trades})
+                return job_queue.update_job(job_id, status="SKIPPED", completed_at=_now(), recommendation="REVIEW", result_path=None)
         debate = debate_recommendation(metrics, bool(cost_dict.get("cost_sensitive", False)))
+        try:
+            from tar_system.scoring.scorer import score_strategy
+            scored = score_strategy({k: float(v) for k, v in metrics.items() if isinstance(v, (int, float))})
+            _result_index.upsert_result(
+                strategy=strategy,
+                symbol=symbol,
+                timeframe=timeframe,
+                stage=str(job.get("research_stage") or "full"),
+                score=float(scored.score),
+                verdict=scored.verdict,
+                total_trades=int(metrics.get("total_trades", 0)),
+                profit_factor=float(metrics.get("profit_factor", 0.0)),
+                max_drawdown=float(metrics.get("max_drawdown", 0.0)),
+                sharpe_ratio=float(metrics.get("sharpe_ratio", 0.0)),
+                data_hash=str(job["data_hash"]) if job.get("data_hash") else None,
+            )
+        except Exception:
+            pass
         variant = default_variant(strategy, symbol, timeframe)
         result_path = f"reports/{symbol}_{timeframe}_{strategy}_report.md"
         updated = job_queue.update_job(

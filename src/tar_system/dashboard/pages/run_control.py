@@ -13,7 +13,15 @@ import pandas as pd
 
 from tar_system import settings
 from tar_system.audit.writer import append_audit_event
-from tar_system.controller.job_queue import add_job, clear_completed, queue_stats, read_jobs
+from tar_system.cache import result_index as _result_index
+from tar_system.controller.job_queue import (
+    add_job,
+    clear_completed,
+    diagnose_failures,
+    queue_stats,
+    read_jobs,
+    reset_stale_running,
+)
 from tar_system.controller.research_loop import recommend_next_actions
 from tar_system.dashboard.components.controls import SYMBOLS, TIMEFRAMES
 from tar_system.dashboard.components.layout import page_header, status_pill
@@ -225,7 +233,7 @@ def _render_primary_controls(st: object, selected: dict[str, Any], checklist: li
 
     if start_col.button("Start Backtest" if not active else "Running...", type="primary", disabled=active or not ready, help="Start a local paper-only backtest/pipeline subprocess with the selected date range.", width="stretch"):
         _start_backtest_subprocess(st, selected)
-    if stop_col.button("Stop Backtest", disabled=str(status.get("status")) != "RUNNING", help="Request a safe stop. The running task should exit cleanly before status becomes STOPPED.", width="stretch"):
+    if stop_col.button("Stop Backtest", disabled=str(status.get("status", "IDLE")).upper() != "RUNNING", help="Request a safe stop. The running task should exit cleanly before status becomes STOPPED.", width="stretch"):
         request_stop_active_task()
         request_stop_backtest()
         _audit_button("Stop Backtest", selected, "STOPPING", "STOP_REQUESTED", {"run_id": status.get("run_id")})
@@ -255,7 +263,26 @@ def _render_batch_controls(st: object, selected: dict[str, Any], checklist: list
     force = cols[0].checkbox("Force retest", value=False, key="tar_run_force_retest", help="Queue jobs even if the same data/date window has already been tested.")
     daily = cols[1].checkbox("Schedule daily", value=False, key="tar_run_schedule_daily", help="Create a recurring daily batch queue job.")
     daily_time = cols[2].time_input("Daily time", value=time(2, 5), key="tar_run_daily_time", help="Local time for the daily batch queue job.")
-    batch_selected = {**selected, "force_all_tests": force, "daily_time": daily_time.isoformat(timespec="minutes")}
+
+    st.markdown("#### Batch Safety Controls")
+    guard_cols = st.columns([1, 1, 1, 1, 1])
+    max_jobs = guard_cols[0].number_input("Max queued jobs", min_value=1, max_value=50, value=3, step=1, key="tar_batch_max_jobs", help="Cap total active+queued jobs. Prevents the 500+ job backlog problem.")
+    require_wf = guard_cols[1].checkbox("Require walk-forward", value=True, key="tar_batch_require_wf", help="Skip any job that has walk-forward disabled.")
+    require_mt = guard_cols[2].checkbox("Require min trades", value=False, key="tar_batch_require_min_trades", help="Skip results with too few trades to be statistically valid.")
+    min_trades = guard_cols[3].number_input("Min trades", min_value=1, max_value=500, value=30, step=1, key="tar_batch_min_trades", help="Minimum trade count required when 'Require min trades' is on.", disabled=not require_mt)
+    no_promote = guard_cols[4].checkbox("Block MT5 promotion", value=True, key="tar_batch_no_promote", help="Prevent any job from being promoted to MT5 live. Always on for paper batches.")
+
+    batch_selected = {
+        **selected,
+        "force_all_tests": force,
+        "daily_time": daily_time.isoformat(timespec="minutes"),
+        "max_jobs": int(max_jobs),
+        "require_walk_forward": require_wf,
+        "require_min_trades": require_mt,
+        "min_trades": int(min_trades),
+        "no_mt5_promotion": no_promote,
+        "no_live": True,
+    }
     if cols[3].button("Run All Tests Now", disabled=active or not ready, type="secondary", help="Queue all paper research tests for the selected A-B date range.", width="stretch"):
         _run_quick_action(st, "queue_all_tests", "Run All Tests", batch_selected, _queue_all_tests_action)
     if daily:
@@ -279,7 +306,7 @@ def _render_secondary_controls(st: object, selected: dict[str, Any], status: dic
             selected["broker"],
             from_date=selected.get("from_date"),
             to_date=selected.get("to_date"),
-            skip_walk_forward=True,
+            skip_walk_forward=False,
             skip_forward_test=True,
             research_stage="dashboard",
             priority=5,
@@ -323,7 +350,7 @@ def _render_terminal(st: object, status: dict[str, Any]) -> None:
 
 
 def _render_completion_summary(st: object, status: dict[str, Any]) -> None:
-    if str(status.get("status")) not in {"COMPLETED", "FAILED", "STOPPED"}:
+    if str(status.get("status", "IDLE")).upper() not in {"COMPLETED", "FAILED", "STOPPED"}:
         return
     metrics_path = _metrics_path(status)
     metrics = _load_json(metrics_path)
@@ -407,6 +434,57 @@ def _render_previous_runs(st: object) -> None:
 def _render_queue(st: object, selected: dict[str, Any]) -> None:
     st.markdown("### Research Queue")
     st.write({"queue_stats": queue_stats(), "next_actions": recommend_next_actions()})
+
+    with st.expander("Failure Diagnosis", expanded=False):
+        try:
+            diag = diagnose_failures()
+            dcols = st.columns(3)
+            dcols[0].metric("Failed jobs", diag["total_failed"])
+            dcols[1].metric("Skipped jobs", diag["total_skipped"])
+            dcols[2].metric("Stale RUNNING", len(diag["stale_running"]))
+            if diag["by_stage"]:
+                st.markdown("**By stage**")
+                st.dataframe([{"stage": s, "count": c} for s, c in diag["by_stage"]], width="stretch")
+            if diag["by_target"]:
+                st.markdown("**Top failing targets**")
+                st.dataframe([{"target": t, "count": c} for t, c in diag["by_target"]], width="stretch")
+            if diag["stale_running"]:
+                st.warning(f"{len(diag['stale_running'])} job(s) stuck in RUNNING state.")
+                if st.button("Reset stale RUNNING jobs to FAILED"):
+                    n = reset_stale_running()
+                    st.success(f"Reset {n} stale job(s).")
+                    st.rerun()
+        except Exception as exc:
+            st.caption(f"Diagnosis unavailable: {exc}")
+
+    with st.expander("Result Index (top scored)", expanded=False):
+        try:
+            stats = _result_index.result_index_stats()
+            st.write({"indexed": stats["total"], "by_verdict": stats["by_verdict"]})
+            if stats["top_5"]:
+                st.dataframe(stats["top_5"], width="stretch")
+            top = _result_index.get_ranked_results(min_trades=30, limit=20)
+            if top:
+                st.markdown("**Ranked (≥30 trades)**")
+                st.dataframe(
+                    [
+                        {
+                            "strategy": r["strategy"],
+                            "symbol": r["symbol"],
+                            "timeframe": r["timeframe"],
+                            "score": round(float(r["score"]), 1),
+                            "verdict": r["verdict"],
+                            "trades": r["total_trades"],
+                            "PF": round(float(r["profit_factor"]), 2),
+                            "DD": round(float(r["max_drawdown"]) * 100, 1),
+                        }
+                        for r in top
+                    ],
+                    width="stretch",
+                )
+        except Exception as exc:
+            st.caption(f"Result index unavailable: {exc}")
+
     scheduled = read_schedule().get("jobs", [])
     if scheduled:
         st.markdown("#### Scheduled Jobs")
@@ -437,6 +515,11 @@ def _render_queue(st: object, selected: dict[str, Any]) -> None:
                     "timeframe": row.get("timeframe"),
                     "priority": row.get("priority"),
                     "recommendation": row.get("recommendation"),
+                    "no_live": row.get("no_live"),
+                    "no_mt5_promotion": row.get("no_mt5_promotion"),
+                    "require_wf": row.get("require_walk_forward"),
+                    "require_min_trades": row.get("require_min_trades"),
+                    "min_trades": row.get("min_trades"),
                 }
                 for row in rows[-80:]
             ],
@@ -484,7 +567,6 @@ def _start_backtest_subprocess(st: object, selected: dict[str, Any]) -> None:
         "--broker",
         selected["broker"],
         "--force",
-        "--skip-walk-forward",
         "--skip-forward-test",
     ]
     if selected.get("from_date"):
@@ -518,11 +600,17 @@ def _queue_all_tests_action(selected: dict[str, Any]) -> dict[str, Any]:
         process_limit=0,
         run_worker_now=False,
         research_stage="dashboard_batch",
-        skip_walk_forward=True,
+        skip_walk_forward=False,
         skip_forward_test=True,
         max_walk_forward_splits=10,
         from_date=selected.get("from_date"),
         to_date=selected.get("to_date"),
+        max_jobs=int(selected.get("max_jobs") or 3),
+        no_live=bool(selected.get("no_live", True)),
+        no_mt5_promotion=bool(selected.get("no_mt5_promotion", True)),
+        require_walk_forward=bool(selected.get("require_walk_forward", True)),
+        require_min_trades=bool(selected.get("require_min_trades", False)),
+        min_trades=int(selected.get("min_trades") or 30),
     )
     return {
         "queued_jobs": result.queued_jobs,
@@ -649,7 +737,7 @@ def _schedule_daily_all_tests(selected: dict[str, Any], run_at: datetime) -> Pat
             "force": bool(selected.get("force_all_tests", False)),
             "from_date": selected.get("from_date"),
             "to_date": selected.get("to_date"),
-            "skip_walk_forward": True,
+            "skip_walk_forward": False,
             "skip_forward_test": True,
             "max_walk_forward_splits": 10,
             "research_stage": "dashboard_daily",
@@ -678,7 +766,7 @@ def _sync_background_status() -> None:
         latest = "\n".join(lines[-40:])
         if "Pipeline complete" in latest:
             finish_task("COMPLETED", "Backtest completed successfully", {"progress_pct": 100, "terminal": lines[-160:], "latest_result_path": _report_path(status)})
-        elif str(status.get("status")) == "STOPPING":
+        elif str(status.get("status", "IDLE")).upper() == "STOPPING":
             finish_task("STOPPED", "Backtest stopped safely", {"terminal": lines[-160:]})
         else:
             finish_task("FAILED", "Pipeline failed. Check terminal output.", {"terminal": lines[-160:]})

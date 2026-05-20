@@ -39,7 +39,7 @@ class GoldV2:
             "entry": entry,
             "metadata": {"regime": regime},
         }
-        if self.session_filter and not bool(row.get("is_liquid_session", True)):
+        if self.session_filter and _session_blocked(row):
             return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None, reason_code=rc.SESSION_FILTER_BLOCK, **base)
         if regime not in {Regime.TRENDING.value, "TRENDING"}:
             return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None, reason_code=rc.SIGNAL_HOLD, **base)
@@ -78,3 +78,15 @@ class GoldV2:
                 **base,
             )
         return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None, reason_code=rc.SIGNAL_HOLD, **base)
+
+
+def _session_blocked(row: pd.Series) -> bool:
+    if "is_liquid_session" in row.index:
+        value = row.get("is_liquid_session", True)
+        if isinstance(value, str):
+            return value.strip().lower() in {"false", "0", "no", "off"}
+        return not bool(value)
+    if "hour_utc" in row.index:
+        hour = int(float(row.get("hour_utc", 0) or 0))
+        return not (7 <= hour < 20)
+    return False

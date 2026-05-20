@@ -99,6 +99,44 @@ class PaperBroker:
             net_pnl=-total_cost,
         )
 
+    def close_position(
+        self,
+        position,
+        timestamp: pd.Timestamp,
+        exit_price: float,
+        broker_profile: BrokerProfile | None = None,
+        contract_size: float | None = None,
+        cost_multiplier: float = 1.0,
+    ) -> Fill:
+        symbol_profile = broker_profile.symbol_profile(position.symbol) if broker_profile else None
+        spread_model = _cost_model(symbol_profile) if symbol_profile else None
+        effective_spread = self._spread_amount(exit_price, position.symbol, spread_model, None) * cost_multiplier
+        slippage = self._slippage_amount(exit_price, position.symbol, symbol_profile.slippage_model if symbol_profile else None) * cost_multiplier
+        side = "BUY" if position.side == "SELL" else "SELL"
+        quantity = position.quantity
+        units = quantity * (contract_size if contract_size is not None else (symbol_profile.contract_size if symbol_profile else 1.0))
+        spread_cost = abs(effective_spread * units)
+        slippage_cost = abs(slippage * units)
+        total_cost = spread_cost + slippage_cost + self.commission_per_trade
+        return Fill(
+            timestamp=timestamp,
+            symbol=position.symbol,
+            side=side,
+            quantity=quantity,
+            price=float(exit_price),
+            commission=self.commission_per_trade,
+            metadata={
+                "spread": float(effective_spread),
+                "slippage": float(slippage),
+                "spread_model": spread_model or "manual",
+                "close_position": True,
+            },
+            slippage_cost=slippage_cost,
+            spread_cost=spread_cost,
+            total_cost=total_cost,
+            net_pnl=-total_cost,
+        )
+
     def calculate_swap_cost(self, symbol_profile: BrokerSymbolProfile, side: str, lots: float, notional: float, timeframe: str, bars_held: int) -> tuple[float, float]:
         days = bars_held * timeframe_day_fraction(timeframe)
         swap_rate = symbol_profile.swap_long if side.upper() == "BUY" else symbol_profile.swap_short

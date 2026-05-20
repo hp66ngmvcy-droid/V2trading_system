@@ -14,7 +14,7 @@ def main() -> None:
     import streamlit as st
 
     from tar_system.dashboard.components.layout import apply_theme
-    from tar_system.dashboard.pages import asset_data, daily_summary, environment, leaderboard, overview, positioning, promotion_board, run_control, security, strategy_detail
+    from tar_system.dashboard.pages import asset_data, daily_summary, environment, leaderboard, overview, paper_signals, positioning, promotion_board, run_control, security, strategy_detail
 
     st.set_page_config(page_title="TAR V2 Research", layout="wide")
     apply_theme(st)
@@ -27,6 +27,7 @@ def main() -> None:
         "Asset Data",
         "Run Backtest",
         "Forward Test",
+        "Paper Signals",
         "Strategy Ranking",
         "Strategy Detail",
         "Positioning Context",
@@ -57,6 +58,8 @@ def main() -> None:
         run_control.render(st)
     elif section == "Forward Test":
         run_control.render(st)
+    elif section == "Paper Signals":
+        paper_signals.render(st)
     elif section == "Import CSV":
         asset_data.render(st)
     elif section == "Asset Data":

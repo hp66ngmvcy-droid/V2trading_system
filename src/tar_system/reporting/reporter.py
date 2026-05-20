@@ -93,6 +93,164 @@ def generate_report(
     return path
 
 
+def generate_quant_report(
+    strategy: str,
+    symbol: str,
+    timeframe: str,
+    metrics: dict[str, float],
+    signal: dict[str, object] | None = None,
+    health: dict[str, object] | None = None,
+) -> Path:
+    """Generate a print-ready quant report in Markdown."""
+    output_dir = Path(REPORT_DIR)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / f"{symbol}_{timeframe}_{strategy}_quant_report.md"
+    signal = signal or {}
+    health = health or {}
+    equity = _load_equity_summary(strategy, symbol, timeframe)
+    lines = [
+        f"# {strategy} Quant Report",
+        "",
+        "## Summary",
+        f"- Strategy: {strategy}",
+        f"- Symbol: {symbol}",
+        f"- Timeframe: {timeframe}",
+        "- Mode: paper-only",
+        f"- Health Status: {health.get('status', 'UNKNOWN')}",
+        f"- Health Recommendation: {health.get('recommendation', 'Review manually')}",
+        f"- Latest Signal: {signal.get('side', 'N/A')}",
+        f"- Risk Decision: {signal.get('risk_reason', 'N/A')}",
+        "",
+        "## Performance",
+    ]
+    for key in [
+        "total_trades",
+        "win_rate",
+        "profit_factor",
+        "max_drawdown",
+        "sharpe_ratio",
+        "sortino_ratio",
+        "calmar_ratio",
+        "net_profit",
+    ]:
+        if key in metrics:
+            lines.append(f"- {key}: {metrics[key]}")
+    if not any(key in metrics for key in ["total_trades", "win_rate", "profit_factor", "max_drawdown", "net_profit"]):
+        lines.append("- No backtest metrics found yet")
+    lines.extend(
+        [
+            "",
+            "## Equity Summary",
+            f"- Start Equity: {equity.get('start_equity', 'N/A')}",
+            f"- End Equity: {equity.get('end_equity', 'N/A')}",
+            f"- Peak Equity: {equity.get('peak_equity', 'N/A')}",
+            f"- Max Equity Drawdown: {equity.get('max_drawdown_pct', 'N/A')}",
+            f"- Equity Points: {equity.get('points', 0)}",
+        ]
+    )
+    if health.get("reason_codes"):
+        lines.extend(["", "## Health Reasons"])
+        lines.extend(f"- {code}" for code in health.get("reason_codes", []))
+    lines.extend(
+        [
+            "",
+            "## Latest Paper Signal",
+            f"- Side: {signal.get('side', 'N/A')}",
+            f"- Confidence: {signal.get('confidence', 'N/A')}",
+            f"- Entry: {signal.get('entry', 'N/A')}",
+            f"- Stop Loss: {signal.get('stop_loss', 'N/A')}",
+            f"- Take Profit: {signal.get('take_profit', 'N/A')}",
+            f"- Risk Approved: {signal.get('risk_approved', 'N/A')}",
+            f"- Risk Reason: {signal.get('risk_reason', 'N/A')}",
+            "",
+            "## Controls",
+            "- Live order execution: disabled",
+            "- Human review required before any external action",
+            "- Circuit breakers: daily loss, weekly loss and consecutive-loss gates",
+            "",
+            "## Next Review",
+            "- Check sample size before promoting confidence",
+            "- Re-run multi-asset and walk-forward validation after parameter changes",
+            "- Keep paper-only status unless explicitly reviewed outside this report",
+        ]
+    )
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    _write_basic_pdf(path.with_suffix(".pdf"), lines)
+    return path
+
+
+def _load_equity_summary(strategy: str, symbol: str, timeframe: str) -> dict[str, object]:
+    path = Path("data/results") / f"{symbol}_{timeframe}_{strategy}_equity.json"
+    if not path.exists():
+        return {}
+    try:
+        rows = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(rows, list) or not rows:
+        return {}
+    equities = [float(row.get("equity", 0.0) or 0.0) for row in rows if isinstance(row, dict)]
+    drawdowns = [float(row.get("drawdown_pct", 0.0) or 0.0) for row in rows if isinstance(row, dict)]
+    if not equities:
+        return {}
+    return {
+        "start_equity": equities[0],
+        "end_equity": equities[-1],
+        "peak_equity": max(equities),
+        "max_drawdown_pct": max(drawdowns) if drawdowns else 0.0,
+        "points": len(equities),
+    }
+
+
+def _write_basic_pdf(path: Path, lines: list[str]) -> Path:
+    wrapped: list[str] = []
+    for line in lines:
+        text = line.replace("#", "").strip()
+        if not text:
+            wrapped.append("")
+            continue
+        while len(text) > 88:
+            wrapped.append(text[:88])
+            text = text[88:]
+        wrapped.append(text)
+
+    page_lines = wrapped[:42]
+    stream_lines = ["BT", "/F1 10 Tf", "50 780 Td"]
+    for index, line in enumerate(page_lines):
+        if index:
+            stream_lines.append("0 -16 Td")
+        stream_lines.append(f"({_pdf_escape(line)}) Tj")
+    stream_lines.append("ET")
+    stream = "\n".join(stream_lines).encode("latin-1", errors="replace")
+
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n" + stream + b"\nendstream",
+    ]
+    payload = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for number, obj in enumerate(objects, start=1):
+        offsets.append(len(payload))
+        payload.extend(f"{number} 0 obj\n".encode("ascii"))
+        payload.extend(obj)
+        payload.extend(b"\nendobj\n")
+    xref_offset = len(payload)
+    payload.extend(f"xref\n0 {len(objects) + 1}\n".encode("ascii"))
+    payload.extend(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        payload.extend(f"{offset:010d} 00000 n \n".encode("ascii"))
+    payload.extend(f"trailer << /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF\n".encode("ascii"))
+    path.write_bytes(bytes(payload))
+    return path
+
+
+def _pdf_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+
 if __name__ == "__main__":
     print("Use python -m tar_system.cli generate-report")
 

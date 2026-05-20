@@ -139,12 +139,19 @@ def run_backtest_cmd(args: argparse.Namespace) -> None:
 def score_strategy_cmd(args: argparse.Namespace) -> None:
     from tar_system.memory.strategy_memory import record_strategy_result
     from tar_system.reporting.review_log import append_review_result, write_review_summary
+    from tar_system.scoring.gates import run_gates
     from tar_system.scoring.scorer import score_strategy
     from tar_system.strategies.resolver import resolve_strategy
 
     path = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_metrics.json"
+    walk_forward_path = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_walk_forward.json"
     metrics = json.loads(path.read_text(encoding="utf-8"))
-    score = score_strategy(metrics)
+    walk_forward_metrics = json.loads(walk_forward_path.read_text(encoding="utf-8")) if walk_forward_path.exists() else None
+    score = score_strategy(metrics, walk_forward_metrics, args.timeframe, require_walk_forward=True)
+    gate_metrics = _metrics_with_walk_forward(metrics, walk_forward_metrics)
+    gate = run_gates(gate_metrics, args.timeframe, require_oos=True)
+    reason_codes = _merge_reason_codes(score.reason_codes, gate.reason_codes)
+    metrics = {**gate_metrics, "gate_failed": gate.failed_gate or "", "gate_reason": gate.reason}
     resolved = resolve_strategy(args.strategy, args.symbol, args.timeframe, getattr(args, "broker", "current_broker_demo"), audit=True)
     strategy = resolved.strategy
     record_strategy_result(
@@ -155,8 +162,9 @@ def score_strategy_cmd(args: argparse.Namespace) -> None:
         {},
         metrics,
         score.score,
-        score.verdict,
-        score.reason_codes,
+        gate.verdict,
+        reason_codes,
+        walk_forward_metrics,
     )
     append_review_result(
         args.strategy,
@@ -165,12 +173,12 @@ def score_strategy_cmd(args: argparse.Namespace) -> None:
         args.timeframe,
         metrics,
         score.score,
-        score.verdict,
-        ",".join(score.reason_codes),
-        "EXPORT_OBSIDIAN" if score.verdict in {"KEEP", "REVIEW"} else "ARCHIVE",
+        gate.verdict,
+        ",".join(reason_codes),
+        "EXPORT_OBSIDIAN" if gate.verdict in {"KEEP", "REVIEW"} else "ARCHIVE",
     )
     write_review_summary()
-    print(json.dumps(score.__dict__, indent=2))
+    print(json.dumps({"score": score.score, "verdict": gate.verdict, "reason_codes": reason_codes, "gate": gate.__dict__}, indent=2))
 
 
 def export_mt5_cmd(args: argparse.Namespace) -> None:
@@ -236,6 +244,15 @@ def run_walk_forward_cmd(args: argparse.Namespace) -> None:
     features = load_feature_data(args.symbol, args.timeframe)
     strategy = get_strategy(args.strategy)
     result = run_walk_forward(features, strategy, args.train_window, args.test_window)
+    
+    # Save to data/results/
+    output = Path("data/results")
+    output.mkdir(parents=True, exist_ok=True)
+    path = output / f"{args.strategy}_{args.symbol}_{args.timeframe}_walk_forward.json"
+    with open(path, "w") as f:
+        json.dump(asdict(result), f, indent=2, default=str)
+    
+    print(f"Walk-forward results saved to: {path}")
     print(json.dumps(asdict(result), indent=2, default=str))
 
 
@@ -328,6 +345,60 @@ def generate_report_cmd(args: argparse.Namespace) -> None:
         args.format,
     )
     print(f"Generated report: {path}")
+
+
+def run_paper_signal_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.controller.paper_signal_runner import run_paper_signal
+
+    result = run_paper_signal(
+        args.strategy,
+        args.symbol,
+        args.timeframe,
+        args.broker,
+        args.sizing_model,
+        force_health_check=not args.skip_health_check,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def monitor_strategy_health_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.controller.strategy_health_monitor import evaluate_strategy_health
+
+    result = evaluate_strategy_health(
+        args.strategy,
+        args.symbol,
+        args.timeframe,
+        min_trades=args.min_trades,
+        min_profit_factor=args.min_profit_factor,
+        min_sharpe=args.min_sharpe,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def generate_quant_report_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.controller.strategy_health_monitor import read_strategy_health
+    from tar_system.reporting.reporter import generate_quant_report
+
+    metrics_path = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_metrics.json"
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8")) if metrics_path.exists() else {}
+    signal_path = Path("runtime") / "latest_paper_signal.json"
+    signal = json.loads(signal_path.read_text(encoding="utf-8")) if signal_path.exists() else {}
+    health = read_strategy_health(args.strategy, args.symbol, args.timeframe)
+    path = generate_quant_report(
+        args.strategy,
+        args.symbol,
+        args.timeframe,
+        metrics,
+        signal=signal,
+        health=asdict(health) if health else {},
+    )
+    print(json.dumps({"report_path": str(path), "pdf_path": str(path.with_suffix(".pdf")), "paper_only": True}, indent=2))
 
 
 def security_check_cmd(args: argparse.Namespace) -> None:
@@ -460,6 +531,7 @@ def run_scheduled_cmd(args: argparse.Namespace) -> None:
     from tar_system.audit.writer import append_audit_event
     from tar_system.dashboard.runtime_control import read_schedule, write_schedule_jobs
     from tar_system.controller.research_loop import run_research_loop
+    from tar_system.controller.paper_signal_runner import run_paper_signal
 
     now = datetime.fromisoformat(args.now) if args.now else datetime.now()
     jobs = list(read_schedule().get("jobs", []))
@@ -474,7 +546,16 @@ def run_scheduled_cmd(args: argparse.Namespace) -> None:
         write_schedule_jobs(jobs)
         append_audit_event("scheduled_worker", str(job.get("strategy", "")), str(job.get("symbol", "")), str(job.get("timeframe", "")), "STARTED", "SCHEDULED_JOB_STARTED", job)
         try:
-            if job.get("job_type") == "all_tests":
+            if job.get("job_type") == "paper_signal":
+                result = run_paper_signal(
+                    str(job["strategy"]),
+                    str(job["symbol"]),
+                    str(job["timeframe"]),
+                    str(job.get("broker", "current_broker_demo")),
+                    str(job.get("sizing_model", "ATR_BASED")),
+                )
+                metadata = {"latest_signal_path": "runtime/latest_paper_signal.json", "alert_ready": result.alert_ready}
+            elif job.get("job_type") == "all_tests":
                 result = run_research_loop(
                     raw_dir=job.get("raw_dir", "data/raw"),
                     broker=job.get("broker", "current_broker_demo"),
@@ -482,7 +563,7 @@ def run_scheduled_cmd(args: argparse.Namespace) -> None:
                     process_limit=0,
                     run_worker_now=False,
                     research_stage=job.get("research_stage", "dashboard_daily"),
-                    skip_walk_forward=bool(job.get("skip_walk_forward", True)),
+                    skip_walk_forward=bool(job.get("skip_walk_forward", False)),
                     skip_forward_test=bool(job.get("skip_forward_test", True)),
                     max_walk_forward_splits=int(job.get("max_walk_forward_splits", 10)),
                     from_date=job.get("from_date"),
@@ -508,7 +589,11 @@ def run_scheduled_cmd(args: argparse.Namespace) -> None:
                 )
                 metadata = {}
             completed = {**jobs[index], "status": "completed", "completed_at": datetime.now().isoformat(), **metadata}
-            if completed.get("repeat_daily"):
+            if completed.get("repeat_interval_minutes"):
+                completed["status"] = "scheduled"
+                completed["last_completed_at"] = completed.pop("completed_at")
+                completed["run_at"] = (run_at + timedelta(minutes=int(completed["repeat_interval_minutes"]))).isoformat()
+            elif completed.get("repeat_daily"):
                 completed["status"] = "scheduled"
                 completed["last_completed_at"] = completed.pop("completed_at")
                 completed["run_at"] = (run_at + timedelta(days=1)).isoformat()
@@ -518,6 +603,27 @@ def run_scheduled_cmd(args: argparse.Namespace) -> None:
             jobs[index] = {**jobs[index], "status": "stopped", "stopped_at": datetime.now().isoformat(), "latest_message": str(exc)}
         write_schedule_jobs(jobs)
     print(json.dumps({"checked_at": now.isoformat(), "jobs_run": ran}, indent=2))
+
+
+def install_paper_signal_schedule_cmd(args: argparse.Namespace) -> None:
+    from datetime import datetime, timedelta
+
+    from tar_system.dashboard.runtime_control import schedule_research_run
+
+    run_at = datetime.now() + timedelta(minutes=max(1, args.interval_minutes))
+    path = schedule_research_run(
+        {
+            "job_type": "paper_signal",
+            "strategy": args.strategy,
+            "symbol": args.symbol,
+            "timeframe": args.timeframe,
+            "broker": args.broker,
+            "sizing_model": args.sizing_model,
+            "run_at": run_at.isoformat(timespec="seconds"),
+            "repeat_interval_minutes": args.interval_minutes,
+        }
+    )
+    print(json.dumps({"schedule_path": str(path), "interval_minutes": args.interval_minutes, "paper_only": True}, indent=2))
 
 
 def queue_job_cmd(args: argparse.Namespace) -> None:
@@ -601,6 +707,13 @@ def research_summary_cmd(args: argparse.Namespace) -> None:
     print(json.dumps({"summary_path": str(path), "next_actions": recommend_next_actions(args.limit)}, indent=2))
 
 
+def export_ai_review_packet_cmd(args: argparse.Namespace) -> None:
+    from tar_system.reporting.ai_review_packet import export_ai_review_packet
+
+    path = export_ai_review_packet(args.output, args.limit)
+    print(json.dumps({"packet_path": str(path), "json_path": str(path.with_suffix(".json"))}, indent=2))
+
+
 def import_cot_cmd(args: argparse.Namespace) -> None:
     from dataclasses import asdict
 
@@ -660,6 +773,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
     )
     from tar_system.reporting.review_log import append_review_result
     from tar_system.reporting.reporter import generate_report
+    from tar_system.scoring.gates import run_gates
     from tar_system.scoring.scorer import score_strategy
     from tar_system.strategies.registry import get_strategy
     from tar_system.validation.walk_forward import run_walk_forward
@@ -733,6 +847,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
 
     if args.skip_walk_forward:
         print("[5/9] Walk-forward skipped")
+        _write_walk_forward_review_artifact(args.strategy, args.symbol, args.timeframe, "Walk-forward skipped for this run.", "skipped")
         append_audit_event("pipeline_step", args.strategy, args.symbol, args.timeframe, "SKIPPED", "WALK_FORWARD_SKIPPED", context)
         checkpoint = mark_stage_completed(checkpoint, "run-walk-forward", {"latest_message": "walk-forward skipped"})
     else:
@@ -747,11 +862,16 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
                     raise SystemExit("Walk-forward stopped before completion; partial result was not scored")
                 payload = {
                     "split_count": len(result.splits),
+                    "ran": result.ran,
+                    "window_count": result.window_count,
+                    "wf_verdict": result.wf_verdict,
+                    "wf_reason": result.wf_reason,
                     "stitched_metrics": result.stitched_metrics,
                     "parameter_stability": result.parameter_stability,
                     "stable_parameter_ranges": result.stable_parameter_ranges,
                     "parameter_stability_score": result.parameter_stability_score,
                     "recommended_search_range": result.recommended_search_range,
+                    "bootstrap_ci": result.bootstrap_ci,
                 }
                 output = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_walk_forward.json"
                 output.parent.mkdir(parents=True, exist_ok=True)
@@ -762,6 +882,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
             checkpoint = _pipeline_step("run-walk-forward", args, _run_pipeline_walk_forward, context, checkpoint)
         else:
             print("[5/9] Walk-forward skipped: not enough rows")
+            _write_walk_forward_review_artifact(args.strategy, args.symbol, args.timeframe, f"Not enough rows for walk-forward: {len(features)} rows available.", "not_enough_data")
             append_audit_event("pipeline_step", args.strategy, args.symbol, args.timeframe, "SKIPPED", "WALK_FORWARD_NOT_ENOUGH_DATA", {"rows": len(features), **context})
             checkpoint = mark_stage_completed(checkpoint, "run-walk-forward", {"latest_message": "walk-forward skipped: not enough rows"})
 
@@ -795,7 +916,17 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
     def _score_pipeline_strategy() -> dict[str, object]:
         metrics_path = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_metrics.json"
         stage_metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
-        stage_score = score_strategy(stage_metrics)
+        walk_forward_path = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_walk_forward.json"
+        walk_forward = json.loads(walk_forward_path.read_text(encoding="utf-8")) if walk_forward_path.exists() else None
+        stage_score = score_strategy(stage_metrics, walk_forward, args.timeframe, require_walk_forward=True)
+        stage_metrics = _metrics_with_walk_forward(stage_metrics, walk_forward)
+        stage_gate = run_gates(stage_metrics, args.timeframe, require_oos=True)
+        reason_codes = _merge_reason_codes(stage_score.reason_codes, stage_gate.reason_codes)
+        stage_metrics = {
+            **stage_metrics,
+            "gate_failed": stage_gate.failed_gate or "",
+            "gate_reason": stage_gate.reason,
+        }
         append_review_result(
             args.strategy,
             strategy.version,
@@ -803,12 +934,21 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
             args.timeframe,
             stage_metrics,
             stage_score.score,
-            stage_score.verdict,
-            ",".join(stage_score.reason_codes),
+            stage_gate.verdict,
+            ",".join(reason_codes),
             "WRITE_MEMORY",
         )
-        score_payload.update({"metrics": stage_metrics, "score": stage_score})
-        print(json.dumps(stage_score.__dict__, indent=2))
+        score_payload.update(
+            {
+                "metrics": stage_metrics,
+                "score": stage_score,
+                "verdict": stage_gate.verdict,
+                "reason_codes": reason_codes,
+                "gate": stage_gate,
+                "walk_forward_metrics": walk_forward or {},
+            }
+        )
+        print(json.dumps({"score": stage_score.score, "verdict": stage_gate.verdict, "reason_codes": reason_codes, "gate": stage_gate.__dict__}, indent=2))
         return score_payload
 
     checkpoint = _pipeline_step("score-strategy", args, _score_pipeline_strategy, context, checkpoint)
@@ -826,9 +966,9 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
             args.timeframe,
             metrics,
             score.score,  # type: ignore[union-attr]
-            score.verdict,  # type: ignore[union-attr]
+            str(score_payload.get("verdict") or score.verdict),  # type: ignore[union-attr]
             "REVIEW_ONLY",
-            score.reason_codes,  # type: ignore[union-attr]
+            list(score_payload.get("reason_codes") or score.reason_codes),  # type: ignore[union-attr]
             "REVIEW",
             "md",
         ),
@@ -842,7 +982,18 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
     checkpoint = _pipeline_step(
         "write-memory",
         args,
-        lambda: record_strategy_result(args.strategy, strategy.version, args.symbol, args.timeframe, {}, metrics, score.score, score.verdict, score.reason_codes),  # type: ignore[union-attr]
+        lambda: record_strategy_result(
+            args.strategy,
+            strategy.version,
+            args.symbol,
+            args.timeframe,
+            {},
+            metrics,
+            score.score,  # type: ignore[union-attr]
+            str(score_payload.get("verdict") or score.verdict),  # type: ignore[union-attr]
+            list(score_payload.get("reason_codes") or score.reason_codes),  # type: ignore[union-attr]
+            dict(score_payload.get("walk_forward_metrics") or {}),
+        ),
         context,
         checkpoint,
     )
@@ -945,6 +1096,65 @@ def _pipeline_step(step: str, args: argparse.Namespace, func: object, metadata: 
     if checkpoint:
         return mark_stage_completed(checkpoint, step)
     return checkpoint
+
+
+def _merge_reason_codes(*groups: list[str]) -> list[str]:
+    merged: list[str] = []
+    for group in groups:
+        for code in group:
+            if code not in merged:
+                merged.append(code)
+    return merged
+
+
+def _metrics_with_walk_forward(metrics: dict[str, float], walk_forward: dict[str, object] | None) -> dict[str, float]:
+    enriched = dict(metrics)
+    if not walk_forward:
+        return enriched
+    stitched = walk_forward.get("stitched_metrics", {}) or {}
+    if isinstance(stitched, dict):
+        enriched["sharpe_oos"] = float(stitched.get("sharpe_ratio", stitched.get("sharpe", 0.0)) or 0.0)
+    enriched["param_stability"] = float(walk_forward.get("parameter_stability_score", 0.0) or 0.0)
+    enriched["walk_forward_splits"] = float(walk_forward.get("split_count", walk_forward.get("window_count", 0)) or 0)
+    bootstrap_ci = walk_forward.get("bootstrap_ci", {}) or {}
+    if isinstance(bootstrap_ci, dict):
+        enriched["bootstrap_ci_lower"] = float(bootstrap_ci.get("ci_lower", 0.0) or 0.0)
+        enriched["bootstrap_ci_upper"] = float(bootstrap_ci.get("ci_upper", 0.0) or 0.0)
+        enriched["bootstrap_ci_spans_zero"] = bool(bootstrap_ci.get("spans_zero", True))
+    return enriched
+
+
+def _write_walk_forward_review_artifact(strategy: str, symbol: str, timeframe: str, reason: str, status: str) -> Path:
+    output = Path("data/results") / f"{strategy}_{symbol}_{timeframe}_walk_forward.json"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(
+            {
+                "split_count": 0,
+                "ran": False,
+                "window_count": 0,
+                "wf_verdict": "REVIEW",
+                "wf_reason": reason,
+                "stitched_metrics": {},
+                "parameter_stability": {"status": status, "stability_score": 0.0},
+                "stable_parameter_ranges": {},
+                "parameter_stability_score": 0.0,
+                "recommended_search_range": {},
+                "bootstrap_ci": {
+                    "mean": 0.0,
+                    "ci_lower": 0.0,
+                    "ci_upper": 0.0,
+                    "spans_zero": True,
+                    "sample_size": 0,
+                    "confidence": 0.95,
+                    "n_iterations": 0,
+                },
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    return output
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1057,6 +1267,30 @@ def build_parser() -> argparse.ArgumentParser:
     report_parser.add_argument("--format", default="md", choices=["md", "json"])
     report_parser.set_defaults(func=generate_report_cmd)
 
+    paper_signal_parser = subparsers.add_parser("run-paper-signal")
+    paper_signal_parser.add_argument("--strategy", required=True)
+    paper_signal_parser.add_argument("--symbol", required=True)
+    paper_signal_parser.add_argument("--timeframe", required=True)
+    paper_signal_parser.add_argument("--broker", default="current_broker_demo")
+    paper_signal_parser.add_argument("--sizing-model", default="ATR_BASED", choices=["FIXED_LOT", "FIXED_RISK_PCT", "ATR_BASED", "HALF_KELLY"])
+    paper_signal_parser.add_argument("--skip-health-check", action="store_true")
+    paper_signal_parser.set_defaults(func=run_paper_signal_cmd)
+
+    health_parser = subparsers.add_parser("monitor-strategy-health")
+    health_parser.add_argument("--strategy", required=True)
+    health_parser.add_argument("--symbol", required=True)
+    health_parser.add_argument("--timeframe", required=True)
+    health_parser.add_argument("--min-trades", type=int, default=30)
+    health_parser.add_argument("--min-profit-factor", type=float, default=1.05)
+    health_parser.add_argument("--min-sharpe", type=float, default=0.0)
+    health_parser.set_defaults(func=monitor_strategy_health_cmd)
+
+    quant_report_parser = subparsers.add_parser("generate-quant-report")
+    quant_report_parser.add_argument("--strategy", required=True)
+    quant_report_parser.add_argument("--symbol", required=True)
+    quant_report_parser.add_argument("--timeframe", required=True)
+    quant_report_parser.set_defaults(func=generate_quant_report_cmd)
+
     security_parser = subparsers.add_parser("security-check")
     security_parser.set_defaults(func=security_check_cmd)
 
@@ -1120,6 +1354,15 @@ def build_parser() -> argparse.ArgumentParser:
     scheduled_parser.add_argument("--now", default=None)
     scheduled_parser.set_defaults(func=run_scheduled_cmd)
 
+    install_signal_schedule_parser = subparsers.add_parser("install-paper-signal-schedule")
+    install_signal_schedule_parser.add_argument("--strategy", default="liquidity_sweep_v1")
+    install_signal_schedule_parser.add_argument("--symbol", default="XAUUSD")
+    install_signal_schedule_parser.add_argument("--timeframe", default="M15")
+    install_signal_schedule_parser.add_argument("--broker", default="current_broker_demo")
+    install_signal_schedule_parser.add_argument("--sizing-model", default="ATR_BASED", choices=["FIXED_LOT", "FIXED_RISK_PCT", "ATR_BASED", "HALF_KELLY"])
+    install_signal_schedule_parser.add_argument("--interval-minutes", type=int, default=15)
+    install_signal_schedule_parser.set_defaults(func=install_paper_signal_schedule_cmd)
+
     controller_parser = subparsers.add_parser("run-controller")
     controller_parser.add_argument("--once", action="store_true")
     controller_parser.add_argument("--watch", action="store_true")
@@ -1153,6 +1396,11 @@ def build_parser() -> argparse.ArgumentParser:
     research_summary_parser = subparsers.add_parser("research-summary")
     research_summary_parser.add_argument("--limit", type=int, default=5)
     research_summary_parser.set_defaults(func=research_summary_cmd)
+
+    ai_packet_parser = subparsers.add_parser("export-ai-review-packet")
+    ai_packet_parser.add_argument("--output", default="runtime/ai_review_packet.md")
+    ai_packet_parser.add_argument("--limit", type=int, default=10)
+    ai_packet_parser.set_defaults(func=export_ai_review_packet_cmd)
 
     cot_parser = subparsers.add_parser("import-cot")
     cot_parser.add_argument("--file", required=True)

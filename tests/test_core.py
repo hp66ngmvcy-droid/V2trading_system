@@ -12,11 +12,14 @@ from tar_system.features.engineering import build_features
 from tar_system.optimisation.parameter_anchors import ATR_STOP_ANCHORS, GOLD_V2_ANCHORS
 from tar_system.regime.detector import Regime, detect_regime
 from tar_system.risk.engine import RiskEngine
+from tar_system.scoring.gates import run_gates
 from tar_system.scoring.scorer import score_strategy
 from tar_system.strategies.asset_variants import default_variant
 from tar_system.strategies.base import Signal
 from tar_system.strategies.gold_v2 import GoldV2
+from tar_system.strategies.registry import ALIASES, REGISTRY, RESEARCH_REGISTRY, get_strategy
 from tar_system.backtest.metrics import calculate_metrics
+from tar_system.backtest.engine import _safe_backtest_quantity
 from tar_system.portfolio.tracker import Trade
 
 
@@ -86,6 +89,8 @@ def test_feature_creation() -> None:
     features = build_features(sample_df(), "XAUUSD", "M15")
     assert "ema_fast" in features.columns
     assert "rsi" in features.columns
+    assert "hour_utc" in features.columns
+    assert features["hour_utc"].between(0, 23).all()
     assert "range_compression" in features.columns
     assert "session_label" in features.columns
     assert "ema_fast_slope" in features.columns
@@ -126,6 +131,18 @@ def test_gold_v2_blocks_asian_session_when_filter_enabled() -> None:
     assert signal.reason_code == "SESSION_FILTER_BLOCK"
 
 
+def test_gold_v2_allows_missing_session_columns() -> None:
+    row = _gold_row().drop(labels=["is_liquid_session"])
+    signal = GoldV2(session_filter=True).generate_signal(row, "TRENDING")
+    assert signal.reason_code != "SESSION_FILTER_BLOCK"
+
+
+def test_gold_v2_handles_string_session_filter_values() -> None:
+    signal = GoldV2(session_filter=True).generate_signal(_gold_row(is_liquid_session="False"), "TRENDING")
+    assert signal.side == "HOLD"
+    assert signal.reason_code == "SESSION_FILTER_BLOCK"
+
+
 def test_gold_v2_generates_signal_during_london_session() -> None:
     signal = GoldV2(session_filter=True).generate_signal(_gold_row(), "TRENDING")
     assert signal.side == "BUY"
@@ -133,6 +150,15 @@ def test_gold_v2_generates_signal_during_london_session() -> None:
 
 def test_btc_variant_has_session_filter_disabled() -> None:
     assert default_variant("gold_v2", "BTCUSD", "M15").parameters["session_filter"] is False
+
+
+def test_strategy_registry_includes_canonical_strategies_and_resolves_aliases() -> None:
+    assert "rsi_only_v3" in REGISTRY
+    assert "rsi_v3" not in REGISTRY
+    assert get_strategy("rsi_only_v3").__class__ is REGISTRY["rsi_only_v3"]
+    assert get_strategy("rsi_v3").__class__ is ALIASES["rsi_v3"]
+    assert all(get_strategy(name).__class__ is strategy_class for name, strategy_class in REGISTRY.items())
+    assert set(RESEARCH_REGISTRY) == {"gold_v2", "rsi_reversion_v1"}
 
 
 def test_gold_v2_blocks_atr_too_low_and_too_high() -> None:
@@ -207,6 +233,63 @@ def test_scorer_verdict() -> None:
     score = score_strategy({"win_rate": 0.55, "profit_factor": 1.6, "max_drawdown": 0.1, "total_trades": 35, "expectancy": 12})
     assert score.verdict in {"KEEP", "REVIEW", "KILL"}
     assert 0 <= score.score <= 100
+
+
+def test_scorer_requires_walk_forward_when_requested() -> None:
+    metrics = {"win_rate": 0.65, "profit_factor": 2.4, "max_drawdown": 0.08, "total_trades": 60, "expectancy": 12}
+    score = score_strategy(metrics, require_walk_forward=True)
+    assert score.verdict == "REVIEW"
+    assert "WF_NOT_RUN" in score.reason_codes
+
+
+def test_scorer_can_keep_with_strong_walk_forward() -> None:
+    metrics = {"win_rate": 0.65, "profit_factor": 2.4, "max_drawdown": 0.08, "total_trades": 60, "expectancy": 12}
+    walk_forward = {
+        "split_count": 3,
+        "ran": True,
+        "stitched_metrics": {"total_trades": 30, "profit_factor": 1.4, "max_drawdown": 0.10},
+        "parameter_stability_score": 60.0,
+    }
+    score = score_strategy(metrics, walk_forward, "M15", require_walk_forward=True)
+    assert score.verdict == "KEEP"
+
+
+def test_structural_gate_blocks_one_trade_winner() -> None:
+    gate = run_gates({"total_trades": 1, "win_rate": 1.0, "profit_factor": 100.0, "max_drawdown": 0.0}, "M15")
+    assert gate.verdict == "KILL"
+    assert gate.failed_gate == "min_trades"
+
+
+def test_structural_gate_blocks_directional_failure() -> None:
+    gate = run_gates(
+        {
+            "total_trades": 104,
+            "win_rate": 0.0,
+            "profit_factor": 0.0,
+            "max_drawdown": 0.10,
+            "max_consecutive_losses": 104,
+        },
+        "M15",
+        require_oos=False,
+    )
+    assert gate.verdict == "KILL"
+    assert gate.failed_gate == "consecutive_loss_ratio"
+
+
+def test_structural_gate_requires_walk_forward_for_keep() -> None:
+    gate = run_gates(
+        {"total_trades": 40, "win_rate": 0.55, "profit_factor": 1.8, "max_drawdown": 0.10},
+        "M15",
+        require_oos=True,
+    )
+    assert gate.verdict == "REVIEW"
+    assert "SEARCH_OOS_SHARPE_NOT_MET" in gate.reason_codes
+
+
+def test_safe_backtest_quantity_caps_large_notional() -> None:
+    assert _safe_backtest_quantity(50000.0, 10000.0) == 0.02
+    assert _safe_backtest_quantity(2000.0, 10000.0) == 0.5
+    assert _safe_backtest_quantity(1.1, 10000.0) == 1.0
 
 
 def test_mt5_export_creates_files(tmp_path, monkeypatch) -> None:

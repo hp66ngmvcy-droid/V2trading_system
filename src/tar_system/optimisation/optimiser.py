@@ -23,7 +23,7 @@ class OptimisedVariant:
     variant_name: str
     parameters: dict[str, Any]
     metrics: dict[str, float]
-    walk_forward_metrics: dict[str, float]
+    walk_forward_metrics: dict[str, Any]
     score: float
     verdict: str
     reason_codes: list[str]
@@ -63,11 +63,23 @@ def optimise_asset(
     for mutation_name, parameters in mutations:
         strategy = get_strategy(strategy_name, **parameters)
         backtest = run_backtest(features, strategy, audit_decisions=False)
-        wf_metrics: dict[str, float] = {}
+        wf_metrics: dict[str, Any] = {}
         if len(features) >= 250:
             wf = run_walk_forward(features, strategy, 200, 50, audit_decisions=False, max_splits=25)
-            wf_metrics = wf.stitched_metrics
-        score = score_strategy({**backtest.metrics, "parameter_stability": 50.0})
+            wf_metrics = {
+                "split_count": len(wf.splits),
+                "ran": wf.ran,
+                "window_count": wf.window_count,
+                "wf_verdict": wf.wf_verdict,
+                "wf_reason": wf.wf_reason,
+                "stitched_metrics": wf.stitched_metrics,
+                "parameter_stability": wf.parameter_stability,
+                "stable_parameter_ranges": wf.stable_parameter_ranges,
+                "parameter_stability_score": wf.parameter_stability_score,
+                "recommended_search_range": wf.recommended_search_range,
+                "bootstrap_ci": wf.bootstrap_ci,
+            }
+        score = score_strategy(backtest.metrics, wf_metrics, timeframe, require_walk_forward=True)
         verdict = "KEEP" if score.verdict == "KEEP" else "REVISE" if score.verdict == "REVIEW" else "KILL"
         variant_name = resolved.variant.variant_name if mutation_name == "base" else f"{resolved.variant.variant_name}_{mutation_name}"
         row = OptimisedVariant(variant_name, parameters, backtest.metrics, wf_metrics, score.score, verdict, score.reason_codes)
