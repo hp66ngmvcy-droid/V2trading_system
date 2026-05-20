@@ -7,7 +7,7 @@ import math
 from tar_system.portfolio.tracker import Trade
 
 
-def calculate_metrics(trades: list[Trade], equity_curve: list[tuple[object, float]]) -> dict[str, float]:
+def calculate_metrics(trades: list[Trade], equity_curve: list[tuple[object, float]]) -> dict[str, object]:
     total = len(trades)
     pnls = [float(getattr(trade, "net_pnl", trade.pnl) or trade.pnl) for trade in trades]
     wins = [pnl for pnl in pnls if pnl > 0]
@@ -42,6 +42,8 @@ def calculate_metrics(trades: list[Trade], equity_curve: list[tuple[object, floa
         "total_cost": total_cost,
         "swap_cost": swap_cost,
         "net_profit": net_profit,
+        "trade_returns": returns,
+        "trade_pnls": pnls,
         "sharpe_ratio": sharpe,
         "sortino_ratio": sortino,
         "calmar_ratio": annual_return / max_drawdown if max_drawdown else 0.0,

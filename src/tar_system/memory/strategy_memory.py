@@ -47,6 +47,7 @@ def record_strategy_result(
     score: float,
     verdict: str,
     reason_codes: list[str],
+    walk_forward_metrics: dict[str, Any] | None = None,
 ) -> None:
     record_strategy_memory(
         base_strategy=strategy,
@@ -59,7 +60,7 @@ def record_strategy_result(
         broker_profile={},
         parameters=parameters,
         backtest_metrics=metrics,
-        walk_forward_metrics={},
+        walk_forward_metrics=walk_forward_metrics or {},
         forward_test_metrics={},
         score=score,
         verdict=verdict,

@@ -43,6 +43,12 @@ def run_research_loop(
     max_walk_forward_splits: int | None = None,
     from_date: str | None = None,
     to_date: str | None = None,
+    max_jobs: int | None = None,
+    no_live: bool = True,
+    no_mt5_promotion: bool = True,
+    require_walk_forward: bool = True,
+    require_min_trades: bool = False,
+    min_trades: int = 30,
 ) -> ResearchLoopResult:
     queued = scan_raw_data(
         raw_dir=raw_dir,
@@ -55,8 +61,14 @@ def run_research_loop(
         max_walk_forward_splits=max_walk_forward_splits,
         from_date=from_date,
         to_date=to_date,
+        max_jobs=max_jobs,
+        no_live=no_live,
+        no_mt5_promotion=no_mt5_promotion,
+        require_walk_forward=require_walk_forward,
+        require_min_trades=require_min_trades,
+        min_trades=min_trades,
     )
-    worker_result = run_worker(process_limit) if run_worker_now and process_limit > 0 else None
+    worker_result = run_worker(process_limit, max_queued=max_jobs) if run_worker_now and process_limit > 0 else None
     stats = queue_stats()
     actions = recommend_next_actions()
     summary_path = write_research_loop_summary(queued, worker_result, stats, actions)

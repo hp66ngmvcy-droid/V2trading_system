@@ -9,7 +9,8 @@ from __future__ import annotations
 import json
 import time
 import uuid
-from datetime import datetime, timezone
+from collections import Counter
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +48,11 @@ QUEUE_COLUMNS = [
     "skip_forward_test",
     "max_walk_forward_splits",
     "research_stage",
+    "no_live",
+    "no_mt5_promotion",
+    "require_walk_forward",
+    "require_min_trades",
+    "min_trades",
 ]
 ACTIVE_STATUSES = {"QUEUED", "RUNNING"}
 ActiveJobKey = tuple[str, str, str, str, str, str, str, str]
@@ -69,6 +75,11 @@ def add_job(
     skip_forward_test: bool = False,
     max_walk_forward_splits: int = 100,
     research_stage: str = "full",
+    no_live: bool = True,
+    no_mt5_promotion: bool = True,
+    require_walk_forward: bool = True,
+    require_min_trades: bool = False,
+    min_trades: int = 30,
 ) -> dict[str, Any]:
     job = {
         "job_id": uuid.uuid4().hex,
@@ -97,10 +108,15 @@ def add_job(
         "skip_forward_test": skip_forward_test,
         "max_walk_forward_splits": max_walk_forward_splits,
         "research_stage": research_stage,
+        "no_live": no_live,
+        "no_mt5_promotion": no_mt5_promotion,
+        "require_walk_forward": require_walk_forward,
+        "require_min_trades": require_min_trades,
+        "min_trades": min_trades,
     }
-    _insert_duckdb(job)
+    inserted = _insert_duckdb_unless_active_duplicate(job)
     _mirror_jsonl()
-    return job
+    return inserted
 
 
 def has_active_job(
@@ -244,6 +260,65 @@ def delete_jobs_by_data_hash_prefix(prefix: str) -> Path:
     return _mirror_jsonl()
 
 
+def count_active_jobs() -> int:
+    _ensure_queue_table()
+    with _connect() as connection:
+        row = connection.execute(
+            "SELECT COUNT(*) FROM research_jobs WHERE status IN ('QUEUED', 'RUNNING')"
+        ).fetchone()
+    return int(row[0]) if row else 0
+
+
+def diagnose_failures(stale_running_minutes: int = 120) -> dict[str, Any]:
+    """Return structured failure breakdown from the job queue."""
+    _ensure_queue_table()
+    cutoff = (datetime.now(timezone.utc) - timedelta(minutes=stale_running_minutes)).isoformat()
+    with _connect() as connection:
+        failed_rows = connection.execute(
+            "SELECT research_stage, strategy, symbol, timeframe FROM research_jobs WHERE status = 'FAILED'"
+        ).fetchall()
+        skipped_count = connection.execute(
+            "SELECT COUNT(*) FROM research_jobs WHERE status = 'SKIPPED'"
+        ).fetchone()
+        stale_rows = connection.execute(
+            "SELECT * FROM research_jobs WHERE status = 'RUNNING' AND started_at IS NOT NULL AND started_at < ?",
+            [cutoff],
+        ).fetchall()
+        stale_cols = [item[0] for item in connection.description] if connection.description else []
+
+    by_stage: Counter[str] = Counter(row[0] or "unknown" for row in failed_rows)
+    by_target: Counter[str] = Counter(
+        f"{row[1]} {row[2]} {row[3]}" for row in failed_rows
+    )
+    return {
+        "total_failed": len(failed_rows),
+        "total_skipped": int(skipped_count[0]) if skipped_count else 0,
+        "by_stage": by_stage.most_common(),
+        "by_target": by_target.most_common(10),
+        "stale_running": [_row_to_job(stale_cols, row) for row in stale_rows],
+    }
+
+
+def reset_stale_running(max_minutes: int = 120) -> int:
+    """Mark RUNNING jobs older than max_minutes as FAILED. Returns count reset."""
+    _ensure_queue_table()
+    cutoff = (datetime.now(timezone.utc) - timedelta(minutes=max_minutes)).isoformat()
+    now = _now()
+    with _connect() as connection:
+        result = connection.execute(
+            """
+            UPDATE research_jobs
+            SET status = 'FAILED', completed_at = ?
+            WHERE status = 'RUNNING' AND started_at IS NOT NULL AND started_at < ?
+            RETURNING job_id
+            """,
+            [now, cutoff],
+        ).fetchall()
+    if result:
+        _mirror_jsonl()
+    return len(result)
+
+
 def queue_stats() -> dict[str, int]:
     stats = {status: 0 for status in sorted(STATUSES)}
     for job in read_jobs():
@@ -304,6 +379,61 @@ def _insert_duckdb(job: dict[str, Any], mirror: bool = True, ensure: bool = True
         _mirror_jsonl()
 
 
+def _insert_duckdb_unless_active_duplicate(job: dict[str, Any]) -> dict[str, Any]:
+    """Atomically insert a job unless an equivalent active job already exists.
+
+    Callers should not have to remember to call ``has_active_job`` before
+    queueing. DuckDB permits one writer at a time, so keeping the active check
+    and insert in one transaction closes the common check-then-insert race.
+    """
+
+    _ensure_queue_table()
+    payload = {column: job.get(column) for column in QUEUE_COLUMNS}
+    dedupe_token = str(job.get("data_hash") or job.get("file") or "")
+    with _connect() as connection:
+        connection.execute("BEGIN TRANSACTION")
+        try:
+            duplicate = connection.execute(
+                """
+                SELECT * FROM research_jobs
+                WHERE status IN ('QUEUED', 'RUNNING')
+                  AND strategy = ?
+                  AND symbol = ?
+                  AND timeframe = ?
+                  AND type = ?
+                  AND COALESCE(data_hash, file, '') = ?
+                  AND COALESCE(from_date, '') = ?
+                  AND COALESCE(to_date, '') = ?
+                  AND COALESCE(research_stage, 'full') = ?
+                ORDER BY created_at ASC
+                LIMIT 1
+                """,
+                [
+                    job.get("strategy"),
+                    job.get("symbol"),
+                    job.get("timeframe"),
+                    job.get("type"),
+                    dedupe_token,
+                    str(job.get("from_date") or ""),
+                    str(job.get("to_date") or ""),
+                    str(job.get("research_stage") or "full"),
+                ],
+            ).fetchone()
+            columns = [item[0] for item in connection.description] if connection.description else []
+            if duplicate:
+                connection.execute("COMMIT")
+                return _row_to_job(columns, duplicate)
+            connection.execute(
+                f"INSERT INTO research_jobs ({', '.join(QUEUE_COLUMNS)}) VALUES ({', '.join(['?'] * len(QUEUE_COLUMNS))})",
+                [payload[column] for column in QUEUE_COLUMNS],
+            )
+            connection.execute("COMMIT")
+            return job
+        except Exception:
+            connection.execute("ROLLBACK")
+            raise
+
+
 def _ensure_queue_columns(connection: duckdb.DuckDBPyConnection) -> None:
     existing = {row[1] for row in connection.execute("PRAGMA table_info('research_jobs')").fetchall()}
     additions = {
@@ -314,6 +444,11 @@ def _ensure_queue_columns(connection: duckdb.DuckDBPyConnection) -> None:
         "skip_forward_test": "BOOLEAN",
         "max_walk_forward_splits": "INTEGER",
         "research_stage": "VARCHAR",
+        "no_live": "BOOLEAN",
+        "no_mt5_promotion": "BOOLEAN",
+        "require_walk_forward": "BOOLEAN",
+        "require_min_trades": "BOOLEAN",
+        "min_trades": "INTEGER",
     }
     for column, column_type in additions.items():
         if column not in existing:

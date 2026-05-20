@@ -71,7 +71,7 @@ def test_data_watcher_smoke_stage_queues_recent_slice(tmp_path, monkeypatch) -> 
     assert {job["research_stage"] for job in queued} == {"smoke"}
     assert {job["from_date"] for job in queued} == {"2026-02-15"}
     assert {job["to_date"] for job in queued} == {"2026-03-15"}
-    assert all(job["skip_walk_forward"] for job in queued)
+    assert all(job["skip_walk_forward"] is False for job in queued)
     assert all(job["skip_forward_test"] for job in queued)
     assert all(job["max_walk_forward_splits"] == 10 for job in queued)
     assert all(job["priority"] == 10 for job in queued)
@@ -126,6 +126,35 @@ def test_active_job_dedupe_uses_hash_before_file_path(tmp_path, monkeypatch) -> 
     assert not has_active_job("gold_v2", "XAUUSD", "M15", "/abs/path/XAUUSD_M15.csv", data_hash="other-hash")
 
 
+def test_add_job_blocks_duplicate_active_hash_job(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    first = add_job("gold_v2", "XAUUSD", "M15", "data/raw/XAUUSD_M15.csv", data_hash="same-hash")
+    second = add_job("gold_v2", "XAUUSD", "M15", "/absolute/XAUUSD_M15.csv", data_hash="same-hash")
+
+    jobs = read_jobs()
+    assert first["job_id"] == second["job_id"]
+    assert len(jobs) == 1
+
+
+def test_add_job_allows_same_hash_after_active_job_completes(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    first = add_job("gold_v2", "XAUUSD", "M15", "data/raw/XAUUSD_M15.csv", data_hash="same-hash")
+    update_job(first["job_id"], status="COMPLETED")
+
+    second = add_job("gold_v2", "XAUUSD", "M15", "/absolute/XAUUSD_M15.csv", data_hash="same-hash")
+
+    assert second["job_id"] != first["job_id"]
+    assert len(read_jobs()) == 2
+
+
+def test_add_job_allows_distinct_research_windows(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    add_job("gold_v2", "XAUUSD", "M15", "data/raw/XAUUSD_M15.csv", data_hash="same-hash", from_date="2026-01-01")
+    add_job("gold_v2", "XAUUSD", "M15", "data/raw/XAUUSD_M15.csv", data_hash="same-hash", from_date="2026-02-01")
+
+    assert len(read_jobs()) == 2
+
+
 def test_controller_picks_next_queued_job_and_completes(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     Path("data/results").mkdir(parents=True)
@@ -164,6 +193,7 @@ def test_controller_passes_staged_job_window_to_pipeline(tmp_path, monkeypatch) 
         skip_forward_test=True,
         max_walk_forward_splits=3,
         research_stage="smoke",
+        require_walk_forward=False,
     )
 
     def pipeline_runner(args: argparse.Namespace) -> None:

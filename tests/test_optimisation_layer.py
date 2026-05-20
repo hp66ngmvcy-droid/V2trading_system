@@ -184,3 +184,52 @@ def test_optimiser_cli_command_imports() -> None:
     parser = build_parser()
     commands = parser._subparsers._group_actions[0].choices.keys()  # type: ignore[attr-defined]
     assert {"optimise-strategy", "go-no-go", "regime-heatmap"}.issubset(set(commands))
+
+
+def test_stitch_metrics_includes_sharpe_ratio() -> None:
+    from tar_system.validation.walk_forward import stitch_metrics
+
+    # Two splits with consistent positive returns
+    split1 = {"total_trades": 10.0, "win_rate": 0.6, "profit_factor": 1.8,
+               "max_drawdown": 0.05, "expectancy": 0.02, "average_win": 0.05,
+               "average_loss": -0.03, "trade_returns": [0.05, 0.04, 0.06, -0.02, -0.01,
+                                                         0.03, 0.05, -0.02, 0.04, 0.03]}
+    split2 = {"total_trades": 8.0, "win_rate": 0.5, "profit_factor": 1.5,
+               "max_drawdown": 0.07, "expectancy": 0.01, "average_win": 0.04,
+               "average_loss": -0.03, "trade_returns": [0.04, -0.03, 0.05, -0.02,
+                                                         0.03, 0.04, -0.01, 0.02]}
+
+    result = stitch_metrics([split1, split2])
+
+    assert "sharpe_ratio" in result
+    assert isinstance(result["sharpe_ratio"], float)
+    # Positive returns should give positive Sharpe
+    assert result["sharpe_ratio"] > 0
+
+
+def test_stitch_metrics_sharpe_zero_for_empty() -> None:
+    from tar_system.validation.walk_forward import stitch_metrics
+
+    result = stitch_metrics([])
+
+    assert result.get("sharpe_ratio", 0.0) == 0.0
+
+
+def test_merge_walk_forward_uses_stitched_sharpe() -> None:
+    # Regression: sharpe_oos was always 0.0 because stitch_metrics did not
+    # include sharpe_ratio, so _merge_walk_forward_metrics got default 0.0.
+    from tar_system.validation.walk_forward import stitch_metrics
+
+    returns = [0.05, 0.04, 0.03, 0.06, -0.01, 0.04, 0.05, 0.03, -0.02, 0.04] * 3
+    stitched = stitch_metrics([{
+        "total_trades": float(len(returns)),
+        "win_rate": 0.8,
+        "profit_factor": 2.0,
+        "max_drawdown": 0.04,
+        "expectancy": 0.03,
+        "average_win": 0.04,
+        "average_loss": -0.015,
+        "trade_returns": returns,
+    }])
+
+    assert stitched["sharpe_ratio"] > 0.0

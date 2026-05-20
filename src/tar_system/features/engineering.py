@@ -43,6 +43,8 @@ def build_features(
     work["rolling_volatility"] = work["returns"].rolling(volatility_window).std()
     work["rolling_high"] = work["high"].rolling(volatility_window).max()
     work["rolling_low"] = work["low"].rolling(volatility_window).min()
+    work["prior_rolling_high"] = work["rolling_high"].shift(1)
+    work["prior_rolling_low"] = work["rolling_low"].shift(1)
     work["bollinger_mid"] = work["close"].rolling(20).mean()
     rolling_std = work["close"].rolling(20).std()
     work["bollinger_upper"] = work["bollinger_mid"] + 2 * rolling_std
@@ -52,7 +54,9 @@ def build_features(
     work["price_in_band"] = ((work["close"] - work["bollinger_lower"]) / band_range).clip(0, 1).fillna(0.5)
     price_range = (work["rolling_high"] - work["rolling_low"]).replace(0, pd.NA)
     work["range_compression"] = (work["atr"] / price_range).fillna(0)
-    work["session_label"] = pd.to_datetime(work["timestamp"], utc=True).dt.hour.map(_session_label)
+    timestamps = pd.to_datetime(work["timestamp"], utc=True)
+    work["hour_utc"] = timestamps.dt.hour
+    work["session_label"] = work["hour_utc"].map(_session_label)
     work["is_liquid_session"] = work["session_label"].isin({"LONDON", "OVERLAP", "NEW_YORK"})
     return work
 
