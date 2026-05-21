@@ -55,6 +55,15 @@ from tar_system.strategies.registry import REGISTRY, get_strategy
 PROJECT_ROOT = Path("/Users/whs1/Dev/V2trading_system")
 RUN_LOG_DIR = Path("runtime/dashboard_runs")
 STATUS_ORDER = ["IDLE", "RUNNING", "STOPPING", "STOPPED", "COMPLETED", "FAILED"]
+_DATA_ROOT = PROJECT_ROOT / "data"
+
+
+def _safe_data_path(file_path: str) -> Path:
+    """Resolve file_path and confirm it stays inside data/. Raises ValueError on traversal."""
+    resolved = (PROJECT_ROOT / file_path).resolve()
+    if not resolved.is_relative_to(_DATA_ROOT.resolve()):
+        raise ValueError(f"File path escapes data directory: {file_path!r}")
+    return resolved
 
 
 def render(st: object) -> None:
@@ -549,6 +558,12 @@ def _start_backtest_subprocess(st: object, selected: dict[str, Any]) -> None:
     except RuntimeError as exc:
         st.warning(str(exc))
         return
+    try:
+        data_file = str(_safe_data_path(selected["file"]))
+    except ValueError as exc:
+        st.error(f"Invalid file path: {exc}")
+        finish_task("FAILED", str(exc), {"error": str(exc)})
+        return
     RUN_LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_path = RUN_LOG_DIR / f"{task['run_id']}.log"
     command = [
@@ -563,7 +578,7 @@ def _start_backtest_subprocess(st: object, selected: dict[str, Any]) -> None:
         "--timeframe",
         selected["timeframe"],
         "--file",
-        selected["file"],
+        data_file,
         "--broker",
         selected["broker"],
         "--force",
