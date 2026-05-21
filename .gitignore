@@ -1,77 +1,33 @@
-# --- Environment ---
-venv/
+# Environment
 .env
+venv/
+.venv/
 
-# --- Python ---
+# Python
 __pycache__/
 *.pyc
 
-# --- System files ---
+# System files
 .DS_Store
 
-# --- Logs ---
+# Logs and runtime state
 *.log
 logs/
+runtime/
 
-# --- Data (critical for trading system) ---
+# Trading data and generated outputs
 data/raw/
 data/validated/
 data/features/
 data/results/
+reports/
+exports/
 
-# --- Databases ---
+# Databases
 *.db
 *.sqlite
 *.duckdb
 
-# --- Outputs / reports ---
-reports/
-exports/
-
-# --- Secrets / keys ---
+# Secrets and keys
 *.key
-*.pem# --- Environment ---
-venv/
-.env
-
-# --- Python ---
-__pycache__/
-*.pyc
-
-# --- System files ---
-.DS_Store
-
-# --- Logs ---
-*.log
-logs/
-
-# --- Data (critical for trading system) ---
-data/raw/
-data/validated/
-data/features/
-data/results/
-
-# --- Databases ---
-*.db
-*.sqlite
-*.duckdb
-
-# --- Outputs / reports ---
-reports/
-exports/
-
-# --- Secrets / keys ---
-*.key
-*.pem.env
-venv/
-__pycache__/
-*.pyc
-data/raw/*
-data/validated/*
-data/features/*
-data/results/*
-logs/*
-reports/*
-exports/*
-*.duckdb
-*.db
+*.pem
