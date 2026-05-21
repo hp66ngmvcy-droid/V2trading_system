@@ -762,6 +762,21 @@ def fit_strategy_filters_cmd(args: argparse.Namespace) -> None:
     )
 
 
+def export_private_memory_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.memory.private_memory_export import export_private_strategy_memory
+
+    result = export_private_strategy_memory(
+        strategy=args.strategy,
+        symbol=args.symbol,
+        timeframe=args.timeframe,
+        obsidian_root=args.obsidian_root,
+        second_brain_root=args.second_brain_root,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
 def import_cot_cmd(args: argparse.Namespace) -> None:
     from dataclasses import asdict
 
@@ -1463,6 +1478,14 @@ def build_parser() -> argparse.ArgumentParser:
     fitter_parser.add_argument("--output-dir", default="runtime")
     fitter_parser.add_argument("--skip-committee", action="store_true")
     fitter_parser.set_defaults(func=fit_strategy_filters_cmd)
+
+    private_memory_parser = subparsers.add_parser("export-private-memory")
+    private_memory_parser.add_argument("--strategy", default=None)
+    private_memory_parser.add_argument("--symbol", default=None)
+    private_memory_parser.add_argument("--timeframe", default=None)
+    private_memory_parser.add_argument("--obsidian-root", default="obsidian/private_trading_memory")
+    private_memory_parser.add_argument("--second-brain-root", default="second_brain/vault/01_hubs/private_trading_memory")
+    private_memory_parser.set_defaults(func=export_private_memory_cmd)
 
     cot_parser = subparsers.add_parser("import-cot")
     cot_parser.add_argument("--file", required=True)

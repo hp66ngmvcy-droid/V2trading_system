@@ -22,6 +22,8 @@ data/features/
 data/results/
 reports/
 exports/
+obsidian/private_trading_memory/
+second_brain/vault/01_hubs/private_trading_memory/
 
 # Databases
 *.db
