@@ -1,0 +1,19 @@
+=== PHASE A COMPONENTS ===
+
+Checking Phase A files...
+
+=== PHASE 2 COMPONENTS (WALK-FORWARD) ===
+Checking Phase 2 components...
+
+=== LIVE TRADING COMPONENTS ===
+Checking Live Trading components...
+
+=== MASTER MEMORY COMPONENTS ===
+Checking Master Memory components...
+
+=== CLI COMMANDS ===
+Checking CLI commands...
+
+=== REPO DOWNLOADS ===
+Checking repo downloads...
+

@@ -140,6 +140,7 @@ def score_strategy_cmd(args: argparse.Namespace) -> None:
     from tar_system.memory.strategy_memory import record_strategy_result
     from tar_system.reporting.review_log import append_review_result, write_review_summary
     from tar_system.scoring.gates import run_gates
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
     from tar_system.scoring.scorer import score_strategy
     from tar_system.strategies.resolver import resolve_strategy
 
@@ -150,7 +151,10 @@ def score_strategy_cmd(args: argparse.Namespace) -> None:
     score = score_strategy(metrics, walk_forward_metrics, args.timeframe, require_walk_forward=True)
     gate_metrics = _metrics_with_walk_forward(metrics, walk_forward_metrics)
     gate = run_gates(gate_metrics, args.timeframe, require_oos=True)
-    reason_codes = _merge_reason_codes(score.reason_codes, gate.reason_codes)
+    ma_result = score_multi_agent(gate_metrics)
+    ma_codes = ["MULTI_AGENT_KILL"] if ma_result.verdict == "KILL" else []
+    reason_codes = _merge_reason_codes(score.reason_codes, gate.reason_codes, ma_codes)
+    final_verdict = "REVIEW" if gate.verdict == "KEEP" and ma_result.verdict == "KILL" else gate.verdict
     metrics = {**gate_metrics, "gate_failed": gate.failed_gate or "", "gate_reason": gate.reason}
     resolved = resolve_strategy(args.strategy, args.symbol, args.timeframe, getattr(args, "broker", "current_broker_demo"), audit=True)
     strategy = resolved.strategy
@@ -162,7 +166,7 @@ def score_strategy_cmd(args: argparse.Namespace) -> None:
         {},
         metrics,
         score.score,
-        gate.verdict,
+        final_verdict,
         reason_codes,
         walk_forward_metrics,
     )
@@ -173,12 +177,23 @@ def score_strategy_cmd(args: argparse.Namespace) -> None:
         args.timeframe,
         metrics,
         score.score,
-        gate.verdict,
+        final_verdict,
         ",".join(reason_codes),
-        "EXPORT_OBSIDIAN" if gate.verdict in {"KEEP", "REVIEW"} else "ARCHIVE",
+        "EXPORT_OBSIDIAN" if final_verdict in {"KEEP", "REVIEW"} else "ARCHIVE",
     )
     write_review_summary()
-    print(json.dumps({"score": score.score, "verdict": gate.verdict, "reason_codes": reason_codes, "gate": gate.__dict__}, indent=2))
+    print(json.dumps({
+        "score": score.score,
+        "verdict": final_verdict,
+        "reason_codes": reason_codes,
+        "gate": gate.__dict__,
+        "multi_agent": {
+            "verdict": ma_result.verdict,
+            "confidence": ma_result.confidence,
+            "dissent": ma_result.dissent,
+            "agents": [{"agent": v.agent, "verdict": v.verdict, "confidence": v.confidence} for v in ma_result.agent_verdicts],
+        },
+    }, indent=2))
 
 
 def export_mt5_cmd(args: argparse.Namespace) -> None:
@@ -837,6 +852,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
     from tar_system.reporting.review_log import append_review_result
     from tar_system.reporting.reporter import generate_report
     from tar_system.scoring.gates import run_gates
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
     from tar_system.scoring.scorer import score_strategy
     from tar_system.strategies.registry import get_strategy
     from tar_system.validation.walk_forward import run_walk_forward
@@ -984,7 +1000,10 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
         stage_score = score_strategy(stage_metrics, walk_forward, args.timeframe, require_walk_forward=True)
         stage_metrics = _metrics_with_walk_forward(stage_metrics, walk_forward)
         stage_gate = run_gates(stage_metrics, args.timeframe, require_oos=True)
-        reason_codes = _merge_reason_codes(stage_score.reason_codes, stage_gate.reason_codes)
+        ma_result = score_multi_agent(stage_metrics)
+        ma_codes = ["MULTI_AGENT_KILL"] if ma_result.verdict == "KILL" else []
+        reason_codes = _merge_reason_codes(stage_score.reason_codes, stage_gate.reason_codes, ma_codes)
+        final_verdict = "REVIEW" if stage_gate.verdict == "KEEP" and ma_result.verdict == "KILL" else stage_gate.verdict
         stage_metrics = {
             **stage_metrics,
             "gate_failed": stage_gate.failed_gate or "",
@@ -997,7 +1016,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
             args.timeframe,
             stage_metrics,
             stage_score.score,
-            stage_gate.verdict,
+            final_verdict,
             ",".join(reason_codes),
             "WRITE_MEMORY",
         )
@@ -1005,13 +1024,24 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
             {
                 "metrics": stage_metrics,
                 "score": stage_score,
-                "verdict": stage_gate.verdict,
+                "verdict": final_verdict,
                 "reason_codes": reason_codes,
                 "gate": stage_gate,
                 "walk_forward_metrics": walk_forward or {},
+                "multi_agent": ma_result,
             }
         )
-        print(json.dumps({"score": stage_score.score, "verdict": stage_gate.verdict, "reason_codes": reason_codes, "gate": stage_gate.__dict__}, indent=2))
+        print(json.dumps({
+            "score": stage_score.score,
+            "verdict": final_verdict,
+            "reason_codes": reason_codes,
+            "gate": stage_gate.__dict__,
+            "multi_agent": {
+                "verdict": ma_result.verdict,
+                "confidence": ma_result.confidence,
+                "dissent": ma_result.dissent,
+            },
+        }, indent=2))
         return score_payload
 
     checkpoint = _pipeline_step("score-strategy", args, _score_pipeline_strategy, context, checkpoint)

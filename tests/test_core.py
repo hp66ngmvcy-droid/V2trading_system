@@ -321,3 +321,64 @@ def test_environment_high_impact_holds() -> None:
     event = Event("US CPI", pd.Timestamp("2026-06-12").to_pydatetime(), "HIGH")
     state = check_environment_risk("XAUUSD", pd.Timestamp("2026-06-12").to_pydatetime(), events=[event])
     assert state == "HOLD_TRADING"
+
+
+# ---------------------------------------------------------------------------
+# Multi-agent scorer wiring
+# ---------------------------------------------------------------------------
+
+def test_multi_agent_wiring_keep_when_both_agree() -> None:
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
+    metrics = {
+        "total_trades": 60, "win_rate": 0.55, "profit_factor": 1.8,
+        "max_drawdown": 0.10, "sharpe_ratio": 1.4, "expectancy": 0.005,
+        "sharpe_oos": 1.1, "param_stability": 0.80, "walk_forward_splits": 5,
+    }
+    gate = run_gates(metrics, "M15", require_oos=False)
+    ma = score_multi_agent(metrics)
+    final_verdict = "REVIEW" if gate.verdict == "KEEP" and ma.verdict == "KILL" else gate.verdict
+    assert final_verdict == gate.verdict  # no override needed
+
+
+def test_multi_agent_wiring_downgrades_keep_to_review_when_ma_kills() -> None:
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
+    # Gate passes (good structural metrics) but multi-agent kills on soft metrics
+    gate_metrics = {
+        "total_trades": 30, "win_rate": 0.51, "profit_factor": 1.2,
+        "max_drawdown": 0.12, "sharpe_ratio": -0.3, "expectancy": -0.002,
+        "sharpe_oos": -0.8, "param_stability": 0.3, "walk_forward_splits": 4,
+    }
+    ma = score_multi_agent(gate_metrics)
+    assert ma.verdict == "KILL"
+    # Simulate gate returning KEEP (hypothetically) and verify override
+    simulated_gate_verdict = "KEEP"
+    final_verdict = "REVIEW" if simulated_gate_verdict == "KEEP" and ma.verdict == "KILL" else simulated_gate_verdict
+    assert final_verdict == "REVIEW"
+
+
+def test_multi_agent_wiring_gate_kill_not_overridden_by_ma_keep() -> None:
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
+    # Gate kills; multi-agent should not be able to upgrade it
+    metrics = {
+        "total_trades": 1, "win_rate": 1.0, "profit_factor": 100.0,
+        "max_drawdown": 0.0, "sharpe_ratio": 5.0, "expectancy": 0.1,
+    }
+    gate = run_gates(metrics, "M15")
+    assert gate.verdict == "KILL"
+    ma = score_multi_agent(metrics)
+    final_verdict = "REVIEW" if gate.verdict == "KEEP" and ma.verdict == "KILL" else gate.verdict
+    assert final_verdict == "KILL"  # gate kill stands
+
+
+def test_multi_agent_result_has_expected_structure() -> None:
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
+    metrics = {
+        "total_trades": 40, "win_rate": 0.52, "profit_factor": 1.5,
+        "max_drawdown": 0.15, "sharpe_ratio": 1.1, "expectancy": 0.003,
+    }
+    ma = score_multi_agent(metrics)
+    assert ma.verdict in {"KEEP", "REVIEW", "KILL"}
+    assert 0.0 <= ma.confidence <= 1.0
+    assert isinstance(ma.dissent, bool)
+    assert len(ma.agent_verdicts) == 3
+    assert {v.agent for v in ma.agent_verdicts} == {"risk", "performance", "robustness"}

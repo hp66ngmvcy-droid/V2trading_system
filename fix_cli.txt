@@ -1,0 +1,30 @@
+OLD_FUNCTION:
+def run_walk_forward_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.data.store import load_feature_data
+    from tar_system.strategies.registry import get_strategy
+    from tar_system.validation.walk_forward import run_walk_forward
+
+    features = load_feature_data(args.symbol, args.timeframe)
+    strategy = get_strategy(args.strategy)
+    result = run_walk_forward(features, strategy, args.train_window, args.test_window)
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+NEW_FUNCTION:
+def run_walk_forward_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+    from pathlib import Path
+
+    from tar_system.data.store import load_feature_data
+    from tar_system.strategies.registry import get_strategy
+    from tar_system.validation.walk_forward import run_walk_forward
+
+    features = load_featur    features = load_frgs.timeframe)
+    strategy = get_strategy(args.strategy)
+    result = run_walk_forward(features, strategy, args.train_window, args.test_window)
+    
+    # Save to data/results/
+    output = Path("data/results")
+                                                       =                                                        =  wa                                                       =         (asd                                                       =   k-f                                        int(json.dumps(asdict(result), indent=2, default=str))

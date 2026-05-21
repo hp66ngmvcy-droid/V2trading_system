@@ -1,0 +1,10 @@
+{
+  "parameter_stability": {
+    "total_lessons": 1,
+    "high_confidence_lessons": 1,
+    "avg_confidence": 0.95,
+    "top_lessons": [
+      "EMA(12,26) parameter stable across walk-forward windows"
+    ]
+  }
+}

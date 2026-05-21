@@ -1,0 +1,12 @@
+"""ATR Breakout Strategy - FIXED for available co"""ATR Breakout Strategy - FIXED for avass
+import pandas as pd
+from tar_system import reason_codes as rc
+from tar_system.strategies.base import Signal
+
+@dataclass@dataclass@dataclass@datac   name: str = "atr_breakout_fixed"
+    version: str = "    ver      version: str = "    ver      version: str = "    ver     :
+    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e  flo    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e  flo    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e   "a  ":     ver e    ver e    ver e    ver e    ver e    ver e    ver a    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver e    ver        ver e    ver eide="BUY", confidence=0.7, stop_loss=entry - stop_distance,
+                         take_p                         take_p                         take_p                                   take_p                         take_p                         taLL", confidence=0.7, stop_loss=entry + stop_distance,
+                         take_profit=entry - stop_distance * 2.5, reason_code=rc.SIGNAL_SELL, **base)
+        
+        return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None, reason_code=rc.SIGNAL_HOLD, **base)

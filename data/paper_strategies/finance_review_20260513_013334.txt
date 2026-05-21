@@ -1,0 +1,109 @@
+================================================================================
+PAPER STRATEGY FINANCE REVIEW REPORT
+================================================================================
+
+SUMMARY
+--------------------------------------------------------------------------------
+KEEP Strategies:   0
+REVISE Strategies: 0
+KILL Strategies:   5
+
+DETAILED STRATEGY REVIEWS
+--------------------------------------------------------------------------------
+
+Strategy: HYBRID
+Verdict:  KILL (Score: 0/10)
+Rationale: ❌ Insufficient trades (0) or error: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - `Import pyarrow` failed. pyarrow is required for parquet support. Use pip or conda to install the pyarrow package.
+ - `Import fastparquet` failed. fastparquet is required for parquet support. Use pip or conda to install the fastparquet package.
+
+Metrics:
+  Sharpe Ratio:         0.00
+  Max Drawdown:         0.0%
+  Win Rate:             0.0%
+  Total Return:         0.0%
+  Total Trades:            0
+
+--------------------------------------------------------------------------------
+
+Strategy: MEAN_REVERSION
+Verdict:  KILL (Score: 0/10)
+Rationale: ❌ Insufficient trades (0) or error: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - `Import pyarrow` failed. pyarrow is required for parquet support. Use pip or conda to install the pyarrow package.
+ - `Import fastparquet` failed. fastparquet is required for parquet support. Use pip or conda to install the fastparquet package.
+
+Metrics:
+  Sharpe Ratio:         0.00
+  Max Drawdown:         0.0%
+  Win Rate:             0.0%
+  Total Return:         0.0%
+  Total Trades:            0
+
+--------------------------------------------------------------------------------
+
+Strategy: MOMENTUM
+Verdict:  KILL (Score: 0/10)
+Rationale: ❌ Insufficient trades (0) or error: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - `Import pyarrow` failed. pyarrow is required for parquet support. Use pip or conda to install the pyarrow package.
+ - `Import fastparquet` failed. fastparquet is required for parquet support. Use pip or conda to install the fastparquet package.
+
+Metrics:
+  Sharpe Ratio:         0.00
+  Max Drawdown:         0.0%
+  Win Rate:             0.0%
+  Total Return:         0.0%
+  Total Trades:            0
+
+--------------------------------------------------------------------------------
+
+Strategy: ORB
+Verdict:  KILL (Score: 0/10)
+Rationale: ❌ Insufficient trades (0) or error: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - `Import pyarrow` failed. pyarrow is required for parquet support. Use pip or conda to install the pyarrow package.
+ - `Import fastparquet` failed. fastparquet is required for parquet support. Use pip or conda to install the fastparquet package.
+
+Metrics:
+  Sharpe Ratio:         0.00
+  Max Drawdown:         0.0%
+  Win Rate:             0.0%
+  Total Return:         0.0%
+  Total Trades:            0
+
+--------------------------------------------------------------------------------
+
+Strategy: VOLATILITY_BREAKOUT
+Verdict:  KILL (Score: 0/10)
+Rationale: ❌ Insufficient trades (0) or error: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - `Import pyarrow` failed. pyarrow is required for parquet support. Use pip or conda to install the pyarrow package.
+ - `Import fastparquet` failed. fastparquet is required for parquet support. Use pip or conda to install the fastparquet package.
+
+Metrics:
+  Sharpe Ratio:         0.00
+  Max Drawdown:         0.0%
+  Win Rate:             0.0%
+  Total Return:         0.0%
+  Total Trades:            0
+
+--------------------------------------------------------------------------------
+
+RECOMMENDATIONS
+--------------------------------------------------------------------------------
+
+❌ KILL (ARCHIVE FOR REFERENCE)
+   - mean_reversion
+   - momentum
+   - orb
+   - volatility_breakout
+   - hybrid
+
+================================================================================

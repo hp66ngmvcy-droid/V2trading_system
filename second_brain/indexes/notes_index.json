@@ -1,0 +1,20 @@
+[
+  {
+    "path": "second_brain/vault/02_reviews/daily/2026-05-13.md",
+    "title": "Daily Review 2026-05-13",
+    "hub": "02_reviews",
+    "tags": [],
+    "links": [
+      "Daily Review 2026-05-13"
+    ],
+    "word_count": 44,
+    "modified_at": "2026-05-13T09:10:58",
+    "sha256": "b85afd635303d3a3bb4d8a9e5a8e3a72e04c2ff1997edd628a649c1eb31e2f3c",
+    "summary": "- Notes indexed: 1 - Hubs active: 1 - Orphan candidates: 1 - Broken link candidates: 0 - Duplicate title groups: 0 - 02_reviews: 1 - [[Daily Review 2026-05-13]] - `second_brain/vault/02_reviews/daily/2026-05-13.md` No files were changed...",
+    "frontmatter": {
+      "title": "Daily Review 2026-05-13",
+      "type": "daily-review",
+      "generated_at": "2026-05-13T09:10:58"
+    }
+  }
+]

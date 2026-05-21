@@ -1,0 +1,24 @@
+{
+  "problem": "Too many losing trades, not enough entries",
+  "current_params": {
+    "fast_ema": 12,
+    "slow_ema": 26,
+    "rsi_buy_threshold": 55,
+    "rsi_sell_threshold": 45,
+    "stop_loss_pips": 30,
+    "take_profit_pips": 50
+  },
+  "refined_params": {
+    "fast_ema": 12,
+    "slow_ema": 26,
+    "rsi_buy_threshold": 50,
+    "rsi_sell_threshold": 50,
+    "stop_loss_pips": 50,
+    "take_profit_pips": 100
+  },
+  "changes": [
+    "Widened stop from 30 to 50 pips (less whipsawed)",
+    "Doubled target from 50 to 100 pips (better reward/risk)",
+    "Relaxed RSI thresholds from 55/45 to 50/50 (more entries)"
+  ]
+}

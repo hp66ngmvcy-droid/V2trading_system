@@ -130,3 +130,46 @@ def _liquidity_sweep_overrides(symbol: str) -> dict[str, object]:
     if symbol == "BTCUSD":
         return {"wick_ratio": 0.5, "min_confidence": 0.65}
     return {}
+
+
+_WIDE_MOVE_ASSETS = {"BTCUSD", "XAUUSD", "USOUSD"}
+
+
+def tsds_seed_params(strategy: str, symbol: str, timeframe: str, atr_pct_median: float) -> dict[str, object]:
+    """Return volatility-calibrated seed params for TSDS discovery runs.
+
+    Uses SCA (Seed Calibration Agent) logic:
+    - atr_multiplier scaled to asset volatility
+    - RSI bands widened on M15 (noisy), standard on H1
+    - reward_risk tighter for FX, wider for trending/volatile assets
+    """
+    s = symbol.upper()
+    tf = timeframe.upper()
+
+    atr_mult = round(max(0.8, min(atr_pct_median * 12, 3.0)), 4)
+    reward_risk = 2.5 if s in _WIDE_MOVE_ASSETS else 1.5
+
+    params: dict[str, object] = {
+        "atr_multiplier": atr_mult,
+        "reward_risk": reward_risk,
+    }
+
+    if strategy in {"rsi_reversion_v1", "rsi_only_v3"}:
+        if tf == "M15":
+            params.update({"oversold": 25, "overbought": 75})
+        else:
+            params.update({"oversold": 30, "overbought": 70})
+
+    if strategy == "rsi_only_v3":
+        if tf == "M15":
+            params.update({"rsi_buy_level": 35.0, "rsi_sell_level": 65.0})
+        else:
+            params.update({"rsi_buy_level": 40.0, "rsi_sell_level": 60.0})
+
+    if strategy == "atr_breakout_v3":
+        params["atr_multiplier"] = round(max(0.5, atr_pct_median * 8), 4)
+
+    if strategy == "liquidity_sweep_v1":
+        params["min_confidence"] = 0.4
+
+    return params

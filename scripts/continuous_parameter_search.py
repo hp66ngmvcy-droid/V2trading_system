@@ -35,10 +35,8 @@ TESTED_DATA_REGISTRY_PATH = Path("runtime") / "tested_data_registry.json"
 RESULTS_DIR = Path("data/results/parameter_search")
 
 DEFAULT_STRATEGIES = [
-    "gold_v2",
     "rsi_reversion_v1",
     "rsi_only_v3",
-    "ema_volume_v3",
     "atr_breakout_v3",
     "momentum_crossover_v3",
     "multi_timeframe_v3",
@@ -67,14 +65,14 @@ class Candidate:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Keep testing parameter ideas until KEEP candidates are found.")
     parser.add_argument("--symbols", default="XAUUSD,EURUSD,GBPUSD,AUDUSD,USDCAD,USDJPY,USOUSD,BTCUSD")
-    parser.add_argument("--timeframes", default="M15")
+    parser.add_argument("--timeframes", default="M15,H1")
     parser.add_argument("--strategies", default=",".join(DEFAULT_STRATEGIES))
     parser.add_argument("--max-generations", type=int, default=4)
     parser.add_argument("--max-candidates", type=int, default=300)
     parser.add_argument("--max-rows", type=int, default=20000)
     parser.add_argument("--survivors", type=int, default=5)
     parser.add_argument("--target-keeps", type=int, default=3)
-    parser.add_argument("--min-score-to-mutate", type=float, default=35.0)
+    parser.add_argument("--min-score-to-mutate", type=float, default=20.0)
     parser.add_argument("--min-trades-for-keep", type=int, default=30)
     parser.add_argument("--min-profit-factor-for-keep", type=float, default=1.4)
     parser.add_argument("--max-drawdown-for-keep", type=float, default=0.2)

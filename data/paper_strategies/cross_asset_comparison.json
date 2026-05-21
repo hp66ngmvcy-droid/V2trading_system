@@ -1,0 +1,372 @@
+{
+  "mean_reversion": {
+    "AUDUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "BTCUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "EURUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "GBPUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USDCAD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USDJPY": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USOUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "XAUUSD": {
+      "verdict": "KEEP",
+      "score": 9,
+      "sharpe_ratio": 10.812034552450177,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.8,
+      "total_return_pct": 0.13282871622082149,
+      "total_trades": 5
+    }
+  },
+  "momentum": {
+    "AUDUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "BTCUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "EURUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "GBPUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USDCAD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USDJPY": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USOUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "XAUUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    }
+  },
+  "orb": {
+    "AUDUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "BTCUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "EURUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "GBPUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USDCAD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USDJPY": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USOUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "XAUUSD": {
+      "verdict": "KEEP",
+      "score": 9,
+      "sharpe_ratio": 3.6476862913487778,
+      "max_drawdown_pct": 0.1413116425042405,
+      "win_rate": 0.6,
+      "total_return_pct": 0.16174648331842478,
+      "total_trades": 15
+    }
+  },
+  "volatility_breakout": {
+    "AUDUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "BTCUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "EURUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "GBPUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USDCAD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USDJPY": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USOUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "XAUUSD": {
+      "verdict": "KEEP",
+      "score": 9,
+      "sharpe_ratio": 12.511595153742007,
+      "max_drawdown_pct": 0.03330959123835445,
+      "win_rate": 0.7777777777777778,
+      "total_return_pct": 0.2498051390962983,
+      "total_trades": 9
+    }
+  },
+  "hybrid": {
+    "AUDUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "BTCUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "EURUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "GBPUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USDCAD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USDJPY": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "USOUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    },
+    "XAUUSD": {
+      "verdict": "KILL",
+      "score": 0,
+      "sharpe_ratio": 0.0,
+      "max_drawdown_pct": 0.0,
+      "win_rate": 0.0,
+      "total_return_pct": 0.0,
+      "total_trades": 0
+    }
+  }
+}

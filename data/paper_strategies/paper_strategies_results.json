@@ -1,0 +1,162 @@
+{
+  "mean_reversion": {
+    "total_trades": 62,
+    "win_rate": 0.6290322580645161,
+    "profit_factor": 1.803499172892234,
+    "sharpe_ratio": 4.447479369719516,
+    "max_drawdown_pct": 0.3242953424310414,
+    "total_return_pct": 1.315858728743406,
+    "average_win": 0.05385638726003703,
+    "average_loss": -0.05063584253833276,
+    "strategy_name": "mean_reversion",
+    "symbol": "XAUUSD",
+    "timeframe": "M15",
+    "reference": {
+      "title": "Combining mean reversion and momentum trading strategies in foreign exchange markets",
+      "authors": "Serban, A. et al.",
+      "year": 2010,
+      "journal": "Journal of Banking & Finance",
+      "doi": "10.1016/j.jbankfin.2009.10.003",
+      "url": null
+    },
+    "parameters": {
+      "strategy_name": "mean_reversion",
+      "asset": "XAUUSD",
+      "timeframe": "M15",
+      "lookback_period": 20,
+      "entry_threshold": 2.0,
+      "exit_percentage": 0.02,
+      "stop_loss_pct": 0.05,
+      "take_profit_pct": 0.1
+    },
+    "trade_count": 62
+  },
+  "momentum": {
+    "total_trades": 90,
+    "win_rate": 0.5555555555555556,
+    "profit_factor": 1.8746414796682307,
+    "sharpe_ratio": 3.6108584270360162,
+    "max_drawdown_pct": 0.22436144072072023,
+    "total_return_pct": 1.388812269768827,
+    "average_win": 0.0417954678961006,
+    "average_loss": -0.027868974114117984,
+    "strategy_name": "momentum",
+    "symbol": "XAUUSD",
+    "timeframe": "M15",
+    "reference": {
+      "title": "Technical Trading Rule Profitability and Foreign Exchange Intervention",
+      "authors": "LeBaron, B.",
+      "year": 1999,
+      "journal": "Journal of International Economics",
+      "doi": "10.1016/S0022-1996(99)00009-9",
+      "url": null
+    },
+    "parameters": {
+      "strategy_name": "momentum",
+      "asset": "XAUUSD",
+      "timeframe": "M15",
+      "lookback_period": 20,
+      "entry_threshold": 0.01,
+      "exit_percentage": 0.02,
+      "stop_loss_pct": 0.05,
+      "take_profit_pct": 0.1
+    },
+    "trade_count": 90
+  },
+  "orb": {
+    "total_trades": 161,
+    "win_rate": 0.515527950310559,
+    "profit_factor": 1.5129901620273443,
+    "sharpe_ratio": 2.430239573850741,
+    "max_drawdown_pct": 0.26684244142761976,
+    "total_return_pct": 1.2480422989733482,
+    "average_win": 0.03281228426807055,
+    "average_loss": -0.02307723916521082,
+    "strategy_name": "orb",
+    "symbol": "XAUUSD",
+    "timeframe": "M15",
+    "reference": {
+      "title": "Assessing the profitability of intraday opening range breakout strategies",
+      "authors": "Academic researchers",
+      "year": 2013,
+      "journal": "International Journal of Financial Markets and Derivatives",
+      "doi": null,
+      "url": null
+    },
+    "parameters": {
+      "strategy_name": "orb",
+      "asset": "XAUUSD",
+      "timeframe": "M15",
+      "lookback_period": 15,
+      "entry_threshold": 0.5,
+      "exit_percentage": 0.02,
+      "stop_loss_pct": 0.03,
+      "take_profit_pct": 0.08
+    },
+    "trade_count": 161
+  },
+  "volatility_breakout": {
+    "total_trades": 76,
+    "win_rate": 0.6578947368421053,
+    "profit_factor": 2.0604607481487687,
+    "sharpe_ratio": 5.072389074501039,
+    "max_drawdown_pct": 0.2620423477222377,
+    "total_return_pct": 1.752079179516421,
+    "average_win": 0.042581424040278905,
+    "average_loss": -0.03974225376396293,
+    "strategy_name": "volatility_breakout",
+    "symbol": "XAUUSD",
+    "timeframe": "M15",
+    "reference": {
+      "title": "Volatility-Based Trading Systems: A Dual-Model Analysis",
+      "authors": "Quantitative trading researchers",
+      "year": 2025,
+      "journal": "SSRN/Academic Paper",
+      "doi": null,
+      "url": null
+    },
+    "parameters": {
+      "strategy_name": "volatility_breakout",
+      "asset": "XAUUSD",
+      "timeframe": "M15",
+      "lookback_period": 20,
+      "entry_threshold": 1.5,
+      "exit_percentage": 0.02,
+      "stop_loss_pct": 0.04,
+      "take_profit_pct": 0.12
+    },
+    "trade_count": 76
+  },
+  "hybrid": {
+    "total_trades": 0,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "sharpe_ratio": 0.0,
+    "max_drawdown_pct": 0.0,
+    "total_return_pct": 0.0,
+    "average_win": 0.0,
+    "average_loss": 0.0,
+    "strategy_name": "hybrid",
+    "symbol": "XAUUSD",
+    "timeframe": "M15",
+    "reference": {
+      "title": "Combining mean reversion and momentum trading strategies in foreign exchange markets",
+      "authors": "Serban, A. et al.",
+      "year": 2010,
+      "journal": "Journal of Banking & Finance",
+      "doi": "10.1016/j.jbankfin.2009.10.003",
+      "url": null
+    },
+    "parameters": {
+      "strategy_name": "hybrid",
+      "asset": "XAUUSD",
+      "timeframe": "M15",
+      "lookback_period": 20,
+      "entry_threshold": 1.5,
+      "exit_percentage": 0.02,
+      "stop_loss_pct": 0.05,
+      "take_profit_pct": 0.1
+    },
+    "trade_count": 0
+  }
+}

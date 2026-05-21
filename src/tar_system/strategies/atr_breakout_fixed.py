@@ -1,0 +1,35 @@
+from dataclasses import dataclass
+import pandas as pd
+from tar_system import reason_codes as rc
+from tar_system.strategies.base import Signal
+
+@dataclass
+class ATRBreakoutFixed:
+    name: str = "atr_breakout_fixed"
+    version: str = "0.3.1"
+    
+    def generate_signal(self, row: pd.Series, regime: str):
+        entry = float(row["close"])
+        atr = float(row.get("atr", 0) or 0)
+        atr_median = float(row.get("atr_median_50", atr) or atr)
+        high_20 = float(row.get("rolling_high", entry) or entry)
+        low_20 = float(row.get("rolling_low", entry) or entry)
+        stop_distance = atr * 2.0 if atr > 0 else entry * 0.01
+        base = {
+            "timestamp": pd.Timestamp(row["timestamp"]),
+            "symbol": str(row["symbol"]),
+            "timeframe": str(row["timeframe"]),
+            "strategy": self.name,
+            "version": self.version,
+            "entry": entry,
+            "metadata": {"regime": regime, "atr": atr}
+        }
+        if entry > high_20 and atr > atr_median:
+            return Signal(side="BUY", confidence=0.7, stop_loss=entry - stop_distance,
+                         take_profit=entry + stop_distance * 2.5, reason_code=rc.SIGNAL_BUY, **base)
+        if entry < low_20 and atr > atr_median:
+            return Signal(side="SELL", confidence=0.7, stop_loss=entry + stop_distance,
+                         take_profit=entry - stop_distance * 2.5, reason_code=rc.SIGNAL_SELL, **base)
+        return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None,
+                     reason_code=rc.SIGNAL_HOLD, **base)
+                     

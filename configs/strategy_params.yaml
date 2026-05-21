@@ -1,0 +1,26 @@
+strategies:
+  EMA_12_26:
+    name: "EMA 12/26 Cross Strategy"
+    asset: XAUUSD
+    timeframe: M15
+    
+    params:
+      fast_ema: 12
+      slow_ema: 26
+      take_profit_pips: 50
+      stop_loss_pips: 30
+    
+    backtest:
+      start_date: "2018-01-01"
+      end_date: "2024-01-01"
+      walk_forward_months: 12
+      test_months: 3
+    
+    risk:
+      max_position_size: 0.02
+      max_daily_loss_pct: 0.05
+    
+    execution:
+      slippage_bps: 1.0
+      commission_bps: 0.1
+      bid_ask_spread_pips: 0.5
