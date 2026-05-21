@@ -714,6 +714,54 @@ def export_ai_review_packet_cmd(args: argparse.Namespace) -> None:
     print(json.dumps({"packet_path": str(path), "json_path": str(path.with_suffix(".json"))}, indent=2))
 
 
+def run_research_committee_cmd(args: argparse.Namespace) -> None:
+    from tar_system.research.committee import run_research_committee
+
+    manual_notes = ""
+    if getattr(args, "notes_file", None):
+        manual_notes = Path(args.notes_file).read_text(encoding="utf-8")
+    result = run_research_committee(
+        args.strategy,
+        args.symbol,
+        args.timeframe,
+        manual_notes=manual_notes,
+        output_dir=args.output_dir,
+    )
+    print(
+        json.dumps(
+            {
+                "paper_only": result.paper_only,
+                "recommendation": result.recommendation,
+                "confidence": result.confidence,
+                "markdown": result.output_markdown,
+                "json": result.output_json,
+            },
+            indent=2,
+        )
+    )
+
+
+def fit_strategy_filters_cmd(args: argparse.Namespace) -> None:
+    from tar_system.research.strategy_fitter import build_strategy_filter_plan
+
+    plan = build_strategy_filter_plan(
+        limit=args.limit,
+        output_dir=args.output_dir,
+        run_committee=not args.skip_committee,
+    )
+    print(
+        json.dumps(
+            {
+                "paper_only": plan.paper_only,
+                "candidates_reviewed": plan.candidates_reviewed,
+                "markdown": plan.output_markdown,
+                "json": plan.output_json,
+            },
+            indent=2,
+        )
+    )
+
+
 def import_cot_cmd(args: argparse.Namespace) -> None:
     from dataclasses import asdict
 
@@ -1401,6 +1449,20 @@ def build_parser() -> argparse.ArgumentParser:
     ai_packet_parser.add_argument("--output", default="runtime/ai_review_packet.md")
     ai_packet_parser.add_argument("--limit", type=int, default=10)
     ai_packet_parser.set_defaults(func=export_ai_review_packet_cmd)
+
+    committee_parser = subparsers.add_parser("run-research-committee")
+    committee_parser.add_argument("--strategy", required=True)
+    committee_parser.add_argument("--symbol", required=True)
+    committee_parser.add_argument("--timeframe", required=True)
+    committee_parser.add_argument("--notes-file", default=None)
+    committee_parser.add_argument("--output-dir", default="runtime")
+    committee_parser.set_defaults(func=run_research_committee_cmd)
+
+    fitter_parser = subparsers.add_parser("fit-strategy-filters")
+    fitter_parser.add_argument("--limit", type=int, default=12)
+    fitter_parser.add_argument("--output-dir", default="runtime")
+    fitter_parser.add_argument("--skip-committee", action="store_true")
+    fitter_parser.set_defaults(func=fit_strategy_filters_cmd)
 
     cot_parser = subparsers.add_parser("import-cot")
     cot_parser.add_argument("--file", required=True)
