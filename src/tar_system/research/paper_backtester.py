@@ -272,7 +272,7 @@ class PaperStrategyBacktester:
         total_losses = np.abs(np.sum(losing_trades)) if len(losing_trades) > 0 else 0
 
         win_rate = len(winning_trades) / len(trades) if trades else 0
-        profit_factor = total_wins / total_losses if total_losses > 0 else 0
+        profit_factor = total_wins / total_losses if total_losses > 0 else (999.0 if total_wins > 0 else 0.0)
 
         # Sharpe ratio (assuming daily periods)
         daily_returns = pnl_array

@@ -379,7 +379,7 @@ def _metrics_with_walk_forward(metrics: dict[str, Any], walk_forward: dict[str, 
     stitched = walk_forward.get("stitched_metrics", {}) or {}
     if isinstance(stitched, dict):
         enriched["sharpe_oos"] = _as_float(stitched.get("sharpe_ratio", stitched.get("sharpe", 0.0)))
-    enriched["param_stability"] = _as_float(walk_forward.get("parameter_stability_score", 0.0))
+    enriched["param_stability"] = _as_float(walk_forward.get("parameter_stability_score", 0.0)) / 100.0
     enriched["walk_forward_splits"] = _as_float(walk_forward.get("split_count", walk_forward.get("window_count", 0)))
     bootstrap_ci = walk_forward.get("bootstrap_ci", {}) or {}
     if isinstance(bootstrap_ci, dict):

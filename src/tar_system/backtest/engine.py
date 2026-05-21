@@ -80,9 +80,10 @@ def run_backtest(
             )
         if decision.approved:
             symbol_profile = broker_profile.symbol_profile(signal.symbol) if broker_profile else None
-            # Always close existing positions first before opening new ones
-            if portfolio.open_positions:
-                for pos in list(portfolio.open_positions):
+            # Close opposite-side positions for this symbol before opening new one
+            opposite_side = "SELL" if signal.side == "BUY" else "BUY"
+            for pos in list(portfolio.open_positions):
+                if pos.symbol == signal.symbol and pos.side == opposite_side:
                     close_fill = broker.close_position(
                         pos,
                         pd.Timestamp(row["timestamp"]),

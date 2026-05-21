@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 
-MODULE_PATH = Path("/Users/whs1/Dev/V2trading_system/second_brain/scripts/brain.py")
+MODULE_PATH = Path(__file__).parents[1] / "second_brain/scripts/brain.py"
 SPEC = importlib.util.spec_from_file_location("second_brain_cli", MODULE_PATH)
 brain = importlib.util.module_from_spec(SPEC)
 assert SPEC and SPEC.loader
