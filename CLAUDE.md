@@ -86,3 +86,4 @@ Before running, installing, or integrating any external code, document, package,
 - State assumptions explicitly. Ask if uncertain.
 - Follow `PHASE2_VALIDATION_SEQUENCE.md`: Phase 2 Standard first, paper collection second, macro/regime retrofit third, Phase 3 multi-asset after.
 - Do not promote one-trade optimiser winners; enforce minimum trade-count and robustness gates before KEEP.
+- Before committing changes to scoring, gates, CLI, or dashboard: run `/adversarial_review` and resolve any HIGH/CRITICAL findings before merging.

@@ -74,6 +74,11 @@ def render(st: object) -> None:
     _render_status_panel(st, status)
 
     selected = _render_selectors(st)
+    try:
+        selected["file"] = str(_safe_data_path(selected["file"]))
+    except ValueError as exc:
+        st.error(f"Invalid data file path: {exc}")
+        return
     dataset = _dataset_summary(selected["file"], selected["symbol"], selected["timeframe"])
     from_date, to_date = _render_date_controls(st, dataset)
     selected.update({"from_date": from_date, "to_date": to_date})
@@ -558,12 +563,7 @@ def _start_backtest_subprocess(st: object, selected: dict[str, Any]) -> None:
     except RuntimeError as exc:
         st.warning(str(exc))
         return
-    try:
-        data_file = str(_safe_data_path(selected["file"]))
-    except ValueError as exc:
-        st.error(f"Invalid file path: {exc}")
-        finish_task("FAILED", str(exc), {"error": str(exc)})
-        return
+    data_file = selected["file"]
     RUN_LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_path = RUN_LOG_DIR / f"{task['run_id']}.log"
     command = [
