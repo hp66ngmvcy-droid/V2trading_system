@@ -22,7 +22,13 @@ class PaperBroker:
             raise ValueError(f"No price for {symbol}")
         
         fill_price = current_price * 1.0001 if order_type == 'BUY' else current_price * 0.9999
-        self.positions[symbol] = self.positions.get(symbol, 0) + (size if order_type == 'BUY' else -size)
+        cost = fill_price * size
+        if order_type == 'BUY':
+            self.cash -= cost
+            self.positions[symbol] = self.positions.get(symbol, 0) + size
+        else:
+            self.cash += cost
+            self.positions[symbol] = self.positions.get(symbol, 0) - size
         self.fills.append({'symbol': symbol, 'order_type': order_type, 'size': size, 'fill_price': fill_price})
         return fill_price
     

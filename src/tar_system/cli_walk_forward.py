@@ -10,8 +10,8 @@ from tar_system.validation.equity_stitcher import EquityCurveStitcher
 from tar_system.validation.oos_metrics import OOSMetricsAggregator
 from tar_system.validation.failed_window_logger import FailedWindowLogger
 from tar_system.validation.walk_forward_orchestrator import WalkForwardOrchestrator
-from tar_system.backtest.engine import BacktestEngine
-from tar_system.strategies.base import GoldV2EMAStrategy
+from tar_system.backtest.engine import run_backtest
+from tar_system.strategies.registry import get_strategy
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,14 +24,13 @@ def run_walk_forward(strategy: str = typer.Option("gold_v2"), symbol: str = type
         if data is None:
             typer.echo("No data")
             raise typer.Exit(1)
-        strategy_class = _get_strategy_class(strategy)
-        backtest_engine = BacktestEngine(initial_capital=10000)
+        strategy_instance = get_strategy(strategy)
         window_splitter = RollingWindowSplitter(data, train_months, test_months)
-        blind_tester = BlindOOSTester(strategy_class, backtest_engine)
+        blind_tester = BlindOOSTester(strategy_instance, run_backtest)
         equity_stitcher = EquityCurveStitcher(initial_capital=10000)
         oos_metrics = OOSMetricsAggregator()
         failed_window_logger = FailedWindowLogger("logs/failed_windows.jsonl")
-        orchestrator = WalkForwardOrchestrator(strategy_class, backtest_engine, window_splitter, blind_tester, equity_stitcher, oos_metrics, failed_window_logger, 10000)
+        orchestrator = WalkForwardOrchestrator(strategy_instance, run_backtest, window_splitter, blind_tester, equity_stitcher, oos_metrics, failed_window_logger, 10000)
         results = orchestrator.run(data)
         orchestrator.export_results(output)
         typer.echo(orchestrator.get_results_summary())

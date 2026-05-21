@@ -269,6 +269,15 @@ def count_active_jobs() -> int:
     return int(row[0]) if row else 0
 
 
+def count_running_jobs() -> int:
+    _ensure_queue_table()
+    with _connect() as connection:
+        row = connection.execute(
+            "SELECT COUNT(*) FROM research_jobs WHERE status = 'RUNNING'"
+        ).fetchone()
+    return int(row[0]) if row else 0
+
+
 def diagnose_failures(stale_running_minutes: int = 120) -> dict[str, Any]:
     """Return structured failure breakdown from the job queue."""
     _ensure_queue_table()

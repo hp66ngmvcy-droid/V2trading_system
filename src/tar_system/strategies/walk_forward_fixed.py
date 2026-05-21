@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 import pandas as pd
 import numpy as np
-from tar_system.backtest.engine import BacktestEngine
+from tar_system.backtest.engine import run_backtest
 from tar_system.strategies.registry import get_strategy
 
 class WalkForwardFixed:
@@ -36,12 +36,7 @@ class WalkForwardFixed:
                 continue
             
             # Run backtest on TEST data (blind)
-            engine = BacktestEngine(
-                strategy=get_strategy(self.strategy_name),
-                data=test_data,
-                initial_capital=100000
-            )
-            test_result = engine.run()
+            test_result = run_backtest(get_strategy(self.strategy_name), test_data)
             
             results.append({
                 "window": len(results) + 1,

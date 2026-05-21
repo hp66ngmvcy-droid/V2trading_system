@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from tar_system.controller.job_queue import count_active_jobs, queue_stats
+from tar_system.controller.job_queue import count_active_jobs, count_running_jobs, queue_stats
 from tar_system.controller.research_controller import run_controller_once
 
 
@@ -20,7 +20,7 @@ def run_worker(limit: int = 1, max_queued: int | None = None) -> WorkerResult:
     processed = 0
     last: dict[str, Any] | None = None
     for _ in range(max(1, limit)):
-        if max_queued is not None and count_active_jobs() >= max_queued:
+        if max_queued is not None and count_running_jobs() >= max_queued:
             last = {"status": "throttled", "message": f"active jobs at cap ({max_queued})"}
             break
         result = run_controller_once()

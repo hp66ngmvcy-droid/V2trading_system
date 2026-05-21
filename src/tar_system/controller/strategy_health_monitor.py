@@ -51,7 +51,7 @@ def evaluate_strategy_health(
         reason_codes.append("HEALTH_SAMPLE_TOO_SMALL")
     if resolved_metrics.get("max_drawdown", 0.0) >= drawdown_limit:
         reason_codes.append("HEALTH_DRAWDOWN_LIMIT")
-    if resolved_metrics.get("profit_factor", 0.0) and resolved_metrics.get("profit_factor", 0.0) < min_profit_factor:
+    if resolved_metrics.get("profit_factor", 0.0) < min_profit_factor:
         reason_codes.append("HEALTH_PROFIT_FACTOR_WEAK")
     if resolved_metrics.get("sharpe_ratio", 0.0) < min_sharpe:
         reason_codes.append("HEALTH_SHARPE_WEAK")

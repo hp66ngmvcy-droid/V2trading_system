@@ -154,7 +154,7 @@ def score_strategy_cmd(args: argparse.Namespace) -> None:
     ma_result = score_multi_agent(gate_metrics)
     ma_codes = ["MULTI_AGENT_KILL"] if ma_result.verdict == "KILL" else []
     reason_codes = _merge_reason_codes(score.reason_codes, gate.reason_codes, ma_codes)
-    final_verdict = "REVIEW" if gate.verdict == "KEEP" and ma_result.verdict == "KILL" else gate.verdict
+    final_verdict = "KILL" if ma_result.verdict == "KILL" else gate.verdict
     metrics = {**gate_metrics, "gate_failed": gate.failed_gate or "", "gate_reason": gate.reason}
     resolved = resolve_strategy(args.strategy, args.symbol, args.timeframe, getattr(args, "broker", "current_broker_demo"), audit=True)
     strategy = resolved.strategy
@@ -1207,7 +1207,7 @@ def _metrics_with_walk_forward(metrics: dict[str, float], walk_forward: dict[str
     stitched = walk_forward.get("stitched_metrics", {}) or {}
     if isinstance(stitched, dict):
         enriched["sharpe_oos"] = float(stitched.get("sharpe_ratio", stitched.get("sharpe", 0.0)) or 0.0)
-    enriched["param_stability"] = float(walk_forward.get("parameter_stability_score", 0.0) or 0.0)
+    enriched["param_stability"] = float(walk_forward.get("parameter_stability_score", 0.0) or 0.0) / 100.0
     enriched["walk_forward_splits"] = float(walk_forward.get("split_count", walk_forward.get("window_count", 0)) or 0)
     bootstrap_ci = walk_forward.get("bootstrap_ci", {}) or {}
     if isinstance(bootstrap_ci, dict):

@@ -34,10 +34,10 @@ class RSIOnlyV3:
         confidence = min(0.95, 0.5 + abs(rsi - 50) / 100)
         stop_distance = atr * self.atr_multiplier if atr > 0 else entry * 0.005
         
-        if rsi >= self.rsi_buy_level and rsi < 70:
+        if rsi <= self.rsi_buy_level:
             return Signal(side="BUY", confidence=confidence, stop_loss=entry - stop_distance, take_profit=entry + stop_distance * self.reward_risk, reason_code=rc.SIGNAL_BUY, **base)
-        
-        if rsi <= self.rsi_sell_level and rsi > 30:
+
+        if rsi >= self.rsi_sell_level:
             return Signal(side="SELL", confidence=confidence, stop_loss=entry + stop_distance, take_profit=entry - stop_distance * self.reward_risk, reason_code=rc.SIGNAL_SELL, **base)
         
         return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None, reason_code=rc.SIGNAL_HOLD, **base)
