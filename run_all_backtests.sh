@@ -12,14 +12,14 @@ echo ""
 # Run all backtests
 for strategy in goldv2_v2 rsi_only_v3 ema_volume_v3 atr_breakout_v3 momentum_crossover_v3 multi_timeframe_v3 ema_volume_fixed atr_breakout_fixed; do
     echo "[$strategy] Running backtest..."
-    python -m tar_system.cli backtest --strategy $strategy --symbol XAUUSD --timeframe M15 2>&1 | tail -3
+    python -m tar_system.cli run-backtest --strategy $strategy --symbol XAUUSD --timeframe M15 2>&1 | tail -3
     echo ""
 done
 
 # Run all walk-forward tests
 for strategy in rsi_only_v3 ema_volume_v3 atr_breakout_v3 momentum_crossover_v3 multi_timeframe_v3; do
     echo "[$strategy] Running walk-forward..."
-    python -m tar_system.cli run-walk-forward --strategy $strategy --symbol XAUUSD --timeframe M15 --train-window 12 --test-window 3 2>&1 | tail -3
+    python -m tar_system.cli run-walk-forward --strategy $strategy --symbol XAUUSD --timeframe M15 --train-window 200 --test-window 50 2>&1 | tail -3
     echo ""
 done
 

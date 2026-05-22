@@ -1003,7 +1003,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
         ma_result = score_multi_agent(stage_metrics)
         ma_codes = ["MULTI_AGENT_KILL"] if ma_result.verdict == "KILL" else []
         reason_codes = _merge_reason_codes(stage_score.reason_codes, stage_gate.reason_codes, ma_codes)
-        final_verdict = "REVIEW" if stage_gate.verdict == "KEEP" and ma_result.verdict == "KILL" else stage_gate.verdict
+        final_verdict = "KILL" if ma_result.verdict == "KILL" else stage_gate.verdict
         stage_metrics = {
             **stage_metrics,
             "gate_failed": stage_gate.failed_gate or "",

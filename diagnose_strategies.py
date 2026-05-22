@@ -13,7 +13,7 @@ for strategy_name in ["ema_volume_v3", "atr_breakout_v3"]:
         strategy = get_strategy(strategy_name)
         print(f"✓ Strategy loaded: {strategy}")
         print(f"✓ Strategy name: {strategy.name}")
-        
+
         # Test first 10 rows
         signals = []
         errors = []
@@ -30,4 +30,6 @@ for strategy_name in ["ema_volume_v3", "atr_breakout_v3"]:
         if errors:
             print(f"\nFirst error:")
             print(f"  Row {errors[0][0]}: {errors[0][1]}")
+    except Exception as e:
+        print(f"✗ Failed to load {strategy_name}: {e}")
 
