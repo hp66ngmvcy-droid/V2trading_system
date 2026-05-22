@@ -41,7 +41,7 @@ class OOSMetricsAggregator:
         cumsum = (1 + returns).cumprod()
         running_max = np.maximum.accumulate(cumsum)
         dd = (cumsum - running_max) / running_max
-        return np.min(dd)
+        return abs(np.min(dd))
     
     def _calc_win_rate(self, trades):
         if not trades: return 0

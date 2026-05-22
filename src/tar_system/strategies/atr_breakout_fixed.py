@@ -12,8 +12,8 @@ class ATRBreakoutFixed:
         entry = float(row["close"])
         atr = float(row.get("atr", 0) or 0)
         atr_median = float(row.get("atr_median_50", atr) or atr)
-        high_20 = float(row.get("rolling_high", entry) or entry)
-        low_20 = float(row.get("rolling_low", entry) or entry)
+        high_20 = float(row.get("prior_rolling_high", row.get("rolling_high", entry)) or entry)
+        low_20 = float(row.get("prior_rolling_low", row.get("rolling_low", entry)) or entry)
         stop_distance = atr * 2.0 if atr > 0 else entry * 0.01
         base = {
             "timestamp": pd.Timestamp(row["timestamp"]),

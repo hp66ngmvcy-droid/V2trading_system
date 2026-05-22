@@ -22,7 +22,7 @@ class EMAVolumeV3:
         ema_fast = float(row.get("ema_fast", 0) or 0)
         ema_slow = float(row.get("ema_slow", 0) or 0)
         volume = float(row.get("volume", 0) or 0)
-        volume_sma = float(row.get("volume", 1) or 1)
+        volume_sma = float(row.get("volume_sma", 0) or row.get("volume", 1) or 1)
         
         base = {
             "timestamp": pd.Timestamp(row["timestamp"]),

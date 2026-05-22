@@ -36,16 +36,16 @@ class WalkForwardFixed:
                 continue
             
             # Run backtest on TEST data (blind)
-            test_result = run_backtest(get_strategy(self.strategy_name), test_data)
-            
+            test_result = run_backtest(test_data, get_strategy(self.strategy_name))
+
             results.append({
                 "window": len(results) + 1,
                 "train_period": f"{train_months_list[0]}-{train_months_list[-1]}",
                 "test_period": f"{test_months_list[0]}-{test_months_list[-1]}",
-                "test_sharpe": test_result.get("sharpe", 0),
-                "test_max_dd": test_result.get("max_drawdown", 0),
-                "test_trades": test_result.get("trade_count", 0),
-                "test_win_rate": test_result.get("win_rate", 0)
+                "test_sharpe": test_result.metrics.get("sharpe_ratio", 0),
+                "test_max_dd": test_result.metrics.get("max_drawdown", 0),
+                "test_trades": test_result.trades,
+                "test_win_rate": test_result.metrics.get("win_rate", 0),
             })
         
         # Aggregate blind OOS results

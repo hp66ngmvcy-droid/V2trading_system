@@ -107,6 +107,7 @@ class PaperBroker:
         broker_profile: BrokerProfile | None = None,
         contract_size: float | None = None,
         cost_multiplier: float = 1.0,
+        timeframe: str = "H1",
     ) -> Fill:
         symbol_profile = broker_profile.symbol_profile(position.symbol) if broker_profile else None
         spread_model = _cost_model(symbol_profile) if symbol_profile else None
@@ -117,7 +118,13 @@ class PaperBroker:
         units = quantity * (contract_size if contract_size is not None else (symbol_profile.contract_size if symbol_profile else 1.0))
         spread_cost = abs(effective_spread * units)
         slippage_cost = abs(slippage * units)
-        total_cost = spread_cost + slippage_cost + self.commission_per_trade
+        swap_cost = 0.0
+        if symbol_profile and hasattr(position, "timestamp"):
+            bars_held = max(1, int((timestamp - position.timestamp).total_seconds() / max(1, timeframe_day_fraction(timeframe) * 86400)))
+            notional = exit_price * units
+            swap_cost, _ = self.calculate_swap_cost(symbol_profile, position.side, quantity, notional, timeframe, bars_held)
+            swap_cost = abs(swap_cost) * cost_multiplier
+        total_cost = spread_cost + slippage_cost + swap_cost + self.commission_per_trade
         return Fill(
             timestamp=timestamp,
             symbol=position.symbol,

@@ -26,8 +26,8 @@ for strategy_name in ["ema_volume_v3", "atr_breakout_v3"]:
                     print(f"  Row {idx}: {signal.side} @ confidence {signal.confidence}")
             except Exception as e:
                 errors.append((idx, str(e)))
-                                                  
-                   in                   in                   in        ed                   in                   in          "  Er                   in                   f errors:
+
+        if errors:
             print(f"\nFirst error:")
-            pri            pri                      pri            pri                        pri      to load    }")
+            print(f"  Row {errors[0][0]}: {errors[0][1]}")
 

@@ -19,11 +19,11 @@ class EquityCurveStitcher:
             trades = window.get('trades', [])
             
             if equity_curve:
-                equity_arr = np.array(equity_curve)
+                equity_arr = np.array(equity_curve, dtype=float)
+                incremental = np.diff(equity_arr, prepend=equity_arr[0])
                 window_start = equity_arr[0]
-                window_returns = (equity_arr - window_start) / window_start
-                for ret in window_returns:
-                    current_equity = current_equity * (1 + ret)
+                for delta in incremental[1:]:
+                    current_equity += delta / window_start * current_equity
                     combined_equity.append(current_equity)
                 combined_trades.extend(trades)
         

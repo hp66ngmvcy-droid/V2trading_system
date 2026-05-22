@@ -17,8 +17,8 @@ class ATRBreakoutV3:
         from tar_system.strategies.base import Signal
         entry = float(row["close"])
         atr = float(row.get("atr", 0) or 0)
-        high_20 = float(row.get("rolling_high", entry) or entry)
-        low_20 = float(row.get("rolling_low", entry) or entry)
+        high_20 = float(row.get("prior_rolling_high", row.get("rolling_high", entry)) or entry)
+        low_20 = float(row.get("prior_rolling_low", row.get("rolling_low", entry)) or entry)
         atr_median = float(row.get("atr_median_50", atr) or atr)
         
         base = {

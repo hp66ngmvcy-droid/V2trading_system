@@ -403,6 +403,7 @@ def _run_candidate_walk_forward(
         "stitched_metrics": result.stitched_metrics,
         "parameter_stability_score": result.parameter_stability_score,
         "parameter_stability": result.parameter_stability,
+        "bootstrap_ci": result.bootstrap_ci if hasattr(result, "bootstrap_ci") else {},
         "reason": result.reason_code or "",
     }
 
@@ -413,6 +414,10 @@ def _merge_walk_forward_metrics(metrics: dict[str, float], walk_forward: dict[st
     combined["sharpe_oos"] = float(stitched.get("sharpe_ratio", 0.0) or 0.0)
     combined["param_stability"] = float(walk_forward.get("parameter_stability_score", 0.0) or 0.0) / 100.0
     combined["walk_forward_oos_trades"] = float(stitched.get("total_trades", 0.0) or 0.0)
+    bootstrap_ci = walk_forward.get("bootstrap_ci") or {}
+    combined["bootstrap_ci_lower"] = float(bootstrap_ci.get("ci_lower", 0.0) or 0.0)
+    combined["bootstrap_ci_upper"] = float(bootstrap_ci.get("ci_upper", 0.0) or 0.0)
+    combined["bootstrap_ci_spans_zero"] = bool(bootstrap_ci.get("spans_zero", True))
     return combined
 
 

@@ -91,6 +91,7 @@ def run_backtest(
                         broker_profile=broker_profile,
                         contract_size=symbol_profile.contract_size if symbol_profile else None,
                         cost_multiplier=cost_multiplier,
+                        timeframe=str(row.get("timeframe", "H1")),
                     )
                     portfolio.on_fill(close_fill)
 
@@ -125,6 +126,7 @@ def run_backtest(
                 broker_profile=broker_profile,
                 contract_size=final_symbol_profile.contract_size if final_symbol_profile else None,
                 cost_multiplier=cost_multiplier,
+                timeframe=str(final_row.get("timeframe", "H1")),
             )
             portfolio.on_fill(close_fill)
 
