@@ -44,6 +44,7 @@ def run_backtest(
     work = features.sort_values("timestamp").reset_index(drop=True)
     stopped = False
     reason_code: str | None = None
+    last_row = None
     for index, row in work.iterrows():
         status = read_backtest_status()
         if status.get("stop_requested"):
@@ -60,6 +61,7 @@ def run_backtest(
             )
             write_status("backtest", {**status, "running": False, "latest_message": "stopped safely with partial result"})
             break
+        last_row = row
         regime = detect_regime(row).value
         signal = strategy.generate_signal(row, regime)
         decision = risk.evaluate(
@@ -114,9 +116,9 @@ def run_backtest(
             )
             portfolio.on_fill(fill)
 
-    # Close any remaining open positions at the end of backtest.
-    if work is not None and len(work) > 0 and portfolio.open_positions:
-        final_row = work.iloc[-1]
+    # Close any remaining open positions at the last processed bar (not future data).
+    if last_row is not None and portfolio.open_positions:
+        final_row = last_row
         for pos in list(portfolio.open_positions):
             final_symbol_profile = broker_profile.symbol_profile(pos.symbol) if broker_profile else None
             close_fill = broker.close_position(

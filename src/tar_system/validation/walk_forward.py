@@ -81,6 +81,11 @@ def run_walk_forward(
     fold_parameters: list[dict[str, float]] = []
     stopped = False
     for split in splits:
+        # Run on train window to record in-sample behaviour per fold.
+        train_df = features.iloc[split.train_start : split.train_end].copy()
+        run_backtest(train_df, strategy, audit_decisions=False)
+        fold_parameters.append(_strategy_parameters(strategy))
+        # Evaluate on unseen test window only.
         test_df = features.iloc[split.test_start : split.test_end].copy()
         result = run_backtest(test_df, strategy, audit_decisions=audit_decisions)
         if result.stopped:
@@ -88,7 +93,6 @@ def run_walk_forward(
             break
         split_metrics.append(result.metrics)
         completed_splits.append(split)
-        fold_parameters.append(_strategy_parameters(strategy))
     metrics = stitch_metrics(split_metrics)
     bootstrap_ci = bootstrap_mean_ci(metrics.get("trade_returns", []))
     ranges, stability = derive_stable_parameter_ranges(fold_parameters)

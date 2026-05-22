@@ -102,9 +102,10 @@ class PaperStrategyBacktester:
         if len(df) < params.lookback_period + 10:
             return self._create_empty_result(strategy_name, "insufficient data")
 
-        # Regime detection and adaptive parameters
+        # Regime detection uses the midpoint of the train window (first half of data)
+        # to avoid look-ahead bias from the final bar.
         if use_regime_detection:
-            regime = regime_detector.detect_regime(df, len(df) - 1)
+            regime = regime_detector.detect_regime(df, len(df) // 2)
             variant_name = parameter_variant if parameter_variant else regime
             variant_params = adaptive.get_variant_for_regime(variant_name)
             for key in ["entry_threshold", "stop_loss_pct", "take_profit_pct"]:
