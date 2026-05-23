@@ -62,6 +62,34 @@ def run_backtest(
             write_status("backtest", {**status, "running": False, "latest_message": "stopped safely with partial result"})
             break
         last_row = row
+        # Check TP/SL for open positions before processing this bar's signal.
+        bar_high = float(row.get("high", 0) or 0)
+        bar_low = float(row.get("low", 0) or 0)
+        for pos in list(portfolio.open_positions):
+            if pos.take_profit is not None or pos.stop_loss is not None:
+                exit_price = None
+                if pos.side == "BUY":
+                    if pos.take_profit and bar_high >= pos.take_profit:
+                        exit_price = pos.take_profit
+                    elif pos.stop_loss and bar_low <= pos.stop_loss:
+                        exit_price = pos.stop_loss
+                else:
+                    if pos.take_profit and bar_low <= pos.take_profit:
+                        exit_price = pos.take_profit
+                    elif pos.stop_loss and bar_high >= pos.stop_loss:
+                        exit_price = pos.stop_loss
+                if exit_price is not None:
+                    tp_sl_profile = broker_profile.symbol_profile(pos.symbol) if broker_profile else None
+                    close_fill = broker.close_position(
+                        pos,
+                        pd.Timestamp(row["timestamp"]),
+                        exit_price,
+                        broker_profile=broker_profile,
+                        contract_size=tp_sl_profile.contract_size if tp_sl_profile else None,
+                        cost_multiplier=cost_multiplier,
+                        timeframe=str(row.get("timeframe", "H1")),
+                    )
+                    portfolio.on_fill(close_fill)
         regime = detect_regime(row).value
         signal = strategy.generate_signal(row, regime)
         decision = risk.evaluate(
@@ -118,6 +146,8 @@ def run_backtest(
                 contract_size=contract_size,
                 cost_multiplier=cost_multiplier,
             )
+            fill.metadata["take_profit"] = signal.take_profit
+            fill.metadata["stop_loss"] = signal.stop_loss
             portfolio.on_fill(fill)
 
     # Close any remaining open positions at the last processed bar (not future data).

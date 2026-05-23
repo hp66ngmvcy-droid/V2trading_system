@@ -21,6 +21,8 @@ class Position:
     entry_price: float
     timestamp: pd.Timestamp
     entry_cost: float = 0.0
+    take_profit: float | None = None
+    stop_loss: float | None = None
 
 
 @dataclass
@@ -102,7 +104,9 @@ class PortfolioTracker:
                 )
             )
         else:
-            self.open_positions.append(Position(fill.symbol, fill.side, fill.quantity, fill.price, fill.timestamp, fill.total_cost))
+            tp = fill.metadata.get("take_profit") if fill.metadata else None
+            sl = fill.metadata.get("stop_loss") if fill.metadata else None
+            self.open_positions.append(Position(fill.symbol, fill.side, fill.quantity, fill.price, fill.timestamp, fill.total_cost, take_profit=tp, stop_loss=sl))
         self.equity_curve.append((fill.timestamp, self.current_equity))
         self._update_loss_guard()
 
