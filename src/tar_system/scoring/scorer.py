@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any
+import math
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from tar_system.scoring.multi_agent_scorer import ConsensusResult
 
 
 @dataclass
@@ -11,6 +15,7 @@ class ScoreResult:
     score: float
     verdict: str
     reason_codes: list[str]
+    multi_agent: "ConsensusResult | None" = field(default=None, repr=False)
 
 
 def score_strategy(
@@ -19,11 +24,11 @@ def score_strategy(
     timeframe: str = "M15",
     require_walk_forward: bool = False,
 ) -> ScoreResult:
-    win_rate = metrics.get("win_rate", 0.0)
-    profit_factor = metrics.get("profit_factor", 0.0)
-    drawdown = metrics.get("max_drawdown", 1.0)
-    trade_count = metrics.get("total_trades", 0.0)
-    expectancy = metrics.get("expectancy", 0.0)
+    win_rate = _safe(metrics.get("win_rate", 0.0), 0.0)
+    profit_factor = _safe(metrics.get("profit_factor", 0.0), 0.0)
+    drawdown = _safe(metrics.get("max_drawdown", 1.0), 1.0)
+    trade_count = _safe(metrics.get("total_trades", 0.0), 0.0)
+    expectancy = _safe(metrics.get("expectancy", 0.0), 0.0)
     reasons: list[str] = []
     score = 0.0
     score += min(win_rate, 0.75) / 0.75 * 20
@@ -43,7 +48,16 @@ def score_strategy(
         reasons.extend(_walk_forward_reason_codes(walk_forward_metrics))
     score = max(0.0, min(100.0, score))
     verdict = "KEEP" if score >= 70 and not reasons else "REVIEW" if score >= 45 else "KILL"
-    return ScoreResult(score=round(score, 2), verdict=verdict, reason_codes=reasons)
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent  # noqa: PLC0415
+    return ScoreResult(score=round(score, 2), verdict=verdict, reason_codes=reasons, multi_agent=score_multi_agent(metrics))
+
+
+def _safe(value: object, default: float) -> float:
+    try:
+        f = float(value)  # type: ignore[arg-type]
+        return f if math.isfinite(f) else default
+    except (TypeError, ValueError):
+        return default
 
 
 def _walk_forward_reason_codes(walk_forward_metrics: dict[str, Any] | None) -> list[str]:

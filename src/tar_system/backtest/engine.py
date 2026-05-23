@@ -65,7 +65,10 @@ def run_backtest(
         # Check TP/SL for open positions before processing this bar's signal.
         bar_high = float(row.get("high", 0) or 0)
         bar_low = float(row.get("low", 0) or 0)
+        row_symbol = str(row.get("symbol", ""))
         for pos in list(portfolio.open_positions):
+            if row_symbol and pos.symbol != row_symbol:
+                continue
             if pos.take_profit is not None or pos.stop_loss is not None:
                 exit_price = None
                 if pos.side == "BUY":

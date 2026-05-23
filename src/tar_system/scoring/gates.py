@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -151,7 +152,8 @@ def _metric(metrics: dict[str, float], *keys: str, default: float = 0.0) -> floa
         value = metrics.get(key)
         if value is not None:
             try:
-                return float(value)
+                f = float(value)
+                return f if math.isfinite(f) else default
             except (TypeError, ValueError):
                 return default
     return default
