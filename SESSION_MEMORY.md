@@ -54,3 +54,76 @@ Behaviour:
 - Final candidate verdict is produced by structural gates with `require_oos=True`.
 
 Also added a hard directional-failure gate for cases like 104 consecutive losses out of 104 trades. Those are now `KILL` even if drawdown is under the hard drawdown threshold.
+
+### 2026-05-23 - Adversarial Review Series (Rounds 8–10)
+
+10 rounds of Codex adversarial review completed. Key fixes applied:
+
+**Scoring pipeline hardened:**
+- NaN/inf metrics now return safe defaults (no gate bypass)
+- WF KEEP requires `wf_verdict=="KEEP"`, `window_count>=3`, bootstrap CI present with `spans_zero==False`
+- Missing CI is a blocking reason, not a pass
+- KILL verdict propagates from all 3 scorers (score/gate/multi_agent)
+
+**Backtest correctness:**
+- PnL now multiplied by `contract_size` (was off 100x on XAUUSD)
+- Trade return basis includes `contract_size` (fixes Sharpe/bootstrap inflation)
+- TP/SL loop only applies to matching symbol (no cross-symbol price corruption)
+- Final liquidation uses per-symbol last bar, not overall last row
+- Risk gate uses `drawdown_marked()` — open-position unrealised PnL now visible
+
+**Walk-forward:**
+- Static strategies (identical params every fold) → stability=0 → REVIEW
+- Bootstrap CI waiver removed — `spans_zero==True` always forces REVIEW
+
+**From external backtest analysis (XAUUSD M15):**
+- Observed: 1.02 PF, 288 trades, 71.53% win rate but 81.74% max drawdown
+- Recovery factor 0.08 — drawdown control is the bottleneck, not signal quality
+- RSI thresholds 42/58 conservative; test 35–50 range in next optimiser run
+- 1:3 RR ratio is sound; position sizing (0.01 lots) limits upside
+- Stage 1 priority: broker cost modelling (spreads) will reduce overstated PF
+
+**Test baseline:** 281 passing (2026-05-23).
+
+### 2026-05-23 - Crash Recovery Note
+
+Computer/session crashed after Phase 2 optimiser hardening. Resume from this state:
+
+Completed before crash:
+- Main full-pipeline gate bypass fixed in `src/tar_system/cli.py`.
+- Standalone `score-strategy` now uses structural gates for the final verdict.
+- Paper backtest position sizing was clamped in `src/tar_system/backtest/engine.py` so BTC/gold/oil tests cannot use oversized fixed `quantity=1.0` positions.
+- Structural gates added in `src/tar_system/scoring/gates.py`.
+- Failure/review logging added in `src/tar_system/scoring/failure_logger.py`.
+- Optimiser walk-forward auto-wiring added in `scripts/continuous_parameter_search.py`.
+- Directional failure gate added for cases such as 104 consecutive losses out of 104 trades.
+- Focused tests passed before crash: `33 passed`.
+
+Important current rules:
+- One-trade winners are hard `KILL`, not `KEEP` or lucky `REVIEW`.
+- Missing walk-forward/OOS evidence prevents `KEEP`.
+- Hard gates: minimum trades, max drawdown, directional failure.
+- Soft gates: profit factor, OOS Sharpe, parameter stability, win rate.
+- Keep everything paper-only and local-first.
+
+Next safe resume command:
+
+```bash
+cd /Users/whs1/Dev/V2trading_system
+
+PYTHONPATH=src venv/bin/python scripts/continuous_parameter_search.py \
+  --reset \
+  --symbols XAUUSD,EURUSD,GBPUSD \
+  --timeframes M15,M30,H1 \
+  --max-generations 3 \
+  --max-candidates 50 \
+  --max-rows 0 \
+  --survivors 8 \
+  --target-keeps 3 \
+  --min-trades-for-keep 30 \
+  --wf-train-months 12 \
+  --wf-test-months 3 \
+  --max-walk-forward-splits 12
+```
+
+Downloaded `.py` strategy ideas should go first into `ideas/inbox/attachments/`, with a matching review note in `ideas/inbox/`. Do not place unreviewed downloaded strategy files directly into `src/tar_system/strategies/`.
