@@ -8,7 +8,6 @@ from tar_system.strategies.base import Signal
 
 @dataclass
 class RSITrendV4:
-    rsi_period: int = 14
     rsi_buy_level: float = 40
     rsi_sell_level: float = 60
     atr_multiplier: float = 2.0

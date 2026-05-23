@@ -20,7 +20,6 @@ TIMEFRAME = "M15"
 ATR_CAP = 8.2761   # Stage 2 winner: p90
 
 BASE_STRATEGY = RSITrendV4(
-    rsi_period=20,
     rsi_buy_level=40.0,
     rsi_sell_level=60.0,
     atr_multiplier=2.0,

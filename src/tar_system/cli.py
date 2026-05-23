@@ -325,6 +325,12 @@ def run_dashboard_cmd(args: argparse.Namespace) -> None:
     print("streamlit run src/tar_system/dashboard/app.py")
 
 
+def run_web_ui_cmd(args: argparse.Namespace) -> None:
+    from tar_system.web_ui.server import run
+
+    run(host=args.host, port=args.port)
+
+
 def promote_candidate_cmd(args: argparse.Namespace) -> None:
     from dataclasses import asdict
 
@@ -533,6 +539,41 @@ def compare_assets_cmd(args: argparse.Namespace) -> None:
     print(json.dumps([asdict(row) for row in rows], indent=2, default=str))
 
 
+def tune_strategy_cmd(args: argparse.Namespace) -> None:
+    from tar_system.strategies.registry import get_strategy
+    from tar_system.tuner.pipeline import StrategyTuner
+
+    raw_params = getattr(args, "params", None) or []
+    parsed: dict = {}
+    for pair in raw_params:
+        k, _, v = pair.partition("=")
+        try:
+            parsed[k.strip()] = float(v) if "." in v else int(v)
+        except ValueError:
+            parsed[k.strip()] = v
+    strategy = get_strategy(args.strategy, **parsed)
+    tuner = StrategyTuner(args.symbol, args.timeframe, strategy, args.broker)
+    print(f"Tuning {args.strategy} on {args.symbol} {args.timeframe}...")
+    result = tuner.run()
+    out = tuner.save(result)
+
+    print(f"\n{'='*60}")
+    print(f"TUNE-STRATEGY RESULT: {result.symbol} {result.timeframe} {result.strategy_name}")
+    print(f"{'='*60}")
+    for stage in result.stages:
+        status = "PASS" if stage.passed else "FAIL"
+        print(f"  {stage.stage:<22} [{status}]  {stage.note}")
+    print(f"\n  Optimal config:")
+    for k, v in result.optimal_config.items():
+        print(f"    {k}: {v}")
+    print(f"\n  Final metrics:")
+    for k, v in result.summary.items():
+        print(f"    {k}: {v}")
+    mt5 = "✅ MT5 READY" if result.mt5_ready else f"❌ NOT MT5 READY — {result.mt5_block_reason}"
+    print(f"\n  {mt5}")
+    print(f"  Config saved: {out}")
+
+
 def compare_variants_cmd(args: argparse.Namespace) -> None:
     from tar_system.reporting.reporter import generate_variant_comparison_report
 
@@ -727,6 +768,88 @@ def export_ai_review_packet_cmd(args: argparse.Namespace) -> None:
 
     path = export_ai_review_packet(args.output, args.limit)
     print(json.dumps({"packet_path": str(path), "json_path": str(path.with_suffix(".json"))}, indent=2))
+
+
+def run_static_analysis_scan_cmd(args: argparse.Namespace) -> None:
+    from tar_system.reporting.static_analysis import run_static_analysis_scan
+
+    try:
+        result = run_static_analysis_scan(args.tool, args.target, args.output, args.config)
+    except FileNotFoundError as exc:
+        print(
+            json.dumps(
+                {
+                    "tool": args.tool,
+                    "target": args.target,
+                    "output_path": args.output,
+                    "return_code": 127,
+                    "scan_only": True,
+                    "status": "UNAVAILABLE",
+                    "error": str(exc),
+                },
+                indent=2,
+            )
+        )
+        return
+    print(
+        json.dumps(
+            {
+                "tool": result.tool,
+                "output_path": str(result.output_path),
+                "command": result.command,
+                "return_code": result.return_code,
+                "scan_only": True,
+                "status": "COMPLETED" if result.return_code == 0 else "FAILED",
+            },
+            indent=2,
+        )
+    )
+
+
+def run_local_construction_audit_cmd(args: argparse.Namespace) -> None:
+    from tar_system.reporting.static_analysis import run_local_construction_audit
+
+    try:
+        result = run_local_construction_audit(
+            tool=args.tool,
+            target=args.target,
+            scan_output=args.scan_output,
+            packet_output=args.packet_output,
+            config=args.config,
+            limit=args.limit,
+        )
+    except FileNotFoundError as exc:
+        payload = {
+            "tool": args.tool,
+            "target": args.target,
+            "scan_output_path": args.scan_output,
+            "packet_path": args.packet_output,
+            "scan_return_code": 127,
+            "scan_status": "UNAVAILABLE",
+            "passed": False,
+            "error": str(exc),
+        }
+        print(json.dumps(payload, indent=2))
+        if args.fail_on_findings:
+            raise SystemExit(127)
+        return
+
+    payload = {
+        "tool": result.tool,
+        "target": result.target,
+        "scan_status": result.scan_status,
+        "scan_return_code": result.scan_return_code,
+        "scan_output_path": result.scan_output_path,
+        "packet_path": result.packet_path,
+        "packet_json_path": result.packet_json_path,
+        "total_findings": result.total_findings,
+        "severity_counts": result.severity_counts,
+        "passed": result.passed,
+        "scan_only": True,
+    }
+    print(json.dumps(payload, indent=2))
+    if args.fail_on_findings and not result.passed:
+        raise SystemExit(1)
 
 
 def run_research_committee_cmd(args: argparse.Namespace) -> None:
@@ -1338,6 +1461,11 @@ def build_parser() -> argparse.ArgumentParser:
     dashboard_parser = subparsers.add_parser("run-dashboard")
     dashboard_parser.set_defaults(func=run_dashboard_cmd)
 
+    web_ui_parser = subparsers.add_parser("run-web-ui")
+    web_ui_parser.add_argument("--host", default="127.0.0.1")
+    web_ui_parser.add_argument("--port", type=int, default=8601)
+    web_ui_parser.set_defaults(func=run_web_ui_cmd)
+
     forward_parser = subparsers.add_parser("forward-test")
     forward_parser.add_argument("--strategy", required=True)
     forward_parser.add_argument("--symbol", required=True)
@@ -1496,6 +1624,23 @@ def build_parser() -> argparse.ArgumentParser:
     ai_packet_parser.add_argument("--limit", type=int, default=10)
     ai_packet_parser.set_defaults(func=export_ai_review_packet_cmd)
 
+    static_scan_parser = subparsers.add_parser("run-static-analysis-scan")
+    static_scan_parser.add_argument("--tool", choices=["opengrep", "semgrep"], default="opengrep")
+    static_scan_parser.add_argument("--target", default="src")
+    static_scan_parser.add_argument("--output", default=None)
+    static_scan_parser.add_argument("--config", default="auto")
+    static_scan_parser.set_defaults(func=run_static_analysis_scan_cmd)
+
+    local_audit_parser = subparsers.add_parser("run-local-construction-audit")
+    local_audit_parser.add_argument("--tool", choices=["opengrep", "semgrep"], default="opengrep")
+    local_audit_parser.add_argument("--target", default="src")
+    local_audit_parser.add_argument("--scan-output", default="runtime/static_analysis/opengrep.json")
+    local_audit_parser.add_argument("--packet-output", default="runtime/ai_review_packet.md")
+    local_audit_parser.add_argument("--config", default="auto")
+    local_audit_parser.add_argument("--limit", type=int, default=10)
+    local_audit_parser.add_argument("--fail-on-findings", action="store_true")
+    local_audit_parser.set_defaults(func=run_local_construction_audit_cmd)
+
     committee_parser = subparsers.add_parser("run-research-committee")
     committee_parser.add_argument("--strategy", required=True)
     committee_parser.add_argument("--symbol", required=True)
@@ -1556,6 +1701,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     show_queue_parser = subparsers.add_parser("show-queue")
     show_queue_parser.set_defaults(func=show_queue_cmd)
+
+    tune_parser = subparsers.add_parser("tune-strategy",
+        help="Run Stage 1-3 tuning pipeline for a strategy on a symbol. Outputs validated MT5 config.")
+    tune_parser.add_argument("--strategy", required=True)
+    tune_parser.add_argument("--symbol", required=True)
+    tune_parser.add_argument("--timeframe", required=True)
+    tune_parser.add_argument("--broker", default="current_broker_demo")
+    tune_parser.add_argument("--params", nargs="*", metavar="KEY=VALUE",
+        help="Strategy params as key=value pairs, e.g. rsi_buy_level=38 reward_risk=3.5")
+    tune_parser.set_defaults(func=tune_strategy_cmd)
 
     pipeline_parser = subparsers.add_parser("run-full-pipeline")
     pipeline_parser.add_argument("--strategy", required=True)
