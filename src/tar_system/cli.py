@@ -154,7 +154,7 @@ def score_strategy_cmd(args: argparse.Namespace) -> None:
     ma_result = score_multi_agent(gate_metrics)
     ma_codes = ["MULTI_AGENT_KILL"] if ma_result.verdict == "KILL" else []
     reason_codes = _merge_reason_codes(score.reason_codes, gate.reason_codes, ma_codes)
-    final_verdict = "KILL" if ma_result.verdict == "KILL" else gate.verdict
+    final_verdict = "KILL" if "KILL" in (score.verdict, gate.verdict, ma_result.verdict) else gate.verdict
     metrics = {**gate_metrics, "gate_failed": gate.failed_gate or "", "gate_reason": gate.reason}
     resolved = resolve_strategy(args.strategy, args.symbol, args.timeframe, getattr(args, "broker", "current_broker_demo"), audit=True)
     strategy = resolved.strategy
@@ -1003,7 +1003,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
         ma_result = score_multi_agent(stage_metrics)
         ma_codes = ["MULTI_AGENT_KILL"] if ma_result.verdict == "KILL" else []
         reason_codes = _merge_reason_codes(stage_score.reason_codes, stage_gate.reason_codes, ma_codes)
-        final_verdict = "KILL" if ma_result.verdict == "KILL" else stage_gate.verdict
+        final_verdict = "KILL" if "KILL" in (stage_score.verdict, stage_gate.verdict, ma_result.verdict) else stage_gate.verdict
         stage_metrics = {
             **stage_metrics,
             "gate_failed": stage_gate.failed_gate or "",
