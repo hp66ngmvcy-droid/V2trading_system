@@ -97,6 +97,10 @@ def run_backtest(
                     )
                     portfolio.on_fill(close_fill)
 
+            # Skip if same-direction position already open for this symbol.
+            if any(p.symbol == signal.symbol and p.side == signal.side for p in portfolio.open_positions):
+                continue
+
             # Then open new position
             contract_size = symbol_profile.contract_size if symbol_profile else None
             quantity = _safe_backtest_quantity(
