@@ -44,10 +44,8 @@ class RSITrendV4:
         if self.liquid_sessions_only and not liquid:
             return hold
 
-        # EMA crossover regime gate: only trade with the macro trend.
-        if self.ema_cross_gate:
-            in_uptrend = ema_fast > ema_slow
-            in_downtrend = ema_fast < ema_slow
+        in_uptrend = ema_fast > ema_slow
+        in_downtrend = ema_fast < ema_slow
 
         confidence = min(0.95, 0.5 + abs(rsi - 50) / 100)
         stop_distance = atr * self.atr_multiplier if atr > 0 else entry * 0.01

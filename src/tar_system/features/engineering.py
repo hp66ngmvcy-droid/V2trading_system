@@ -18,7 +18,8 @@ def build_features(
     work = df.sort_values("timestamp").copy()
     # Prefer tick volume for forex data where real volume is unavailable.
     if "volume" not in work.columns or work["volume"].eq(0).all():
-        work["volume"] = work.get("<TICKVOL>", work.get("tickvol", pd.Series(1, index=work.index)))
+        fallback = work["<TICKVOL>"] if "<TICKVOL>" in work.columns else work["tickvol"] if "tickvol" in work.columns else None
+        work["volume"] = fallback if fallback is not None else float("nan")
     work["ema_fast"] = work["close"].ewm(span=fast_window, adjust=False).mean()
     work["ema_slow"] = work["close"].ewm(span=slow_window, adjust=False).mean()
     work["ema_fast_slope"] = ((work["ema_fast"] - work["ema_fast"].shift(3)) / 3 / work["close"]).fillna(0)

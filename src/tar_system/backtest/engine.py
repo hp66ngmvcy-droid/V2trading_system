@@ -69,15 +69,15 @@ def run_backtest(
             if pos.take_profit is not None or pos.stop_loss is not None:
                 exit_price = None
                 if pos.side == "BUY":
-                    if pos.take_profit and bar_high >= pos.take_profit:
-                        exit_price = pos.take_profit
-                    elif pos.stop_loss and bar_low <= pos.stop_loss:
+                    if pos.stop_loss and bar_low <= pos.stop_loss:
                         exit_price = pos.stop_loss
+                    elif pos.take_profit and bar_high >= pos.take_profit:
+                        exit_price = pos.take_profit
                 else:
-                    if pos.take_profit and bar_low <= pos.take_profit:
-                        exit_price = pos.take_profit
-                    elif pos.stop_loss and bar_high >= pos.stop_loss:
+                    if pos.stop_loss and bar_high >= pos.stop_loss:
                         exit_price = pos.stop_loss
+                    elif pos.take_profit and bar_low <= pos.take_profit:
+                        exit_price = pos.take_profit
                 if exit_price is not None:
                     tp_sl_profile = broker_profile.symbol_profile(pos.symbol) if broker_profile else None
                     close_fill = broker.close_position(

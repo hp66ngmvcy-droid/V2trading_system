@@ -195,7 +195,8 @@ def _walk_forward_verdict(
     if bool(bootstrap_ci.get("spans_zero", True)):
         # High-RR strategies have inherently wide per-trade CI; waive when
         # PF and Sharpe both clear stronger thresholds.
-        if profit_factor >= 1.15 and sharpe >= 1.0:
+        total_trades = float(metrics.get("total_trades", 0.0) or 0.0)
+        if profit_factor >= 1.15 and sharpe >= 1.0 and total_trades >= 30:
             return "KEEP", f"{split_count} walk-forward splits passed (PF {profit_factor:.2f}, Sharpe {sharpe:.2f}; CI waived)."
         return "REVIEW", "Walk-forward bootstrap confidence interval spans zero."
     return "KEEP", f"{split_count} walk-forward splits passed validation."
