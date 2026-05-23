@@ -255,7 +255,8 @@ class PaperBroker:
 
     def _spread_amount(self, price: float, symbol: str, model: str | None, manual_spread: float | None) -> float:
         if manual_spread is not None:
-            return float(manual_spread)
+            # Data stores spread in points; convert to price units.
+            return float(manual_spread) * pip_size(symbol)
         if model == "high":
             return price * 0.001
         pips = {"low": 0.5, "medium": 1.5, "medium_high": 3.0}.get(model or "", self.default_spread)
