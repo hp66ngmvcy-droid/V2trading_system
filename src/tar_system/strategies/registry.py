@@ -15,6 +15,7 @@ from .multi_timeframe_v3 import MultiTimeframeV3
 from .ema_volume_fixed import EMAVolumeFixed
 from .atr_breakout_fixed import ATRBreakoutFixed
 from .liquidity_sweep_v1 import LiquiditySweepV1
+from .rsi_trend_v4 import RSITrendV4
 
 REGISTRY = {
     "gold_v2": GoldV2,
@@ -28,6 +29,7 @@ REGISTRY = {
     "ema_volume_fixed": EMAVolumeFixed,
     "atr_breakout_fixed": ATRBreakoutFixed,
     "liquidity_sweep_v1": LiquiditySweepV1,
+    "rsi_trend_v4": RSITrendV4,
 }
 
 
