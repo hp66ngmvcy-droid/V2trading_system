@@ -127,3 +127,46 @@ PYTHONPATH=src venv/bin/python scripts/continuous_parameter_search.py \
 ```
 
 Downloaded `.py` strategy ideas should go first into `ideas/inbox/attachments/`, with a matching review note in `ideas/inbox/`. Do not place unreviewed downloaded strategy files directly into `src/tar_system/strategies/`.
+
+### 2026-05-23 - MT5 Parameter Testing Protocol (Post-Failure)
+
+5 simultaneous parameter changes caused a blowup: 1 trade, 0.00 PF, -2.85 GBP.
+
+Changes that broke it (applied together):
+- RSI period 20→14 (more noise)
+- SL 2.0x→1.5x ATR (too tight for XAUUSD M15 volatility)
+- Spread filter 30→15 pts (excluded most tradeable time)
+- Session start 7→8 UTC (missed morning volatility)
+- Session end 20→17 UTC (missed US session)
+
+**Rule: ONE change at a time. Backtest between each change.**
+
+Correct test sequence for RSITrendV4:
+1. EMA slope gate only → backtest → verify trade count holds
+2. If stable → test spread 30→20 pts → backtest → check trade count
+3. If stable → test session tighten → backtest
+4. If stable → test SL 2.0→1.8x → backtest
+5. RSI levels last — most sensitive to trade count
+
+XAUUSD M15 floors:
+- SL minimum: 2.0x ATR (1.5x causes excessive stops)
+- Spread: 20 pts safe; 15 pts may exclude high-volatility periods
+- Session: 7–20 UTC baseline; narrow cautiously
+
+### 2026-05-23 - MT5 Research Sanity Check Added
+
+Added `scripts/mt5_research_sanity_check.py` to prove the core research plumbing before chasing strategy profitability.
+
+Purpose:
+- Compare selected local MT5 raw CSV files against the research artifacts.
+- Run the real CLI path: import CSV, validate data, build features, backtest, walk-forward, score, and forward-test.
+- Write review outputs to `reports/mt5_research_sanity_check.json` and `reports/mt5_research_sanity_check.md`.
+
+Default cross-section:
+- XAUUSD M15
+- EURUSD M15
+- GBPUSD H1
+- BTCUSD H1
+- USOUSD M30
+
+Use `--dry-run` first to inspect planned commands without crunching data.
