@@ -55,7 +55,8 @@ def calculate_metrics(trades: list[Trade], equity_curve: list[tuple[object, floa
 
 
 def _trade_return(trade: Trade, pnl: float) -> float:
-    basis = abs(float(trade.entry_price) * float(trade.quantity))
+    cs = float(getattr(trade, "contract_size", 1.0) or 1.0)
+    basis = abs(float(trade.entry_price) * float(trade.quantity) * cs)
     return pnl / basis if basis else 0.0
 
 

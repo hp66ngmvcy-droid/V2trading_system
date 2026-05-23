@@ -100,7 +100,7 @@ def run_backtest(
         signal = strategy.generate_signal(row, regime)
         decision = risk.evaluate(
             signal,
-            current_drawdown=portfolio.drawdown(),
+            current_drawdown=portfolio.drawdown_marked(float(row.get("close", 0) or 0)),
             current_exposure=portfolio.exposure(),
             current_volatility=float(row.get("rolling_volatility", 0) or 0),
         )

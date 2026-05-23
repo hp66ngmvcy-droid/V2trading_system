@@ -66,8 +66,14 @@ def _walk_forward_reason_codes(walk_forward_metrics: dict[str, Any] | None) -> l
     split_count = int(walk_forward_metrics.get("split_count", walk_forward_metrics.get("window_count", 0)) or 0)
     if split_count <= 0 or walk_forward_metrics.get("ran") is False:
         return ["WF_NOT_RUN"]
-    stitched = walk_forward_metrics.get("stitched_metrics", walk_forward_metrics)
     reasons: list[str] = []
+    # Require at least 3 splits and an explicit KEEP verdict.
+    if split_count < 3:
+        reasons.append("WF_TOO_FEW_SPLITS")
+    wf_verdict = str(walk_forward_metrics.get("wf_verdict", "REVIEW") or "REVIEW")
+    if wf_verdict != "KEEP":
+        reasons.append("WF_VERDICT_REVIEW")
+    stitched = walk_forward_metrics.get("stitched_metrics", walk_forward_metrics)
     if float(stitched.get("total_trades", 0.0) or 0.0) <= 0:
         reasons.append("WF_NO_TRADES")
     if float(stitched.get("max_drawdown", 0.0) or 0.0) > 0.20:
@@ -81,7 +87,10 @@ def _walk_forward_reason_codes(walk_forward_metrics: dict[str, Any] | None) -> l
             stability = float(stability_payload.get("stability_score", 0.0) or 0.0)
     if stability < 50.0:
         reasons.append("WF_UNSTABLE_PARAMETERS")
-    bootstrap_ci = walk_forward_metrics.get("bootstrap_ci", {})
-    if isinstance(bootstrap_ci, dict) and bool(bootstrap_ci.get("spans_zero", False)):
+    # Missing or invalid CI is treated as failing — omitting CI must not be a bypass.
+    bootstrap_ci = walk_forward_metrics.get("bootstrap_ci")
+    if not isinstance(bootstrap_ci, dict) or "spans_zero" not in bootstrap_ci:
+        reasons.append("WF_BOOTSTRAP_CI_MISSING")
+    elif bool(bootstrap_ci.get("spans_zero", True)):
         reasons.append("WF_BOOTSTRAP_CI_SPANS_ZERO")
     return reasons

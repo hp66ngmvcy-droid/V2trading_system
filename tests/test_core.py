@@ -246,9 +246,12 @@ def test_scorer_can_keep_with_strong_walk_forward() -> None:
     metrics = {"win_rate": 0.65, "profit_factor": 2.4, "max_drawdown": 0.08, "total_trades": 60, "expectancy": 12}
     walk_forward = {
         "split_count": 3,
+        "window_count": 3,
         "ran": True,
+        "wf_verdict": "KEEP",
         "stitched_metrics": {"total_trades": 30, "profit_factor": 1.4, "max_drawdown": 0.10},
         "parameter_stability_score": 60.0,
+        "bootstrap_ci": {"spans_zero": False, "ci_lower": 0.01, "ci_upper": 0.12},
     }
     score = score_strategy(metrics, walk_forward, "M15", require_walk_forward=True)
     assert score.verdict == "KEEP"
