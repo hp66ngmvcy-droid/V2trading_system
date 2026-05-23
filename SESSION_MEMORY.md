@@ -153,6 +153,51 @@ XAUUSD M15 floors:
 - Spread: 20 pts safe; 15 pts may exclude high-volatility periods
 - Session: 7–20 UTC baseline; narrow cautiously
 
+### 2026-05-23 - Confirmed Baseline Parameters (XAUUSD M15, APPROVED)
+
+Test ID: XAUUSD_M15_20260415 — DO NOT CHANGE THESE until each stage completes.
+
+```
+RSI Period:     20       (NOT 14 — 14 increases noise)
+RSI Buy:        42
+RSI Sell:       58
+EMA Fast:       12
+EMA Slow:       26
+ATR Period:     14
+SL Multiplier:  2.0x ATR (NOT 1.5 — floor confirmed by failure test)
+TP Multiplier:  3.0x
+Risk:           1.0% per trade
+Lot size:       0.01
+Session:        07:00-20:00 UTC (NOT 8-17 — caused trade collapse)
+Spread filter:  30 pts (NOT 15 — excluded 60%+ of trades)
+Slippage:       20 pts
+```
+
+Results: 288 trades, 71.53% win rate, PF 1.02, DD 81.74%, +39.64 GBP.
+Signal quality STRONG. Drawdown is the only problem.
+
+### 2026-05-23 - Stage Progression Roadmap
+
+**Current:** Pre-Stage 1 (baseline documented, EMA slope gate added to MT5)
+
+| Stage | Task | Target | Status |
+|-------|------|--------|--------|
+| 1 | Broker cost modelling | Add real spreads/commission to backtest | ⏳ NEXT |
+| 2 | Volatility gates | ATR-based position size reduction; target DD < 40% | — |
+| 3 | Session filter validation | London/US overlap windows | — |
+| 4 | Parameter isolation | One-at-a-time sweeps (RSI, EMA, SL, TP) | — |
+| 5 | Position sizing | Kelly/fixed fractional; cap DD < 30% | — |
+| 6 | Second strategy | RSI mean reversion (shorts 21.93% vs longs 32.76%) | — |
+| 7 | Dashboard | Real-time monitoring | — |
+| 8 | Autonomous controller | Auto parameter sweep + live WF validation | — |
+
+Stage 4 isolation order (when reached):
+1. RSI Period: test [14, 18, 20, 24, 28] — one at a time, all else frozen
+2. SL Multiplier: test [1.8, 2.0, 2.2, 2.5]
+3. Session: test [7-18, 7-19, 7-20, 8-20]
+4. Spread filter: test [20, 25, 30] — after session confirmed
+5. RSI levels: test [38/62, 40/60, 42/58] — last, most sensitive
+
 ### 2026-05-23 - MT5 Research Sanity Check Added
 
 Added `scripts/mt5_research_sanity_check.py` to prove the core research plumbing before chasing strategy profitability.
