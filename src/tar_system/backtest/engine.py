@@ -45,6 +45,7 @@ def run_backtest(
     stopped = False
     reason_code: str | None = None
     last_row = None
+    last_row_by_symbol: dict[str, object] = {}
     for index, row in work.iterrows():
         status = read_backtest_status()
         if status.get("stop_requested"):
@@ -62,10 +63,12 @@ def run_backtest(
             write_status("backtest", {**status, "running": False, "latest_message": "stopped safely with partial result"})
             break
         last_row = row
+        row_symbol = str(row.get("symbol", ""))
+        if row_symbol:
+            last_row_by_symbol[row_symbol] = row
         # Check TP/SL for open positions before processing this bar's signal.
         bar_high = float(row.get("high", 0) or 0)
         bar_low = float(row.get("low", 0) or 0)
-        row_symbol = str(row.get("symbol", ""))
         for pos in list(portfolio.open_positions):
             if row_symbol and pos.symbol != row_symbol:
                 continue
@@ -151,12 +154,13 @@ def run_backtest(
             )
             fill.metadata["take_profit"] = signal.take_profit
             fill.metadata["stop_loss"] = signal.stop_loss
+            fill.metadata["contract_size"] = contract_size if contract_size is not None else 1.0
             portfolio.on_fill(fill)
 
     # Close any remaining open positions at the last processed bar (not future data).
     if last_row is not None and portfolio.open_positions:
-        final_row = last_row
         for pos in list(portfolio.open_positions):
+            final_row = last_row_by_symbol.get(pos.symbol, last_row)
             final_symbol_profile = broker_profile.symbol_profile(pos.symbol) if broker_profile else None
             close_fill = broker.close_position(
                 pos,

@@ -151,6 +151,11 @@ def derive_stable_parameter_ranges(fold_parameters: list[dict[str, float]]) -> t
     if not fold_parameters:
         return {}, 0.0
     keys = sorted(set().union(*(params.keys() for params in fold_parameters)))
+    if not keys:
+        return {}, 0.0
+    # Static strategies return identical params every fold — stability is unmeasurable.
+    if len(fold_parameters) > 1 and all(fp == fold_parameters[0] for fp in fold_parameters):
+        return {}, 0.0
     ranges: dict[str, tuple[float, float]] = {}
     stable = 0
     for key in keys:
@@ -191,13 +196,7 @@ def _walk_forward_verdict(
         return "REVIEW", f"Walk-forward profit factor {profit_factor:.2f} is below 1.10."
     if stability < 50.0:
         return "REVIEW", f"Walk-forward parameter stability {stability:.1f} is below 50."
-    sharpe = float(metrics.get("sharpe_ratio", 0.0) or 0.0)
     if bool(bootstrap_ci.get("spans_zero", True)):
-        # High-RR strategies have inherently wide per-trade CI; waive when
-        # PF and Sharpe both clear stronger thresholds.
-        total_trades = float(metrics.get("total_trades", 0.0) or 0.0)
-        if profit_factor >= 1.15 and sharpe >= 1.0 and total_trades >= 30:
-            return "KEEP", f"{split_count} walk-forward splits passed (PF {profit_factor:.2f}, Sharpe {sharpe:.2f}; CI waived)."
         return "REVIEW", "Walk-forward bootstrap confidence interval spans zero."
     return "KEEP", f"{split_count} walk-forward splits passed validation."
 

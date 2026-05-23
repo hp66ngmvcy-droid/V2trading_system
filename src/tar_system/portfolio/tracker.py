@@ -23,6 +23,7 @@ class Position:
     entry_cost: float = 0.0
     take_profit: float | None = None
     stop_loss: float | None = None
+    contract_size: float = 1.0
 
 
 @dataclass
@@ -79,7 +80,7 @@ class PortfolioTracker:
         opposite = "SELL" if fill.side == "BUY" else "BUY"
         existing = next((pos for pos in self.open_positions if pos.symbol == fill.symbol and pos.side == opposite), None)
         if existing:
-            gross_pnl = (fill.price - existing.entry_price) * existing.quantity
+            gross_pnl = (fill.price - existing.entry_price) * existing.quantity * existing.contract_size
             if existing.side == "SELL":
                 gross_pnl *= -1
             total_cost = existing.entry_cost + fill.total_cost
@@ -106,7 +107,8 @@ class PortfolioTracker:
         else:
             tp = fill.metadata.get("take_profit") if fill.metadata else None
             sl = fill.metadata.get("stop_loss") if fill.metadata else None
-            self.open_positions.append(Position(fill.symbol, fill.side, fill.quantity, fill.price, fill.timestamp, fill.total_cost, take_profit=tp, stop_loss=sl))
+            cs = float(fill.metadata.get("contract_size") or 1.0) if fill.metadata else 1.0
+            self.open_positions.append(Position(fill.symbol, fill.side, fill.quantity, fill.price, fill.timestamp, fill.total_cost, take_profit=tp, stop_loss=sl, contract_size=cs))
         self.equity_curve.append((fill.timestamp, self.current_equity))
         self._update_loss_guard()
 
