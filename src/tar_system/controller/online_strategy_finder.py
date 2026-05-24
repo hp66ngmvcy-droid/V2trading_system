@@ -16,6 +16,16 @@ from tar_system.controller.job_queue import active_job_keys, make_active_job_key
 from tar_system.strategies.registry import STRATEGIES
 
 
+def _run_broad_sweep(topics: list[str]) -> dict:
+    try:
+        from tar_system.research.exa_searcher import broad_sweep
+        return broad_sweep(topics)
+    except RuntimeError as exc:
+        return {"error": str(exc)}
+    except Exception as exc:
+        return {"error": f"exa_sweep failed: {exc}"}
+
+
 def find_and_queue_strategies(
     raw_dir: str | Path = "data/raw",
     force: bool = False,
@@ -27,6 +37,7 @@ def find_and_queue_strategies(
     max_walk_forward_splits: int | None = None,
     from_date: str | None = None,
     to_date: str | None = None,
+    web_topics: list[str] | None = None,
 ) -> dict[str, Any]:
     """Scan raw data and queue online strategy research jobs."""
     raw_dir = Path(raw_dir)
@@ -67,6 +78,7 @@ def find_and_queue_strategies(
             }
             for job in queued[:25]
         ],
+        "exa_sweep": _run_broad_sweep(web_topics) if web_topics else None,
     }
 
 

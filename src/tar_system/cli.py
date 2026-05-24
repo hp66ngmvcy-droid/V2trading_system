@@ -1374,6 +1374,18 @@ def _write_walk_forward_review_artifact(strategy: str, symbol: str, timeframe: s
     return output
 
 
+def scout_cmd(args: argparse.Namespace) -> None:
+    from tar_system.controller.online_strategy_finder import find_and_queue_strategies
+
+    topics = args.topics.split(",") if args.topics else None
+    result = find_and_queue_strategies(
+        raw_dir=args.raw_dir,
+        force=args.force,
+        web_topics=topics,
+    )
+    print(json.dumps(result, indent=2, default=str))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="TAR V2 local trading research CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1727,6 +1739,13 @@ def build_parser() -> argparse.ArgumentParser:
     pipeline_parser.add_argument("--to-date", default=None)
     pipeline_parser.add_argument("--forward-from-date", default=None)
     pipeline_parser.set_defaults(func=run_full_pipeline_cmd)
+
+    scout_parser = subparsers.add_parser("scout", help="Local queue scan + optional Exa web sweep")
+    scout_parser.add_argument("--raw-dir", default="data/raw")
+    scout_parser.add_argument("--force", action="store_true")
+    scout_parser.add_argument("--topics", default=None, help="Comma-separated web search topics (requires EXA_API_KEY)")
+    scout_parser.set_defaults(func=scout_cmd)
+
     return parser
 
 
