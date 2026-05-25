@@ -4,9 +4,26 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import tempfile
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
+
+
+def _atomic_write_json(path: Path, data: object) -> None:
+    """Write JSON atomically — prevents concurrent-worker corruption."""
+    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(json.dumps(data, indent=2, default=str))
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def import_csv(args: argparse.Namespace) -> None:
@@ -129,7 +146,7 @@ def run_backtest_cmd(args: argparse.Namespace) -> None:
     output = Path("data/results")
     output.mkdir(parents=True, exist_ok=True)
     path = output / f"{args.strategy}_{args.symbol}_{args.timeframe}_metrics.json"
-    path.write_text(json.dumps(result.metrics, indent=2), encoding="utf-8")
+    _atomic_write_json(path, result.metrics)
     payload = {"trades": result.trades, "final_equity": result.final_equity, "metrics": result.metrics}
     save_cached_result(cache_key, payload)
     append_review_result(args.strategy, strategy.version, args.symbol, args.timeframe, result.metrics, 0.0, "UNSCORED", "BACKTEST", "SCORE_STRATEGY")
@@ -708,6 +725,17 @@ def show_queue_cmd(args: argparse.Namespace) -> None:
     print(json.dumps(read_jobs(), indent=2, default=str))
 
 
+def queue_health_cmd(args: argparse.Namespace) -> None:
+    from tar_system.controller.job_queue import queue_health
+
+    result = queue_health(limit=args.limit)
+    if args.output:
+        output = Path(args.output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
+    print(json.dumps(result, indent=2, default=str))
+
+
 def run_controller_cmd(args: argparse.Namespace) -> None:
     from tar_system.controller.research_controller import run_controller_once, run_controller_watch
 
@@ -1040,7 +1068,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
         output = Path("data/results")
         output.mkdir(parents=True, exist_ok=True)
         path = output / f"{args.strategy}_{args.symbol}_{args.timeframe}_metrics.json"
-        path.write_text(json.dumps(result.metrics, indent=2), encoding="utf-8")
+        _atomic_write_json(path, result.metrics)
         append_review_result(args.strategy, strategy.version, args.symbol, args.timeframe, result.metrics, 0.0, "UNSCORED", "BACKTEST", "SCORE_STRATEGY")
         print(json.dumps({"trades": result.trades, "final_equity": result.final_equity, "metrics": result.metrics}, indent=2))
         return {"path": str(path), "trades": result.trades, "final_equity": result.final_equity}
@@ -1377,13 +1405,61 @@ def _write_walk_forward_review_artifact(strategy: str, symbol: str, timeframe: s
 def scout_cmd(args: argparse.Namespace) -> None:
     from tar_system.controller.online_strategy_finder import find_and_queue_strategies
 
-    topics = args.topics.split(",") if args.topics else None
+    topics = [topic.strip() for topic in args.topics.split(",") if topic.strip()] if args.topics else None
     result = find_and_queue_strategies(
         raw_dir=args.raw_dir,
         force=args.force,
         web_topics=topics,
+        multi_agent_query=args.multi_agent_query,
+        web_num_results=args.num_results,
+        web_max_workers=args.max_workers,
+        source_quality=args.source_quality,
     )
+    if args.hypothesis_dir:
+        from tar_system.research.hypothesis_notes import write_hypothesis_notes
+        result["hypothesis_notes"] = write_hypothesis_notes(
+            result,
+            output_dir=args.hypothesis_dir,
+            min_score=args.min_source_score,
+            limit=args.hypothesis_limit,
+        )
+    if args.output:
+        output = Path(args.output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
     print(json.dumps(result, indent=2, default=str))
+
+
+def scout_to_hypotheses_cmd(args: argparse.Namespace) -> None:
+    from tar_system.research.hypothesis_notes import write_hypothesis_notes
+
+    payload = json.loads(Path(args.input).read_text(encoding="utf-8"))
+    written = write_hypothesis_notes(
+        payload,
+        output_dir=args.output_dir,
+        min_score=args.min_source_score,
+        limit=args.limit,
+    )
+    print(json.dumps({"written": written, "count": len(written)}, indent=2, default=str))
+
+
+def run_daily_idea_loop_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from dotenv import load_dotenv
+
+    from tar_system.controller.daily_idea_loop import run_daily_idea_loop
+
+    load_dotenv()
+    result = run_daily_idea_loop(
+        online_query=args.online_query,
+        run_online=args.run_online,
+        output_dir=args.output_dir,
+        hypothesis_dir=args.hypothesis_dir,
+        min_source_score=args.min_source_score,
+        hypothesis_limit=args.hypothesis_limit,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1714,6 +1790,11 @@ def build_parser() -> argparse.ArgumentParser:
     show_queue_parser = subparsers.add_parser("show-queue")
     show_queue_parser.set_defaults(func=show_queue_cmd)
 
+    queue_health_parser = subparsers.add_parser("queue-health")
+    queue_health_parser.add_argument("--limit", type=int, default=10)
+    queue_health_parser.add_argument("--output", default=None)
+    queue_health_parser.set_defaults(func=queue_health_cmd)
+
     tune_parser = subparsers.add_parser("tune-strategy",
         help="Run Stage 1-3 tuning pipeline for a strategy on a symbol. Outputs validated MT5 config.")
     tune_parser.add_argument("--strategy", required=True)
@@ -1744,7 +1825,31 @@ def build_parser() -> argparse.ArgumentParser:
     scout_parser.add_argument("--raw-dir", default="data/raw")
     scout_parser.add_argument("--force", action="store_true")
     scout_parser.add_argument("--topics", default=None, help="Comma-separated web search topics (requires EXA_API_KEY)")
+    scout_parser.add_argument("--multi-agent-query", default=None, help="Run one Exa query through risk/performance/robustness search lenses")
+    scout_parser.add_argument("--num-results", type=int, default=5)
+    scout_parser.add_argument("--max-workers", type=int, default=None)
+    scout_parser.add_argument("--source-quality", choices=["balanced", "strict", "off"], default="balanced")
+    scout_parser.add_argument("--output", default=None, help="Optional JSON file path for saved scout output")
+    scout_parser.add_argument("--hypothesis-dir", default=None, help="Optional directory for generated hypothesis notes")
+    scout_parser.add_argument("--min-source-score", type=int, default=70)
+    scout_parser.add_argument("--hypothesis-limit", type=int, default=10)
     scout_parser.set_defaults(func=scout_cmd)
+
+    scout_hypothesis_parser = subparsers.add_parser("scout-to-hypotheses", help="Convert saved scout JSON into hypothesis notes")
+    scout_hypothesis_parser.add_argument("--input", required=True)
+    scout_hypothesis_parser.add_argument("--output-dir", default="ideas/research_queue")
+    scout_hypothesis_parser.add_argument("--min-source-score", type=int, default=70)
+    scout_hypothesis_parser.add_argument("--limit", type=int, default=10)
+    scout_hypothesis_parser.set_defaults(func=scout_to_hypotheses_cmd)
+
+    daily_idea_parser = subparsers.add_parser("run-daily-idea-loop", help="Write a paper-only daily idea review and optional online scout intake")
+    daily_idea_parser.add_argument("--run-online", action="store_true")
+    daily_idea_parser.add_argument("--online-query", default=None)
+    daily_idea_parser.add_argument("--output-dir", default="idea_reviews")
+    daily_idea_parser.add_argument("--hypothesis-dir", default="ideas/research_queue")
+    daily_idea_parser.add_argument("--min-source-score", type=int, default=70)
+    daily_idea_parser.add_argument("--hypothesis-limit", type=int, default=10)
+    daily_idea_parser.set_defaults(func=run_daily_idea_loop_cmd)
 
     return parser
 
