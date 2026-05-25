@@ -1,0 +1,96 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "M15",
+  "strategy_name": "vol_filtered_momentum_v1",
+  "tuned_at": "2026-05-25T12:19:39Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "Sharpe 1.35 < 1.5",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": true,
+      "best_config": {
+        "with_costs_pf": 1.0578
+      },
+      "metrics": {
+        "total_trades": 918.0,
+        "win_rate": 31.7,
+        "profit_factor": 1.0578,
+        "net_profit": 170.3535,
+        "max_drawdown_pct": 1.45,
+        "sharpe_ratio": 0.3569,
+        "expectancy": 0.1856
+      },
+      "note": "raw_pf=1.0837 costed_pf=1.0578"
+    },
+    {
+      "stage": "stage2_atr",
+      "passed": true,
+      "best_config": {
+        "atr_cap": 8.2761,
+        "percentile": 0.9,
+        "total_trades": 717.0,
+        "win_rate": 31.94,
+        "profit_factor": 1.0821,
+        "net_profit": 155.008,
+        "max_drawdown_pct": 1.45,
+        "sharpe_ratio": 0.5534,
+        "expectancy": 0.2162
+      },
+      "metrics": {
+        "atr_cap": 8.2761,
+        "percentile": 0.9,
+        "total_trades": 717.0,
+        "win_rate": 31.94,
+        "profit_factor": 1.0821,
+        "net_profit": 155.008,
+        "max_drawdown_pct": 1.45,
+        "sharpe_ratio": 0.5534,
+        "expectancy": 0.2162
+      },
+      "note": "best percentile=0.9 cap=8.2761"
+    },
+    {
+      "stage": "stage3_sessions",
+      "passed": true,
+      "best_config": {
+        "label": "7-16 (London+Overlap)",
+        "start_utc": 7,
+        "end_utc": 16,
+        "total_trades": 372.0,
+        "win_rate": 33.6,
+        "profit_factor": 1.2149,
+        "net_profit": 179.232,
+        "max_drawdown_pct": 0.68,
+        "sharpe_ratio": 1.3467,
+        "expectancy": 0.4818
+      },
+      "metrics": {
+        "start_utc": 7,
+        "end_utc": 16,
+        "total_trades": 372.0,
+        "win_rate": 33.6,
+        "profit_factor": 1.2149,
+        "net_profit": 179.232,
+        "max_drawdown_pct": 0.68,
+        "sharpe_ratio": 1.3467,
+        "expectancy": 0.4818
+      },
+      "note": "best session=7-16 (London+Overlap)"
+    }
+  ],
+  "optimal_config": {
+    "atr_cap": 8.2761,
+    "atr_percentile": 0.9,
+    "session_start_utc": 7,
+    "session_end_utc": 16,
+    "session_label": "7-16 (London+Overlap)"
+  },
+  "summary": {
+    "profit_factor": 1.2149,
+    "sharpe_ratio": 1.3467,
+    "max_drawdown_pct": 0.68,
+    "total_trades": 372.0,
+    "win_rate": 33.6
+  }
+}

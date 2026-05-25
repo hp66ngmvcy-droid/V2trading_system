@@ -1,0 +1,35 @@
+{
+  "symbol": "BTCUSD",
+  "timeframe": "H1",
+  "strategy_name": "gold_v2",
+  "tuned_at": "2026-05-25T11:52:14Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.4263
+      },
+      "metrics": {
+        "total_trades": 351.0,
+        "win_rate": 34.47,
+        "profit_factor": 0.4263,
+        "net_profit": -1983.5703,
+        "max_drawdown_pct": 20.11,
+        "sharpe_ratio": -6.5048,
+        "expectancy": -5.6512
+      },
+      "note": "raw_pf=1.126 costed_pf=0.4263"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.4263,
+    "sharpe_ratio": -6.5048,
+    "max_drawdown_pct": 20.11,
+    "total_trades": 351.0,
+    "win_rate": 34.47
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "symbol": "EURUSD",
+  "timeframe": "M15",
+  "strategy_name": "ema_volume_v3",
+  "tuned_at": "2026-05-25T09:40:43Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.734
+      },
+      "metrics": {
+        "total_trades": 10555.0,
+        "win_rate": 30.85,
+        "profit_factor": 0.734,
+        "net_profit": -1751.828,
+        "max_drawdown_pct": 17.66,
+        "sharpe_ratio": -2.0215,
+        "expectancy": -0.166
+      },
+      "note": "raw_pf=0.1276 costed_pf=0.734"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.734,
+    "sharpe_ratio": -2.0215,
+    "max_drawdown_pct": 17.66,
+    "total_trades": 10555.0,
+    "win_rate": 30.85
+  }
+}
