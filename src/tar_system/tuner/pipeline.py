@@ -33,6 +33,7 @@ SESSIONS = [
     ("7-18 (London+NY)", 7, 18),
     ("8-17 (Core)", 8, 17),
     ("7-16 (London+Overlap)", 7, 16),
+    ("8-15 (Core Tight)", 8, 15),
     ("12-23 (NY+Late)", 12, 23),
     ("0-24 (all hours)", 0, 24),
 ]
