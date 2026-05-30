@@ -1,0 +1,87 @@
+{
+  "generated_at": "2026-05-25T11:30:39+00:00",
+  "input_dir": "ideas/research_queue",
+  "output_path": "idea_reviews/hypothesis_review_2026-05-25.md",
+  "output_json_path": "idea_reviews/hypothesis_review_2026-05-25.json",
+  "reviewed_count": 5,
+  "ready_count": 0,
+  "needs_rules_count": 5,
+  "rejected_count": 0,
+  "items": [
+    {
+      "path": "ideas/research_queue/online-scout-20260525-05ab51a462-currency-momentum-strategies.md",
+      "idea_id": "online-scout-20260525-05ab51a462",
+      "title": "Currency Momentum Strategies",
+      "status": "hypothesis_extracted",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1809776",
+      "source_quality_score": 95,
+      "source_quality_label": "high",
+      "recommendation": "NEEDS_RULE_TRANSLATION",
+      "blockers": [
+        "strategy_rules_not_defined",
+        "review_gate_unchecked"
+      ],
+      "next_action": "Open the source, define exact Entry/Exit/Filters/Risk, then rerun review."
+    },
+    {
+      "path": "ideas/research_queue/online-scout-20260525-60ebef8e01-a-comparative-study-of-technical-trading-strategies-using-a-gene.md",
+      "idea_id": "online-scout-20260525-60ebef8e01",
+      "title": "A Comparative Study of Technical Trading Strategies Using a Genetic Algorithm",
+      "status": "hypothesis_extracted",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4515471",
+      "source_quality_score": 95,
+      "source_quality_label": "high",
+      "recommendation": "NEEDS_RULE_TRANSLATION",
+      "blockers": [
+        "strategy_rules_not_defined",
+        "review_gate_unchecked"
+      ],
+      "next_action": "Open the source, define exact Entry/Exit/Filters/Risk, then rerun review."
+    },
+    {
+      "path": "ideas/research_queue/online-scout-20260525-6c71c4f887-untitled.md",
+      "idea_id": "online-scout-20260525-6c71c4f887",
+      "title": "Untitled source",
+      "status": "hypothesis_extracted",
+      "source_url": "https://www.wne.uw.edu.pl/download_file/4308/2141",
+      "source_quality_score": 95,
+      "source_quality_label": "high",
+      "recommendation": "NEEDS_RULE_TRANSLATION",
+      "blockers": [
+        "strategy_rules_not_defined",
+        "review_gate_unchecked"
+      ],
+      "next_action": "Open the source, define exact Entry/Exit/Filters/Risk, then rerun review."
+    },
+    {
+      "path": "ideas/research_queue/online-scout-20260525-bcc4b0d614-a-multi-strategy-approach-to-trading-foreign-exchange-futures.md",
+      "idea_id": "online-scout-20260525-bcc4b0d614",
+      "title": "A Multi Strategy Approach to Trading Foreign Exchange Futures",
+      "status": "hypothesis_extracted",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3322717",
+      "source_quality_score": 95,
+      "source_quality_label": "high",
+      "recommendation": "NEEDS_RULE_TRANSLATION",
+      "blockers": [
+        "strategy_rules_not_defined",
+        "review_gate_unchecked"
+      ],
+      "next_action": "Open the source, define exact Entry/Exit/Filters/Risk, then rerun review."
+    },
+    {
+      "path": "ideas/research_queue/online-scout-20260525-c0a0b10349-momentum-and-trend-following-trading-strategies-for-currencies-r.md",
+      "idea_id": "online-scout-20260525-c0a0b10349",
+      "title": "Momentum and Trend Following Trading Strategies for Currencies Revisited - Combining Academia and Industry",
+      "status": "hypothesis_extracted",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2949379",
+      "source_quality_score": 95,
+      "source_quality_label": "high",
+      "recommendation": "NEEDS_RULE_TRANSLATION",
+      "blockers": [
+        "strategy_rules_not_defined",
+        "review_gate_unchecked"
+      ],
+      "next_action": "Open the source, define exact Entry/Exit/Filters/Risk, then rerun review."
+    }
+  ]
+}

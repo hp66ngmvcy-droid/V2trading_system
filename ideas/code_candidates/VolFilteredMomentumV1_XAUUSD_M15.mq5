@@ -11,6 +11,7 @@ input double   RSI_BUY_THRESHOLD     = 57.0;
 input double   RSI_SELL_THRESHOLD    = 43.0;
 input int      SESSION_START_UTC     = 8;       // 08:00 UTC
 input int      SESSION_END_UTC       = 15;      // 15:00 UTC (exclusive)
+input int      SERVER_UTC_OFFSET     = 3;       // broker server = UTC+3
 input double   ATR_CAP               = 8.2761;  // P90 cap from tuner
 input double   EMA_SLOPE_THRESHOLD   = 0.00015; // normalised slope
 input double   ATR_MULTIPLIER        = 2.0;     // stop distance = ATR * this
@@ -66,10 +67,10 @@ void OnTick()
     if (currentBar == lastBar) return;
     lastBar = currentBar;
 
-    // --- session gate (UTC hour of closed bar = bar index 1) ---
+    // --- session gate: convert server time → UTC ---
     MqlDateTime dt;
     TimeToStruct(iTime(_Symbol, PERIOD_M15, 1), dt);
-    int hourUTC = dt.hour;
+    int hourUTC = (dt.hour - SERVER_UTC_OFFSET + 24) % 24;
     if (hourUTC < SESSION_START_UTC || hourUTC >= SESSION_END_UTC) return;
 
     // --- read indicators on last closed bar (index 1) ---

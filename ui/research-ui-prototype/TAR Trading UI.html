@@ -1,0 +1,2459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TAR Trading System — Research UI</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* TAR Trading System — engineering-tool spartan */
+
+:root {
+  --bg: #0a0c10;
+  --panel: #11141a;
+  --panel-2: #161a22;
+  --panel-3: #1c2028;
+  --border: #1f242d;
+  --border-strong: #2a3140;
+  --text: #e6e8eb;
+  --text-2: #8b929e;
+  --text-3: #5a6170;
+  --text-4: #3d434e;
+
+  /* status colors - share chroma */
+  --green: oklch(70% 0.15 150);
+  --green-bg: oklch(70% 0.15 150 / 0.12);
+  --green-border: oklch(70% 0.15 150 / 0.3);
+  --amber: oklch(78% 0.15 75);
+  --amber-bg: oklch(78% 0.15 75 / 0.12);
+  --amber-border: oklch(78% 0.15 75 / 0.3);
+  --red: oklch(68% 0.20 25);
+  --red-bg: oklch(68% 0.20 25 / 0.14);
+  --red-border: oklch(68% 0.20 25 / 0.35);
+  --blue: oklch(70% 0.14 235);
+  --blue-bg: oklch(70% 0.14 235 / 0.12);
+  --blue-border: oklch(70% 0.14 235 / 0.3);
+  --violet: oklch(70% 0.15 295);
+
+  --accent: var(--blue);
+  --accent-bg: var(--blue-bg);
+
+  --mono: "JetBrains Mono", "IBM Plex Mono", "SF Mono", Menlo, monospace;
+  --sans: "IBM Plex Sans", -apple-system, system-ui, sans-serif;
+
+  --row: 28px;
+  --gap: 12px;
+  --pad: 14px;
+  --radius: 4px;
+}
+
+[data-theme="light"] {
+  --bg: #f6f6f4;
+  --panel: #ffffff;
+  --panel-2: #fafaf8;
+  --panel-3: #f0f0ec;
+  --border: #e2e2dc;
+  --border-strong: #c8c8c0;
+  --text: #16181c;
+  --text-2: #5a6170;
+  --text-3: #8b929e;
+  --text-4: #b8bdc5;
+  --green-bg: oklch(70% 0.15 150 / 0.14);
+  --amber-bg: oklch(78% 0.15 75 / 0.16);
+  --red-bg: oklch(68% 0.20 25 / 0.12);
+  --blue-bg: oklch(70% 0.14 235 / 0.12);
+}
+
+[data-density="compact"] {
+  --row: 24px;
+  --gap: 8px;
+  --pad: 10px;
+}
+[data-density="comfortable"] {
+  --row: 34px;
+  --gap: 16px;
+  --pad: 18px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+
+.mono { font-family: var(--mono); font-feature-settings: "zero", "ss01"; }
+.muted { color: var(--text-2); }
+.dim { color: var(--text-3); }
+.faint { color: var(--text-4); }
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+button {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 80ms, border-color 80ms;
+}
+button:hover { background: var(--panel-3); border-color: var(--border-strong); }
+button:active { transform: translateY(0.5px); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button.primary { background: var(--accent-bg); border-color: var(--blue-border); color: var(--blue); }
+button.primary:hover { background: oklch(70% 0.14 235 / 0.2); }
+button.danger { color: var(--red); border-color: var(--red-border); }
+button.icon { padding: 5px 7px; }
+
+input[type="text"], input[type="search"], select, textarea {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 8px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  outline: none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px var(--blue-bg);
+}
+
+/* ====== APP SHELL ====== */
+.app {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "banner banner"
+    "sidebar main";
+  min-height: 100vh;
+}
+
+.env-banner {
+  grid-area: banner;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.env-banner.safe   { background: var(--green-bg); border-bottom-color: var(--green-border); color: var(--green); }
+.env-banner.caution { background: var(--amber-bg); border-bottom-color: var(--amber-border); color: var(--amber); }
+.env-banner.hold   { background: var(--amber-bg); border-bottom-color: var(--amber-border); color: var(--amber); }
+.env-banner.block  { background: var(--red-bg); border-bottom-color: var(--red-border); color: var(--red); }
+.env-banner .state-code {
+  font-family: var(--mono);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.25);
+  font-size: 11px;
+}
+[data-theme="light"] .env-banner .state-code { background: rgba(255,255,255,0.6); }
+.env-banner .pulse {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 0.4; }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+.env-banner .right { margin-left: auto; display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 11px; opacity: 0.85; }
+
+/* ====== SIDEBAR ====== */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sidebar .brand {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+.sidebar .brand .mark {
+  width: 22px; height: 22px;
+  background: var(--text);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 11px;
+  display: grid; place-items: center;
+  border-radius: 3px;
+}
+.sidebar .brand .name {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.sidebar .brand .ver {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+.sidebar .section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  padding: 14px 10px 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: 12.5px;
+  user-select: none;
+}
+.nav-item:hover { background: var(--panel-2); color: var(--text); }
+.nav-item.active { background: var(--panel-3); color: var(--text); }
+.nav-item .nav-icon {
+  width: 14px; height: 14px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.nav-item .nav-kbd {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  background: var(--panel-2);
+  padding: 1px 5px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+}
+.nav-item.active .nav-kbd { background: var(--bg); }
+.sidebar .spacer { flex: 1; }
+.sidebar .footer {
+  padding: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.sidebar .footer .row { display: flex; justify-content: space-between; }
+.sidebar .footer .ok { color: var(--green); }
+
+/* ====== MAIN ====== */
+.main {
+  grid-area: main;
+  padding: 18px 22px 60px;
+  overflow-x: hidden;
+}
+.page-head {
+  display: flex; align-items: baseline; gap: 16px;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.page-head h1 {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 18px;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.page-head .crumb {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+.page-head .actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.page-head .timestamp {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+.page-head .dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+/* ====== CARDS ====== */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.card .card-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+.card .card-head .title { color: var(--text); }
+.card .card-head .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.card .card-body { padding: var(--pad); }
+.card.flat { background: transparent; }
+
+.grid { display: grid; gap: var(--gap); }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-5 { grid-template-columns: repeat(5, 1fr); }
+.grid-6 { grid-template-columns: repeat(6, 1fr); }
+
+/* ====== BADGES ====== */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.badge.green { color: var(--green); background: var(--green-bg); border-color: var(--green-border); }
+.badge.amber { color: var(--amber); background: var(--amber-bg); border-color: var(--amber-border); }
+.badge.red   { color: var(--red);   background: var(--red-bg);   border-color: var(--red-border); }
+.badge.blue  { color: var(--blue);  background: var(--blue-bg);  border-color: var(--blue-border); }
+.badge.neutral { color: var(--text-2); background: var(--panel-2); border-color: var(--border); }
+.badge .dotled { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge .dotled.pulse { animation: pulse 1.4s infinite; }
+
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-2);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+/* ====== METRICS ====== */
+.metric {
+  display: flex; flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-width: 0;
+}
+.metric .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  display: flex; align-items: center; gap: 6px;
+}
+.metric .value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.metric .value.sm { font-size: 18px; }
+.metric .sub {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-3);
+}
+.metric.warn .value { color: var(--amber); }
+.metric.bad .value { color: var(--red); }
+.metric.good .value { color: var(--green); }
+
+/* ====== TABLES ====== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.table th, .table td {
+  text-align: left;
+  padding: 0 12px;
+  height: var(--row);
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.table th {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  font-weight: 500;
+  background: var(--panel-2);
+  position: sticky;
+  top: 0;
+}
+.table td.mono, .table th.mono { font-family: var(--mono); }
+.table tbody tr { cursor: default; }
+.table tbody tr.clickable { cursor: pointer; }
+.table tbody tr.clickable:hover { background: var(--panel-2); }
+.table tbody tr.active { background: var(--panel-3); }
+.table .num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.table th.num { text-align: right; }
+.table .greyed td { color: var(--text-3); }
+.table .greyed td .badge { opacity: 0.7; }
+.table tr.killed { background: oklch(68% 0.20 25 / 0.04); }
+.table td.amber { color: var(--amber); }
+.table td.red { color: var(--red); }
+.table td.green { color: var(--green); }
+
+.table-wrap {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* ====== PROGRESS ====== */
+.progress {
+  height: 4px;
+  background: var(--panel-3);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.progress .bar {
+  height: 100%;
+  background: var(--blue);
+  transition: width 240ms ease-out;
+}
+.progress.indeterminate .bar {
+  background: linear-gradient(90deg, transparent, var(--blue), transparent);
+  width: 40%;
+  animation: indet 1.6s linear infinite;
+}
+@keyframes indet {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ====== STAGE TRACKER ====== */
+.stages {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.stage {
+  padding: 12px 14px;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  position: relative;
+  min-width: 0;
+}
+.stage:last-child { border-right: none; }
+.stage .num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+.stage .name {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+}
+.stage .meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  margin-top: 6px;
+}
+.stage.done { background: var(--panel); }
+.stage.done .name { color: var(--text); }
+.stage.done .num::before {
+  content: "✓ ";
+  color: var(--green);
+}
+.stage.active {
+  background: var(--blue-bg);
+}
+.stage.active .name { color: var(--blue); font-weight: 600; }
+.stage.active .num { color: var(--blue); }
+.stage.active::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--blue);
+  animation: pulse 1.6s infinite;
+}
+.stage.todo .name { color: var(--text-3); }
+.stage.todo .num { color: var(--text-4); }
+
+/* ====== KV LIST ====== */
+.kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.kv dt { color: var(--text-3); }
+.kv dd { margin: 0; color: var(--text); }
+.kv dd.amber { color: var(--amber); }
+.kv dd.red { color: var(--red); }
+.kv dd.green { color: var(--green); }
+
+/* ====== SIGNAL CARD ====== */
+.signal-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 20px;
+  padding: 18px 20px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  align-items: center;
+}
+.side-pill {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 18px;
+  padding: 10px 16px;
+  border-radius: 3px;
+  letter-spacing: 0.08em;
+}
+.side-pill.LONG { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.side-pill.SHORT { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+.side-pill.FLAT { background: var(--panel-2); color: var(--text-2); border: 1px solid var(--border); }
+
+/* ====== GATES ====== */
+.gate {
+  display: flex; align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  gap: 10px;
+}
+.gate .icon {
+  width: 14px; height: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  display: grid; place-items: center;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.gate.pass .icon { background: var(--green-bg); color: var(--green); }
+.gate.warn .icon { background: var(--amber-bg); color: var(--amber); }
+.gate.fail .icon { background: var(--red-bg); color: var(--red); }
+.gate.fail { border-color: var(--red-border); }
+.gate.warn { border-color: var(--amber-border); }
+.gate .name { color: var(--text-2); flex: 1; }
+.gate .val { color: var(--text); }
+.gate.fail .val { color: var(--red); }
+.gate.warn .val { color: var(--amber); }
+
+/* ====== EQUITY CHART ====== */
+.chart {
+  width: 100%;
+  display: block;
+  background: var(--panel);
+  border-radius: var(--radius);
+}
+.chart text { font-family: var(--mono); font-size: 10px; fill: var(--text-3); }
+.chart .grid line { stroke: var(--border); stroke-dasharray: 2 3; }
+.chart .axis line { stroke: var(--border); }
+.chart .dd-band { fill: var(--red); opacity: 0.06; }
+.chart .ev-bt { stroke: var(--blue); fill: none; stroke-width: 1.4; }
+.chart .ev-wf { stroke: var(--amber); fill: none; stroke-width: 1.4; }
+.chart .ev-paper { stroke: var(--green); fill: none; stroke-width: 1.6; }
+.chart .ev-bt-fill { fill: var(--blue); opacity: 0.06; }
+.chart .legend-dot { width: 8px; height: 8px; display: inline-block; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+
+/* ====== AGENT CARDS ====== */
+.agent {
+  padding: 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.agent .name {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.agent .stance {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px;
+}
+.agent .conf-bar {
+  height: 3px;
+  background: var(--panel-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.agent .conf-bar .fill { height: 100%; background: var(--blue); }
+.agent .concern {
+  font-size: 12px;
+  color: var(--text-2);
+  border-left: 2px solid var(--border);
+  padding: 4px 0 4px 10px;
+  font-style: italic;
+}
+
+/* ====== HEATMAP ====== */
+.heatmap {
+  display: grid;
+  gap: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.heatmap .cell {
+  aspect-ratio: 1.6 / 1;
+  display: grid; place-items: center;
+  border-radius: 2px;
+  color: var(--bg);
+  font-weight: 600;
+}
+[data-theme="light"] .heatmap .cell { color: #fff; }
+
+/* ====== UTIL ====== */
+.row-flex { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.row-flex.between { justify-content: space-between; }
+.split { display: flex; gap: 12px; }
+.split > * { flex: 1; }
+hr.sep { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+.reason-code {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--red);
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  padding: 1px 6px;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+}
+.reason-code.warn { color: var(--amber); background: var(--amber-bg); border-color: var(--amber-border); }
+.reason-code.info { color: var(--blue); background: var(--blue-bg); border-color: var(--blue-border); }
+
+.staleness {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--amber);
+  display: inline-flex; align-items: center; gap: 5px;
+}
+
+.scroll-x { overflow-x: auto; }
+
+/* details/summary */
+details.collapsible {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+details.collapsible summary {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+  list-style: none;
+  display: flex; align-items: center; gap: 8px;
+}
+details.collapsible summary::before {
+  content: "▸";
+  font-size: 10px;
+  transition: transform 120ms;
+}
+details.collapsible[open] summary::before { transform: rotate(90deg); }
+details.collapsible .content {
+  padding: 0 14px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-2);
+  white-space: pre-wrap;
+}
+
+/* filter bar */
+.filter-bar {
+  display: flex; gap: 8px; align-items: center;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.filter-bar .filter-group {
+  display: flex; align-items: center; gap: 6px;
+}
+.filter-bar .filter-group label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+.filter-bar .spacer { flex: 1; }
+.filter-bar .count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+/* segmented */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.segmented button {
+  border: none;
+  border-radius: 0;
+  background: var(--panel);
+  padding: 4px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  border-right: 1px solid var(--border);
+}
+.segmented button:last-child { border-right: none; }
+.segmented button.active { background: var(--panel-3); color: var(--text); }
+
+/* sparkline */
+.spark { display: inline-block; vertical-align: middle; }
+
+/* dialog/modal-ish */
+.callout {
+  display: flex; gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  font-size: 12px;
+}
+.callout .ico {
+  font-family: var(--mono);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.callout.warn { background: var(--amber-bg); border-color: var(--amber-border); color: var(--amber); }
+.callout.bad { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+.callout.info { background: var(--blue-bg); border-color: var(--blue-border); color: var(--blue); }
+
+/* sub-table for committee */
+.findings-list { display: flex; flex-direction: column; gap: 6px; }
+.finding {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  align-items: center;
+}
+.finding.high { background: var(--red-bg); border-color: var(--red-border); }
+.finding .sev {
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+.finding.high .sev { color: var(--red); background: rgba(0,0,0,0.2); }
+.finding.medium .sev { color: var(--amber); }
+.finding.low .sev { color: var(--text-3); }
+.finding .loc { color: var(--text-2); }
+.finding .desc { color: var(--text); }
+.finding .fix { color: var(--text-3); font-size: 10.5px; }
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+
+<script type="text/babel" data-presets="env,react">
+// Synthetic data for TAR Trading System UI
+// Matches schemas from spec: dashboard_run_status, metrics, latest_paper_signal, job_queue
+
+const STRATEGIES = [
+  // KEEP candidates
+  { strategy: "ema_pullback_v3", symbol: "EURUSD", tf: "H1", score: 0.82, verdict: "KEEP", trades: 287, sharpe: 1.42, sortino: 1.98, win_rate: 0.541, pf: 1.61, max_dd: 11.4, net_pnl: 18420, oos_sharpe: 1.18, spans_zero: false, param_stab: 0.78, has_wf: true, regime: "trend" },
+  { strategy: "atr_breakout_v2", symbol: "XAUUSD", tf: "H4", score: 0.79, verdict: "KEEP", trades: 142, sharpe: 1.31, sortino: 1.85, win_rate: 0.486, pf: 1.74, max_dd: 14.8, net_pnl: 22100, oos_sharpe: 1.02, spans_zero: false, param_stab: 0.71, has_wf: true, regime: "volatile" },
+  { strategy: "donchian_revert_v1", symbol: "GBPUSD", tf: "H1", score: 0.74, verdict: "KEEP", trades: 198, sharpe: 1.18, sortino: 1.62, win_rate: 0.512, pf: 1.48, max_dd: 13.2, net_pnl: 11240, oos_sharpe: 0.91, spans_zero: false, param_stab: 0.69, has_wf: true, regime: "ranging" },
+  { strategy: "ema_pullback_v3", symbol: "USDJPY", tf: "H1", score: 0.71, verdict: "KEEP", trades: 156, sharpe: 1.09, sortino: 1.45, win_rate: 0.532, pf: 1.42, max_dd: 15.1, net_pnl: 8910, oos_sharpe: 0.78, spans_zero: false, param_stab: 0.62, has_wf: true, regime: "trend" },
+
+  // REVIEW
+  { strategy: "rsi_div_v4", symbol: "EURUSD", tf: "M15", score: 0.61, verdict: "REVIEW", trades: 412, sharpe: 0.92, sortino: 1.24, win_rate: 0.498, pf: 1.21, max_dd: 18.6, net_pnl: 4280, oos_sharpe: 0.31, spans_zero: true, param_stab: 0.42, has_wf: true, regime: "ranging", reason_codes: ["BOOTSTRAP_CI_SPANS_ZERO"] },
+  { strategy: "macd_cross_v2", symbol: "USDJPY", tf: "H4", score: 0.58, verdict: "REVIEW", trades: 87, sharpe: 0.81, sortino: 1.08, win_rate: 0.471, pf: 1.34, max_dd: 19.2, net_pnl: 6120, oos_sharpe: 0.42, spans_zero: false, param_stab: 0.31, has_wf: true, regime: "trend", reason_codes: ["PARAM_UNSTABLE"] },
+  { strategy: "bb_squeeze_v1", symbol: "GBPUSD", tf: "M30", score: 0.54, verdict: "REVIEW", trades: 268, sharpe: 0.76, sortino: 0.98, win_rate: 0.481, pf: 1.18, max_dd: 17.4, net_pnl: 3140, oos_sharpe: 0.18, spans_zero: true, param_stab: 0.51, has_wf: true, regime: "ranging", reason_codes: ["LOW_OOS_SHARPE", "BOOTSTRAP_CI_SPANS_ZERO"] },
+  { strategy: "atr_breakout_v2", symbol: "EURUSD", tf: "H1", score: 0.52, verdict: "REVIEW", trades: 94, sharpe: 0.71, sortino: 0.92, win_rate: 0.479, pf: 1.22, max_dd: 16.8, net_pnl: 2840, oos_sharpe: 0.29, spans_zero: false, param_stab: 0.48, has_wf: true, regime: "trend", reason_codes: ["LOW_OOS_SHARPE"] },
+
+  // KILL
+  { strategy: "trend_follower_v0", symbol: "XAUUSD", tf: "M15", score: 0.21, verdict: "KILL", trades: 18, sharpe: 0.42, sortino: 0.51, win_rate: 0.556, pf: 1.12, max_dd: 28.4, net_pnl: -1240, oos_sharpe: -0.18, spans_zero: true, param_stab: 0.22, has_wf: true, regime: "volatile", reason_codes: ["RISK_MAX_DD", "INSUFFICIENT_TRADES"] },
+  { strategy: "rsi_div_v4", symbol: "GBPJPY", tf: "H4", score: 0.18, verdict: "KILL", trades: 64, sharpe: 0.31, sortino: 0.41, win_rate: 0.469, pf: 0.94, max_dd: 42.1, net_pnl: -4820, oos_sharpe: -0.42, spans_zero: true, param_stab: 0.18, has_wf: true, regime: "volatile", reason_codes: ["RISK_MAX_DD"] },
+  { strategy: "naive_ma_v1", symbol: "EURUSD", tf: "H4", score: 0.14, verdict: "KILL", trades: 41, sharpe: 0.18, sortino: 0.24, win_rate: 0.488, pf: 0.91, max_dd: 31.2, net_pnl: -2140, oos_sharpe: -0.21, spans_zero: true, param_stab: 0.28, has_wf: true, regime: "ranging", reason_codes: ["RISK_MAX_DD", "DIRECTIONAL_FAIL"] },
+  { strategy: "fib_bounce_v1", symbol: "AUDUSD", tf: "H1", score: 0.09, verdict: "KILL", trades: 0, sharpe: null, sortino: null, win_rate: null, pf: null, max_dd: null, net_pnl: null, oos_sharpe: null, spans_zero: null, param_stab: null, has_wf: false, regime: null, reason_codes: ["MISSING_WF", "INSUFFICIENT_TRADES"] },
+];
+
+const JOBS = [
+  { job_id: "j_8af2c1", job_type: "walk_forward", strategy: "ema_pullback_v3", symbol: "EURUSD", tf: "H1", status: "running", reason_code: null, queued_at: "2026-05-23T14:18:02Z", completed_at: null, duration_s: 142, progress: 64 },
+  { job_id: "j_8af2c0", job_type: "backtest", strategy: "atr_breakout_v2", symbol: "XAUUSD", tf: "H4", status: "queued", reason_code: null, queued_at: "2026-05-23T14:19:11Z", completed_at: null, duration_s: null, progress: 0 },
+  { job_id: "j_8af2bf", job_type: "score", strategy: "donchian_revert_v1", symbol: "GBPUSD", tf: "H1", status: "queued", reason_code: null, queued_at: "2026-05-23T14:19:14Z", completed_at: null, duration_s: null, progress: 0 },
+  { job_id: "j_8af2be", job_type: "backtest", strategy: "ema_pullback_v3", symbol: "USDJPY", tf: "H1", status: "completed", reason_code: null, queued_at: "2026-05-23T13:42:18Z", completed_at: "2026-05-23T13:51:04Z", duration_s: 526, progress: 100 },
+  { job_id: "j_8af2bd", job_type: "walk_forward", strategy: "rsi_div_v4", symbol: "EURUSD", tf: "M15", status: "completed", reason_code: null, queued_at: "2026-05-23T13:24:01Z", completed_at: "2026-05-23T13:41:22Z", duration_s: 1041, progress: 100 },
+  { job_id: "j_8af2bc", job_type: "paper_signal", strategy: "trend_follower_v0", symbol: "XAUUSD", tf: "M15", status: "failed", reason_code: "ENV_BLOCK_TRADING", queued_at: "2026-05-23T13:18:42Z", completed_at: "2026-05-23T13:18:43Z", duration_s: 1, progress: 0 },
+  { job_id: "j_8af2bb", job_type: "score", strategy: "fib_bounce_v1", symbol: "AUDUSD", tf: "H1", status: "failed", reason_code: "DATA_MISSING", queued_at: "2026-05-23T13:12:11Z", completed_at: "2026-05-23T13:12:14Z", duration_s: 3, progress: 0 },
+  { job_id: "j_8af2ba", job_type: "backtest", strategy: "macd_cross_v2", symbol: "USDJPY", tf: "H4", status: "completed", reason_code: null, queued_at: "2026-05-23T12:58:02Z", completed_at: "2026-05-23T13:09:48Z", duration_s: 706, progress: 100 },
+  { job_id: "j_8af2b9", job_type: "optimise", strategy: "ema_pullback_v3", symbol: "EURUSD", tf: "H1", status: "completed", reason_code: null, queued_at: "2026-05-23T11:42:18Z", completed_at: "2026-05-23T12:54:31Z", duration_s: 4333, progress: 100 },
+  { job_id: "j_8af2b8", job_type: "forward_test", strategy: "donchian_revert_v1", symbol: "GBPUSD", tf: "H1", status: "completed", reason_code: null, queued_at: "2026-05-23T11:32:00Z", completed_at: "2026-05-23T11:39:14Z", duration_s: 434, progress: 100 },
+  { job_id: "j_8af2b7", job_type: "backtest", strategy: "naive_ma_v1", symbol: "EURUSD", tf: "H4", status: "failed", reason_code: "RISK_GATE_FAIL", queued_at: "2026-05-23T10:42:11Z", completed_at: "2026-05-23T10:48:02Z", duration_s: 351, progress: 100 },
+  { job_id: "j_8af2b6", job_type: "walk_forward", strategy: "bb_squeeze_v1", symbol: "GBPUSD", tf: "M30", status: "completed", reason_code: null, queued_at: "2026-05-23T10:14:22Z", completed_at: "2026-05-23T10:38:12Z", duration_s: 1430, progress: 100 },
+];
+
+const PAPER_SIGNAL = {
+  strategy: "ema_pullback_v3",
+  symbol: "EURUSD",
+  timeframe: "H1",
+  side: "LONG",
+  entry_price: 1.08412,
+  stop_loss: 1.07984,
+  take_profit: 1.09268,
+  confidence: 0.68,
+  generated_at: "2026-05-23T14:00:00Z",
+  env_risk_state: "SAFE_TO_TEST",
+  bar_age: 0,
+};
+
+const FORWARD_TESTS = [
+  { strategy: "ema_pullback_v3", symbol: "EURUSD", tf: "H1", last_bar: "2026-05-23T14:00Z", paper_equity: 10412, paper_dd: 2.1, trades: 14 },
+  { strategy: "atr_breakout_v2", symbol: "XAUUSD", tf: "H4", last_bar: "2026-05-23T12:00Z", paper_equity: 10284, paper_dd: 1.4, trades: 6 },
+  { strategy: "donchian_revert_v1", symbol: "GBPUSD", tf: "H1", last_bar: "2026-05-23T14:00Z", paper_equity: 10092, paper_dd: 3.8, trades: 11 },
+  { strategy: "ema_pullback_v3", symbol: "USDJPY", tf: "H1", last_bar: "2026-05-23T08:00Z", paper_equity: 10018, paper_dd: 2.6, trades: 9 },
+];
+
+const AGENTS = [
+  { name: "Quant Analyst", stance: "KEEP", confidence: 0.78, concern: "OOS Sharpe 1.18 holds across 5/6 splits. Bootstrap CI strictly positive [0.42, 1.84]. No regime decay observed." },
+  { name: "Risk Manager", stance: "KEEP", confidence: 0.64, concern: "Max DD 11.4% within tolerance, but recovery factor 0.92 is borderline. Suggest position size cap at 0.5% equity per trade." },
+  { name: "Trading Advisor", stance: "REVIEW", confidence: 0.52, concern: "Parameter stability 0.78 acceptable but EMA_FAST shows sensitivity at boundary (12 ↔ 14). Recommend forward test 200+ bars before promote." },
+];
+
+const WF_SPLITS = [
+  { idx: 1, train: "2022-01 / 2022-09", test: "2022-10 / 2022-12", is_sharpe: 1.62, oos_sharpe: 1.31, ratio: 0.81 },
+  { idx: 2, train: "2022-04 / 2022-12", test: "2023-01 / 2023-03", is_sharpe: 1.54, oos_sharpe: 1.22, ratio: 0.79 },
+  { idx: 3, train: "2022-07 / 2023-03", test: "2023-04 / 2023-06", is_sharpe: 1.71, oos_sharpe: 1.18, ratio: 0.69 },
+  { idx: 4, train: "2022-10 / 2023-06", test: "2023-07 / 2023-09", is_sharpe: 1.44, oos_sharpe: 0.94, ratio: 0.65 },
+  { idx: 5, train: "2023-01 / 2023-09", test: "2023-10 / 2023-12", is_sharpe: 1.58, oos_sharpe: 1.42, ratio: 0.90 },
+  { idx: 6, train: "2023-04 / 2023-12", test: "2024-01 / 2024-03", is_sharpe: 1.62, oos_sharpe: 1.08, ratio: 0.67 },
+];
+
+const ANCHOR_PARAMS = [
+  { name: "ema_fast", min: 8, max: 21, current: 12, notes: "Standard fast EMA range. Below 8 = noise." },
+  { name: "ema_slow", min: 26, max: 89, current: 34, notes: "Must be ≥2× ema_fast." },
+  { name: "atr_period", min: 10, max: 28, current: 14, notes: "Bound to bar count for stable stop calc." },
+  { name: "atr_mult_stop", min: 1.2, max: 3.5, current: 2.2, notes: "Stop-loss = entry ± N × ATR." },
+  { name: "atr_mult_target", min: 1.5, max: 5.0, current: 3.0, notes: "Should yield RR > 1.3." },
+  { name: "session_filter", min: 0, max: 1, current: 1, notes: "0=24h, 1=LDN+NY only." },
+  { name: "min_trades_gate", min: 30, max: 30, current: 30, notes: "Locked. Hard gate, cannot reduce." },
+];
+
+const SWEEP_RESULTS = [
+  { params: "ema_fast=10 ema_slow=30 atr=14", score: 0.79, verdict: "KEEP", trades: 312 },
+  { params: "ema_fast=12 ema_slow=34 atr=14", score: 0.82, verdict: "KEEP", trades: 287 },
+  { params: "ema_fast=14 ema_slow=42 atr=14", score: 0.78, verdict: "KEEP", trades: 241 },
+  { params: "ema_fast=12 ema_slow=34 atr=18", score: 0.74, verdict: "KEEP", trades: 268 },
+  { params: "ema_fast=10 ema_slow=34 atr=14", score: 0.71, verdict: "KEEP", trades: 294 },
+  { params: "ema_fast=16 ema_slow=50 atr=14", score: 0.62, verdict: "REVIEW", trades: 194 },
+  { params: "ema_fast=8 ema_slow=26 atr=14", score: 0.58, verdict: "REVIEW", trades: 384 },
+  { params: "ema_fast=12 ema_slow=34 atr=10", score: 0.41, verdict: "KILL", trades: 412 },
+  { params: "ema_fast=20 ema_slow=60 atr=14", score: 0.38, verdict: "KILL", trades: 78 },
+];
+
+const REGIME_HEATMAP = [
+  // rows: regime  /  cols: WF split 1..6
+  { regime: "trend", values: [1.42, 1.31, 1.28, 0.94, 1.51, 1.18] },
+  { regime: "ranging", values: [0.61, 0.42, 0.58, 0.31, 0.71, 0.48] },
+  { regime: "volatile", values: [-0.18, 0.12, 0.41, -0.32, 0.28, 0.18] },
+  { regime: "low-vol", values: [0.81, 0.92, 0.68, 0.74, 1.04, 0.82] },
+];
+
+const COMMITTEE_REPORTS = [
+  { strategy: "ema_pullback_v3", symbol: "EURUSD", tf: "H1", verdict: "KEEP", dissent: true, agents: AGENTS, summary: "Strategy demonstrates consistent OOS performance across multiple regimes with acceptable drawdown profile. Trading Advisor flags parameter sensitivity at boundary; recommend extended forward test." },
+  { strategy: "atr_breakout_v2", symbol: "XAUUSD", tf: "H4", verdict: "KEEP", dissent: false, agents: [
+    { name: "Quant Analyst", stance: "KEEP", confidence: 0.71, concern: "PF 1.74 strong, but pre-cost. Estimate 8-12% PF degradation after broker costs applied." },
+    { name: "Risk Manager", stance: "KEEP", confidence: 0.68, concern: "DD 14.8% acceptable for XAU volatility regime. Concentration risk low." },
+    { name: "Trading Advisor", stance: "KEEP", confidence: 0.74, concern: "Clean ATR breakout logic, no overfit signal. Proceed to forward test." },
+  ], summary: "Unanimous KEEP. Conservative ATR-based breakout with adequate trade count and stable params across splits." },
+  { strategy: "rsi_div_v4", symbol: "EURUSD", tf: "M15", verdict: "REVIEW", dissent: true, agents: [
+    { name: "Quant Analyst", stance: "REVIEW", confidence: 0.42, concern: "Bootstrap CI [-0.18, 0.84] spans zero — statistical significance not established." },
+    { name: "Risk Manager", stance: "KILL", confidence: 0.71, concern: "DD trajectory in WF split 4 hit -22% peak. Recovery factor 0.41 inadequate." },
+    { name: "Trading Advisor", stance: "REVIEW", confidence: 0.38, concern: "M15 timeframe noisy for divergence signals. Consider H1 retest before kill." },
+  ], summary: "Dissent: Risk recommends KILL. Bootstrap CI spans zero and intra-WF drawdown exceeds tolerance. Recommend H1 retest before kill." },
+];
+
+const STATIC_FINDINGS = [
+  { severity: "HIGH", file: "src/tar_system/optimisation/sweep.py", line: 142, desc: "Mutable default argument in `run_sweep(params=[])`", fix: "Use `None` sentinel and create new list inside function." },
+  { severity: "HIGH", file: "src/tar_system/backtest/engine.py", line: 84, desc: "Possible division by zero when total_trades == 0", fix: "Guard ratio computations with explicit zero check." },
+  { severity: "MEDIUM", file: "src/tar_system/forward/loop.py", line: 211, desc: "Catch-all `except Exception` swallows error context", fix: "Catch specific exceptions; log with reason_code." },
+  { severity: "MEDIUM", file: "src/tar_system/data/validate.py", line: 56, desc: "Pandas chained indexing — SettingWithCopyWarning risk", fix: "Use `.loc[row, col] = ...` form." },
+  { severity: "LOW", file: "src/tar_system/dashboard/app.py", line: 312, desc: "Unused import: `from typing import Optional`", fix: "Remove unused import." },
+  { severity: "LOW", file: "src/tar_system/scoring/composite.py", line: 91, desc: "f-string missing placeholders", fix: "Use regular string or add interpolation." },
+];
+
+const FILTER_PLAN = {
+  proposed: [
+    { name: "EMA slope gate", current: "none", proposed: "EMA_50 slope > 0 for LONG, < 0 for SHORT", impact: "+0.18 OOS Sharpe est." },
+    { name: "ATR bounds", current: "none", proposed: "0.4× ATR_30d ≤ ATR_now ≤ 2.0× ATR_30d", impact: "Filters extreme regimes" },
+    { name: "Session window", current: "24h", proposed: "08:00 - 17:00 LDN+NY overlap", impact: "Reduces spread, -28% trade count" },
+    { name: "News blackout", current: "none", proposed: "Block ± 30min around HIGH-impact events", impact: "Removes 8 worst-DD trades in WF" },
+  ],
+};
+
+const IMPORTED_DATA = [
+  { symbol: "EURUSD", tf: "H1", file: "EURUSD_H1_2022_2026.csv", date_range: "2022-01-03 → 2026-05-22", bars: 27144, status: "validated", hash: "sha:9a82c1" },
+  { symbol: "EURUSD", tf: "M15", file: "EURUSD_M15_2023_2026.csv", date_range: "2023-01-02 → 2026-05-22", bars: 87412, status: "validated", hash: "sha:7c12fe" },
+  { symbol: "GBPUSD", tf: "H1", file: "GBPUSD_H1_2022_2026.csv", date_range: "2022-01-03 → 2026-05-22", bars: 27144, status: "validated", hash: "sha:24b9aa" },
+  { symbol: "USDJPY", tf: "H1", file: "USDJPY_H1_2022_2026.csv", date_range: "2022-01-03 → 2026-05-22", bars: 27082, status: "validated", hash: "sha:cf18ee" },
+  { symbol: "XAUUSD", tf: "H4", file: "XAUUSD_H4_2020_2026.csv", date_range: "2020-01-02 → 2026-05-22", bars: 9876, status: "validated", hash: "sha:18a4f1" },
+  { symbol: "XAUUSD", tf: "M15", file: "XAUUSD_M15_2024_2026.csv", date_range: "2024-01-01 → 2026-05-22", bars: 48720, status: "validated", hash: "sha:42de98" },
+  { symbol: "AUDUSD", tf: "H1", file: "AUDUSD_H1_2023_2024.csv", date_range: "2023-01-03 → 2024-08-12", bars: 9842, status: "failed", reason: "DATA_SPIKE", hash: "sha:e1f0aa" },
+  { symbol: "GBPJPY", tf: "H4", file: "GBPJPY_H4_2022_2026.csv", date_range: "2022-01-03 → 2026-05-22", bars: 6786, status: "validated", hash: "sha:ba14cd" },
+];
+
+const AUDIT_LOG = [
+  { ts: "2026-05-23T14:18:42Z", event: "job_failed", code: "ENV_BLOCK_TRADING", strategy: "trend_follower_v0", result: "Signal generation blocked — events.yaml flagged FOMC window" },
+  { ts: "2026-05-23T14:12:11Z", event: "job_failed", code: "DATA_MISSING", strategy: "fib_bounce_v1", result: "AUDUSD H1 dataset validation status: failed (DATA_SPIKE)" },
+  { ts: "2026-05-23T13:51:04Z", event: "job_completed", code: null, strategy: "ema_pullback_v3", result: "Backtest USDJPY H1 — 156 trades, verdict KEEP" },
+  { ts: "2026-05-23T13:41:22Z", event: "verdict_assigned", code: "BOOTSTRAP_CI_SPANS_ZERO", strategy: "rsi_div_v4", result: "REVIEW — bootstrap CI [-0.18, 0.84]" },
+  { ts: "2026-05-23T13:18:43Z", event: "signal_blocked", code: "ENV_BLOCK_TRADING", strategy: "trend_follower_v0", result: "Reason: high-impact event within active window" },
+  { ts: "2026-05-23T12:54:31Z", event: "optimise_completed", code: null, strategy: "ema_pullback_v3", result: "324 param combos evaluated, top-K=9 promoted to score" },
+  { ts: "2026-05-23T10:48:02Z", event: "verdict_assigned", code: "RISK_MAX_DD", strategy: "naive_ma_v1", result: "KILL — Max DD 31.2% exceeds 20% hard gate" },
+  { ts: "2026-05-23T10:38:12Z", event: "wf_completed", code: null, strategy: "bb_squeeze_v1", result: "6 splits, OOS Sharpe mean 0.18, spans_zero=True" },
+  { ts: "2026-05-23T09:14:08Z", event: "data_imported", code: null, strategy: null, result: "XAUUSD_H4_2020_2026.csv — 9876 bars, validated" },
+  { ts: "2026-05-23T08:42:11Z", event: "system_start", code: null, strategy: null, result: "tar daemon initialised, paper_mode=true" },
+];
+
+const REASON_CODE_LEGEND = [
+  { prefix: "DATA_*", codes: ["DATA_MISSING", "DATA_DUPLICATE", "DATA_SPIKE", "DATA_GAP", "DATA_HASH_MISMATCH"] },
+  { prefix: "SIGNAL_*", codes: ["SIGNAL_NO_CONFIDENCE", "SIGNAL_ENV_BLOCKED", "SIGNAL_STALE_BAR"] },
+  { prefix: "RISK_*", codes: ["RISK_MAX_DD", "RISK_EXPOSURE_LIMIT", "RISK_CONSECUTIVE_LOSSES", "RISK_GATE_FAIL"] },
+  { prefix: "ENV_*", codes: ["ENV_BLOCK_TRADING", "ENV_HOLD_TRADING", "ENV_SHOCK_DETECTED", "ENV_CAUTION"] },
+];
+
+// expose
+Object.assign(window, {
+  STRATEGIES, JOBS, PAPER_SIGNAL, FORWARD_TESTS, AGENTS, WF_SPLITS,
+  ANCHOR_PARAMS, SWEEP_RESULTS, REGIME_HEATMAP, COMMITTEE_REPORTS,
+  STATIC_FINDINGS, FILTER_PLAN, IMPORTED_DATA, AUDIT_LOG, REASON_CODE_LEGEND,
+});
+
+</script>
+<script type="text/babel" data-presets="env,react">
+// Shared UI primitives for TAR
+
+function Badge({ kind, children, pulse }) {
+  // kind: KEEP|REVIEW|KILL|QUEUED|RUNNING|COMPLETED|FAILED|SAFE_TO_TEST|CAUTION|HOLD_TRADING|BLOCK_TRADING|neutral
+  const map = {
+    KEEP: "green", REVIEW: "amber", KILL: "red",
+    QUEUED: "neutral", RUNNING: "blue", COMPLETED: "green", FAILED: "red",
+    SAFE_TO_TEST: "green", CAUTION: "amber", HOLD_TRADING: "amber", BLOCK_TRADING: "red",
+    LONG: "green", SHORT: "red", FLAT: "neutral",
+    HIGH: "red", MEDIUM: "amber", LOW: "neutral",
+    PASS: "green", WARN: "amber", FAIL: "red",
+  };
+  const cls = map[kind] || "neutral";
+  return (
+    <span className={`badge ${cls}`}>
+      {pulse && <span className="dotled pulse" />}
+      {children || kind}
+    </span>
+  );
+}
+
+function ReasonCode({ code, kind }) {
+  const cls = kind === "warn" ? "warn" : kind === "info" ? "info" : "";
+  return <code className={`reason-code ${cls}`}>{code}</code>;
+}
+
+function Card({ title, right, children, flat, style }) {
+  return (
+    <div className={`card ${flat ? "flat" : ""}`} style={style}>
+      {(title || right) && (
+        <div className="card-head">
+          <span className="title">{title}</span>
+          {right && <span className="right">{right}</span>}
+        </div>
+      )}
+      <div className="card-body">{children}</div>
+    </div>
+  );
+}
+
+function Metric({ label, value, sub, tone, hint }) {
+  return (
+    <div className={`metric ${tone || ""}`}>
+      <div className="label">{label}{hint && <span className="dim" title={hint}>ⓘ</span>}</div>
+      <div className={`value ${(typeof value === "string" && value.length > 8) ? "sm" : ""}`}>{value}</div>
+      {sub && <div className="sub">{sub}</div>}
+    </div>
+  );
+}
+
+function Progress({ pct, indeterminate }) {
+  if (indeterminate) return <div className="progress indeterminate"><div className="bar" /></div>;
+  return <div className="progress"><div className="bar" style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} /></div>;
+}
+
+function timeAgo(iso) {
+  if (!iso) return "—";
+  const ms = Date.now() - new Date(iso).getTime();
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function fmtDuration(s) {
+  if (s == null) return "—";
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  if (m < 60) return `${m}m ${rem}s`;
+  const h = Math.floor(m / 60);
+  return `${h}h ${m % 60}m`;
+}
+
+function fmtNum(n, digits = 2) {
+  if (n == null) return "—";
+  return Number(n).toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
+function fmtPct(n, digits = 1) {
+  if (n == null) return "—";
+  return `${(n * 100).toFixed(digits)}%`;
+}
+
+function fmtPctDirect(n, digits = 1) {
+  if (n == null) return "—";
+  return `${n.toFixed(digits)}%`;
+}
+
+function ddTone(dd) {
+  if (dd == null) return "";
+  if (dd >= 40) return "red";
+  if (dd >= 20) return "amber";
+  return "";
+}
+
+function ddBadgeTone(dd) {
+  if (dd == null) return "";
+  if (dd >= 40) return "bad";
+  if (dd >= 20) return "warn";
+  return "";
+}
+
+function Gate({ state, name, value }) {
+  // state: pass | warn | fail
+  const icon = state === "pass" ? "✓" : state === "warn" ? "!" : "✕";
+  return (
+    <div className={`gate ${state}`}>
+      <span className="icon">{icon}</span>
+      <span className="name">{name}</span>
+      <span className="val">{value}</span>
+    </div>
+  );
+}
+
+function Callout({ kind, ico, children }) {
+  return (
+    <div className={`callout ${kind || ""}`}>
+      <span className="ico">{ico || "ⓘ"}</span>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function Sparkline({ data, color, width = 80, height = 22 }) {
+  if (!data || data.length === 0) return null;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const stepX = width / (data.length - 1 || 1);
+  const points = data.map((v, i) => `${i * stepX},${height - ((v - min) / range) * height}`).join(" ");
+  return (
+    <svg className="spark" width={width} height={height}>
+      <polyline points={points} fill="none" stroke={color || "currentColor"} strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+Object.assign(window, { Badge, ReasonCode, Card, Metric, Progress, timeAgo, fmtDuration, fmtNum, fmtPct, fmtPctDirect, ddTone, ddBadgeTone, Gate, Callout, Sparkline });
+
+</script>
+<script type="text/babel" data-presets="env,react">
+// Pipeline Dashboard — single-glance status of entire research pipeline
+
+function PageDashboard({ tweaks, onNavigate }) {
+  const activeJob = JOBS.find(j => j.status === "running");
+  const completed = JOBS.filter(j => j.status === "completed");
+  const failed = JOBS.filter(j => j.status === "failed");
+  const queued = JOBS.filter(j => j.status === "queued");
+
+  const stages = [
+    { num: 1, name: "Data Import", state: "done", meta: "8 datasets" },
+    { num: 2, name: "Feature Build", state: "done", meta: "ATR · EMA · RSI · ADX" },
+    { num: "3a", name: "Backtest", state: "done", meta: "47 runs" },
+    { num: "3b", name: "Walk-Forward", state: "active", meta: "1 running · 64%" },
+    { num: 4, name: "Score", state: "todo", meta: "queued · 1" },
+    { num: 5, name: "Forward Test", state: "todo", meta: "4 tracked" },
+    { num: 6, name: "Export", state: "todo", meta: "manual" },
+  ];
+
+  // sparkline equity for active job — synthetic
+  const equitySpark = [10000, 10024, 10012, 10038, 10052, 10041, 10068, 10082, 10094, 10078, 10101, 10118, 10142, 10131, 10164, 10182];
+
+  // Tested combos counter
+  const testedCount = 47;
+  const uniqueStrategies = 9;
+  const uniqueSymbols = 6;
+  const uniqueTFs = 4;
+
+  return (
+    <>
+      {/* Top metrics */}
+      <div className="grid grid-4" style={{ marginBottom: 16 }}>
+        <Metric
+          label="Active Job"
+          value={activeJob ? activeJob.job_type.replace("_", " ") : "Idle"}
+          sub={activeJob ? `${activeJob.strategy} · ${activeJob.symbol} · ${activeJob.tf}` : "No job running"}
+        />
+        <Metric
+          label="Current Equity"
+          value={`$10,182`}
+          sub="from last backtest · not live"
+          tone="good"
+        />
+        <Metric
+          label="Current Drawdown"
+          value="-2.1%"
+          sub="pre-vol-gate"
+        />
+        <Metric
+          label="Tested Combos"
+          value={testedCount}
+          sub={`${uniqueStrategies} strat × ${uniqueSymbols} sym × ${uniqueTFs} TF · dedup on`}
+        />
+      </div>
+
+      {/* Active job card */}
+      {activeJob && (
+        <Card
+          title="Active Job"
+          right={
+            <>
+              <span className="muted mono" style={{ fontSize: 10 }}>job_id</span>
+              <code className="mono" style={{ fontSize: 11 }}>{activeJob.job_id}</code>
+              <Badge kind="RUNNING" pulse>RUNNING</Badge>
+            </>
+          }
+          style={{ marginBottom: 16 }}
+        >
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "center" }}>
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+                <div>
+                  <div className="mono" style={{ fontSize: 14 }}>
+                    <strong>{activeJob.job_type}</strong>
+                    <span className="dim" style={{ margin: "0 8px" }}>›</span>
+                    <span>{activeJob.strategy}</span>
+                    <span className="dim" style={{ margin: "0 6px" }}>·</span>
+                    <span>{activeJob.symbol}</span>
+                    <span className="dim" style={{ margin: "0 6px" }}>·</span>
+                    <span>{activeJob.tf}</span>
+                  </div>
+                  <div className="mono dim" style={{ fontSize: 10.5, marginTop: 4 }}>
+                    bars processed: 142,841 / 223,191 · started {timeAgo(activeJob.queued_at)}
+                  </div>
+                </div>
+                <div className="mono" style={{ fontSize: 13 }}>{activeJob.progress}%</div>
+              </div>
+              <Progress pct={activeJob.progress} />
+              <div className="mono dim" style={{ fontSize: 10.5, marginTop: 8 }}>
+                last_updated: 2026-05-23T14:20:38Z · refresh ≥ 5s · progress may be stale
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+              <Sparkline data={equitySpark} color="oklch(70% 0.14 235)" width={140} height={36} />
+              <div className="mono dim" style={{ fontSize: 10 }}>equity (synthetic, in-flight)</div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Pipeline stages */}
+      <div className="card-head" style={{ marginTop: 8, marginBottom: 8, padding: "0 4px", border: "none" }}>
+        <span className="title">Pipeline Stages</span>
+        <span className="right muted" style={{ fontSize: 10 }}>CSV → Features → Backtest → Walk-Forward → Score → Forward Test → Export</span>
+      </div>
+      <div className="stages" style={{ marginBottom: 16 }}>
+        {stages.map(s => (
+          <div key={s.num} className={`stage ${s.state}`}>
+            <div className="num">stage {s.num}</div>
+            <div className="name">{s.name}</div>
+            <div className="meta">{s.meta}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-2" style={{ marginBottom: 16 }}>
+        {/* Quick launch */}
+        <Card title="Quick Launch" right={<span className="muted" style={{ fontSize: 10 }}>queues a job · does not execute</span>}>
+          <div className="grid grid-2" style={{ gap: 8 }}>
+            <QuickAction code="tar backtest" desc="Run backtest on selected strategy" />
+            <QuickAction code="tar walk-forward" desc="Rolling OOS splits" />
+            <QuickAction code="tar score" desc="Composite + agents + gates" />
+            <QuickAction code="tar forward-test" desc="Paper-only bar loop" />
+            <QuickAction code="tar optimise" desc="Parameter sweep (anchors)" />
+            <QuickAction code="tar paper-signal" desc="Generate latest signal" />
+          </div>
+        </Card>
+
+        {/* Recent jobs */}
+        <Card
+          title="Recent Jobs"
+          right={
+            <button onClick={() => onNavigate("jobs")} className="muted" style={{ fontSize: 11 }}>
+              View queue →
+            </button>
+          }
+        >
+          <table className="table" style={{ marginTop: -8 }}>
+            <thead>
+              <tr><th>Job</th><th>Strategy</th><th>Status</th><th className="num">Dur</th></tr>
+            </thead>
+            <tbody>
+              {JOBS.slice(0, 6).map(j => (
+                <tr key={j.job_id}>
+                  <td className="mono">{j.job_type}</td>
+                  <td className="mono dim" style={{ fontSize: 11 }}>{j.strategy} <span className="faint">·</span> {j.symbol} <span className="faint">·</span> {j.tf}</td>
+                  <td>
+                    {j.status === "running" && <Badge kind="RUNNING" pulse>RUNNING</Badge>}
+                    {j.status === "queued" && <Badge kind="QUEUED">QUEUED</Badge>}
+                    {j.status === "completed" && <Badge kind="COMPLETED">DONE</Badge>}
+                    {j.status === "failed" && (
+                      <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                        <Badge kind="FAILED">FAILED</Badge>
+                        <ReasonCode code={j.reason_code} />
+                      </span>
+                    )}
+                  </td>
+                  <td className="num">{fmtDuration(j.duration_s)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      </div>
+
+      <div className="grid grid-2">
+        {/* Top strategies */}
+        <Card
+          title="Top Strategies by Score"
+          right={
+            <button onClick={() => onNavigate("explorer")} className="muted" style={{ fontSize: 11 }}>
+              Open explorer →
+            </button>
+          }
+        >
+          <table className="table" style={{ marginTop: -8 }}>
+            <thead>
+              <tr>
+                <th>Strategy</th>
+                <th className="num">Score</th>
+                <th className="num">Sharpe</th>
+                <th className="num">DD</th>
+                <th>Verdict</th>
+              </tr>
+            </thead>
+            <tbody>
+              {STRATEGIES.filter(s => s.trades >= 30).slice(0, 6).map((s, i) => (
+                <tr key={i} className="clickable" onClick={() => onNavigate("detail", s)}>
+                  <td className="mono" style={{ fontSize: 11.5 }}>
+                    {s.strategy}
+                    <span className="dim" style={{ marginLeft: 6 }}>· {s.symbol} · {s.tf}</span>
+                  </td>
+                  <td className="num mono">{s.score.toFixed(2)}</td>
+                  <td className="num mono">{s.sharpe ? s.sharpe.toFixed(2) : "—"}</td>
+                  <td className={`num mono ${ddTone(s.max_dd)}`}>{s.max_dd ? `${s.max_dd.toFixed(1)}%` : "—"}</td>
+                  <td><Badge kind={s.verdict} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        {/* Automation + Forward tests */}
+        <Card title="Forward Tests" right={<span className="muted" style={{ fontSize: 10 }}>paper · last bar shown</span>}>
+          <table className="table" style={{ marginTop: -8 }}>
+            <thead>
+              <tr>
+                <th>Strategy</th>
+                <th>Last Bar</th>
+                <th className="num">P-Equity</th>
+                <th className="num">DD</th>
+                <th className="num">Trades</th>
+              </tr>
+            </thead>
+            <tbody>
+              {FORWARD_TESTS.map((f, i) => (
+                <tr key={i}>
+                  <td className="mono" style={{ fontSize: 11.5 }}>
+                    {f.strategy} <span className="dim">· {f.symbol} · {f.tf}</span>
+                  </td>
+                  <td className="mono dim" style={{ fontSize: 11 }}>{timeAgo(f.last_bar)}</td>
+                  <td className="num mono">${f.paper_equity.toLocaleString()}</td>
+                  <td className={`num mono ${ddTone(f.paper_dd)}`}>{f.paper_dd.toFixed(1)}%</td>
+                  <td className="num mono">{f.trades}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      </div>
+    </>
+  );
+}
+
+function QuickAction({ code, desc }) {
+  return (
+    <button style={{
+      flexDirection: "column",
+      alignItems: "flex-start",
+      gap: 4,
+      padding: "10px 12px",
+      textAlign: "left",
+    }}>
+      <span className="mono" style={{ fontSize: 12, color: "var(--blue)" }}>{code}</span>
+      <span className="dim" style={{ fontSize: 10.5 }}>{desc}</span>
+    </button>
+  );
+}
+
+window.PageDashboard = PageDashboard;
+
+</script>
+<script type="text/babel" data-presets="env,react">
+// Strategy Explorer — filterable table of all validated strategies
+
+function PageExplorer({ onNavigate }) {
+  const [verdict, setVerdict] = React.useState("ALL");
+  const [symbol, setSymbol] = React.useState("ALL");
+  const [tf, setTf] = React.useState("ALL");
+  const [showLowTrades, setShowLowTrades] = React.useState(false); // <30 trades = hard kill, hidden by default
+  const [sort, setSort] = React.useState({ key: "score", dir: "desc" });
+  const [search, setSearch] = React.useState("");
+
+  const symbols = ["ALL", ...new Set(STRATEGIES.map(s => s.symbol))];
+  const tfs = ["ALL", ...new Set(STRATEGIES.map(s => s.tf))];
+
+  const filtered = STRATEGIES.filter(s => {
+    if (verdict !== "ALL" && s.verdict !== verdict) return false;
+    if (symbol !== "ALL" && s.symbol !== symbol) return false;
+    if (tf !== "ALL" && s.tf !== tf) return false;
+    // Hide < 30 trades unless toggle is on (one-trade winners = hard KILL by spec)
+    if (!showLowTrades && (s.trades == null || s.trades < 30)) return false;
+    if (search && !s.strategy.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  }).sort((a, b) => {
+    const av = a[sort.key] ?? -999;
+    const bv = b[sort.key] ?? -999;
+    return sort.dir === "asc" ? av - bv : bv - av;
+  });
+
+  const hiddenCount = STRATEGIES.length - STRATEGIES.filter(s => s.trades != null && s.trades >= 30).length;
+
+  function toggleSort(key) {
+    if (sort.key === key) setSort({ key, dir: sort.dir === "asc" ? "desc" : "asc" });
+    else setSort({ key, dir: "desc" });
+  }
+
+  function SortableHead({ k, children, className }) {
+    const active = sort.key === k;
+    return (
+      <th className={className} onClick={() => toggleSort(k)} style={{ cursor: "pointer", userSelect: "none" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          {children}
+          <span style={{ opacity: active ? 1 : 0.3, fontSize: 9 }}>
+            {active ? (sort.dir === "asc" ? "▲" : "▼") : "↕"}
+          </span>
+        </span>
+      </th>
+    );
+  }
+
+  return (
+    <>
+      <div className="filter-bar">
+        <div className="filter-group">
+          <label>Search</label>
+          <input
+            type="search"
+            placeholder="strategy name..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ width: 180 }}
+          />
+        </div>
+
+        <div className="filter-group">
+          <label>Verdict</label>
+          <div className="segmented">
+            {["ALL", "KEEP", "REVIEW", "KILL"].map(v => (
+              <button key={v} className={verdict === v ? "active" : ""} onClick={() => setVerdict(v)}>{v}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className="filter-group">
+          <label>Symbol</label>
+          <select value={symbol} onChange={e => setSymbol(e.target.value)}>
+            {symbols.map(s => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>TF</label>
+          <select value={tf} onChange={e => setTf(e.target.value)}>
+            {tfs.map(t => <option key={t}>{t}</option>)}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label style={{ cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={showLowTrades}
+              onChange={e => setShowLowTrades(e.target.checked)}
+              style={{ verticalAlign: "middle", marginRight: 4 }}
+            />
+            Show &lt;30 trades (hard-KILL, hidden by default)
+          </label>
+        </div>
+
+        <div className="spacer" />
+        <span className="count">
+          {filtered.length} / {STRATEGIES.length} strategies
+          {!showLowTrades && hiddenCount > 0 && <span className="dim"> · {hiddenCount} hidden by trade gate</span>}
+        </span>
+      </div>
+
+      <Callout kind="info" ico="i">
+        All <strong>profit factor</strong> and <strong>P&amp;L</strong> values are <strong>pre-cost</strong>. Stage 1 broker costs not yet applied.
+        <strong> Max DD</strong> values are <strong>pre-vol-gate</strong> (Stage 2). Backtest scores ≠ forward-test scores.
+      </Callout>
+
+      <div className="table-wrap" style={{ marginTop: 12 }}>
+        <table className="table">
+          <thead>
+            <tr>
+              <SortableHead k="strategy">Strategy</SortableHead>
+              <th>Symbol</th>
+              <th>TF</th>
+              <SortableHead k="score" className="num">Score</SortableHead>
+              <th>Verdict</th>
+              <SortableHead k="trades" className="num">Trades</SortableHead>
+              <SortableHead k="sharpe" className="num">Sharpe</SortableHead>
+              <SortableHead k="oos_sharpe" className="num">OOS Sharpe</SortableHead>
+              <SortableHead k="win_rate" className="num">Win %</SortableHead>
+              <SortableHead k="pf" className="num">PF<sup className="dim" style={{fontSize:8, marginLeft:2}}>*pre-cost</sup></SortableHead>
+              <SortableHead k="max_dd" className="num">Max DD</SortableHead>
+              <th>Flags</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((s, i) => {
+              const greyed = s.trades != null && s.trades < 30;
+              const ddT = ddTone(s.max_dd);
+              return (
+                <tr
+                  key={i}
+                  className={`clickable ${greyed ? "greyed" : ""} ${s.verdict === "KILL" ? "killed" : ""}`}
+                  onClick={() => onNavigate("detail", s)}
+                >
+                  <td className="mono">{s.strategy}</td>
+                  <td className="mono">{s.symbol}</td>
+                  <td className="mono">{s.tf}</td>
+                  <td className="num mono">{s.score.toFixed(2)}</td>
+                  <td><Badge kind={s.verdict} /></td>
+                  <td className="num mono">{s.trades ?? "—"}</td>
+                  <td className="num mono">{s.sharpe != null ? s.sharpe.toFixed(2) : "—"}</td>
+                  <td className="num mono">
+                    {s.oos_sharpe != null ? s.oos_sharpe.toFixed(2) : "—"}
+                    {s.spans_zero && <span title="bootstrap CI spans zero" style={{ color: "var(--red)", marginLeft: 4 }}>⚠</span>}
+                  </td>
+                  <td className="num mono">{s.win_rate != null ? `${(s.win_rate * 100).toFixed(1)}%` : "—"}</td>
+                  <td className="num mono">{s.pf != null ? s.pf.toFixed(2) : "—"}</td>
+                  <td className={`num mono ${ddT}`}>{s.max_dd != null ? `${s.max_dd.toFixed(1)}%` : "—"}</td>
+                  <td style={{ maxWidth: 200 }}>
+                    {!s.has_wf && <ReasonCode code="MISSING_WF" />}
+                    {s.reason_codes && s.reason_codes.map(c => (
+                      <ReasonCode key={c} code={c} kind={s.verdict === "REVIEW" ? "warn" : ""} />
+                    ))}
+                  </td>
+                </tr>
+              );
+            })}
+            {filtered.length === 0 && (
+              <tr><td colSpan="12" style={{ padding: 40, textAlign: "center", color: "var(--text-3)" }}>No strategies match current filters.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="row-flex" style={{ marginTop: 14, gap: 16, fontSize: 11 }}>
+        <span className="muted mono" style={{ textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 10 }}>Legend</span>
+        <span><Badge kind="KEEP" /> <span className="dim">≥30 trades · OOS Sharpe &gt; 0 · WF exists · all hard gates pass</span></span>
+        <span><Badge kind="REVIEW" /> <span className="dim">soft gate breach</span></span>
+        <span><Badge kind="KILL" /> <span className="dim">hard gate fail</span></span>
+        <span className="dim">·</span>
+        <span className="dim mono" style={{ fontSize: 10 }}>DD: amber &gt;20% · red &gt;40%</span>
+        <span className="dim">·</span>
+        <span className="dim mono" style={{ fontSize: 10 }}>⚠ bootstrap CI spans zero</span>
+      </div>
+    </>
+  );
+}
+
+window.PageExplorer = PageExplorer;
+
+</script>
+<script type="text/babel" data-presets="env,react">
+// Strategy Detail View — all panels A–F per spec
+
+function PageDetail({ strategy, onNavigate }) {
+  const s = strategy || STRATEGIES[0];
+  const chartRef = React.useRef(null);
+  const chartInstance = React.useRef(null);
+
+  // Find committee report
+  const committee = COMMITTEE_REPORTS.find(c =>
+    c.strategy === s.strategy && c.symbol === s.symbol && c.tf === s.tf
+  ) || COMMITTEE_REPORTS[0];
+
+  // Generate synthetic equity curves
+  const eqData = React.useMemo(() => generateEquityCurves(s), [s.strategy, s.symbol, s.tf]);
+
+  React.useEffect(() => {
+    if (!chartRef.current || !window.Chart) return;
+
+    if (chartInstance.current) chartInstance.current.destroy();
+
+    // Manually size the canvas (responsive: false)
+    const container = chartRef.current.parentElement;
+    const sizeCanvas = () => {
+      if (!chartRef.current || !container) return;
+      const dpr = window.devicePixelRatio || 1;
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      chartRef.current.width = w * dpr;
+      chartRef.current.height = h * dpr;
+      chartRef.current.style.width = w + "px";
+      chartRef.current.style.height = h + "px";
+    };
+    sizeCanvas();
+
+    const getCssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+    const blue = getCssVar("--blue") || "#5b8def";
+    const amber = getCssVar("--amber") || "#d9a55b";
+    const green = getCssVar("--green") || "#4caf78";
+    const border = getCssVar("--border") || "#1f242d";
+    const text3 = getCssVar("--text-3") || "#5a6170";
+    const text2 = getCssVar("--text-2") || "#8b929e";
+
+    chartInstance.current = new Chart(chartRef.current, {
+      type: "line",
+      data: {
+        labels: eqData.labels,
+        datasets: [
+          {
+            label: "Backtest equity",
+            data: eqData.backtest,
+            borderColor: blue,
+            backgroundColor: blue + "1f",
+            borderWidth: 1.6,
+            pointRadius: 0,
+            fill: { target: "origin", above: blue + "10" },
+            tension: 0.15,
+          },
+          {
+            label: "Walk-forward OOS",
+            data: eqData.wf,
+            borderColor: amber,
+            borderWidth: 1.4,
+            pointRadius: 0,
+            borderDash: [4, 3],
+            fill: false,
+            tension: 0.15,
+          },
+          {
+            label: "Paper equity",
+            data: eqData.paper,
+            borderColor: green,
+            borderWidth: 1.8,
+            pointRadius: 0,
+            fill: false,
+            tension: 0.1,
+          },
+        ],
+      },
+      options: {
+        responsive: false,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: "index" },
+        plugins: {
+          legend: {
+            position: "top",
+            align: "end",
+            labels: {
+              color: text2,
+              font: { family: "JetBrains Mono, monospace", size: 10 },
+              boxWidth: 10,
+              boxHeight: 2,
+              padding: 14,
+            },
+          },
+          tooltip: {
+            backgroundColor: "#0a0c10",
+            borderColor: border,
+            borderWidth: 1,
+            titleFont: { family: "JetBrains Mono, monospace", size: 10 },
+            bodyFont: { family: "JetBrains Mono, monospace", size: 11 },
+            padding: 10,
+            titleColor: text3,
+            bodyColor: "#e6e8eb",
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: $${ctx.parsed.y?.toLocaleString("en-US", { maximumFractionDigits: 0 }) ?? "—"}`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { color: border, drawTicks: false },
+            ticks: {
+              color: text3,
+              font: { family: "JetBrains Mono, monospace", size: 9 },
+              maxRotation: 0,
+              autoSkipPadding: 24,
+            },
+          },
+          y: {
+            grid: { color: border, drawTicks: false },
+            ticks: {
+              color: text3,
+              font: { family: "JetBrains Mono, monospace", size: 9 },
+              callback: (v) => `$${(v / 1000).toFixed(0)}k`,
+            },
+          },
+        },
+      },
+    });
+
+    return () => {
+      if (chartInstance.current) {
+        chartInstance.current.destroy();
+        chartInstance.current = null;
+      }
+    };
+  }, [eqData, s.strategy]);
+
+  const tone = s.verdict === "KEEP" ? "good" : s.verdict === "REVIEW" ? "warn" : "bad";
+  const isReviewable = s.trades != null && s.trades >= 30;
+  const wfMissing = !s.has_wf;
+
+  // Gates
+  const hardGates = [
+    { name: "≥ 30 trades", state: (s.trades ?? 0) >= 30 ? "pass" : "fail", value: s.trades ?? 0 },
+    { name: "Max DD < 20%", state: s.max_dd != null && s.max_dd < 20 ? "pass" : s.max_dd == null ? "fail" : "fail", value: s.max_dd != null ? `${s.max_dd.toFixed(1)}%` : "—" },
+    { name: "Not directionally failed", state: "pass", value: "OK" },
+    { name: "WF data present", state: s.has_wf ? "pass" : "fail", value: s.has_wf ? "OK" : "missing" },
+    { name: "Not 1-trade winner", state: (s.trades ?? 0) > 1 ? "pass" : "fail", value: (s.trades ?? 0) > 1 ? "OK" : "1 trade" },
+  ];
+  const softGates = [
+    { name: "OOS Sharpe > 0", state: s.oos_sharpe != null && s.oos_sharpe > 0 ? "pass" : "warn", value: s.oos_sharpe != null ? s.oos_sharpe.toFixed(2) : "—" },
+    { name: "Bootstrap CI excl. zero", state: s.spans_zero === false ? "pass" : s.spans_zero === true ? "warn" : "warn", value: s.spans_zero === false ? "[+, +]" : s.spans_zero === true ? "spans 0" : "—" },
+    { name: "Param stability > 0.5", state: s.param_stab != null && s.param_stab > 0.5 ? "pass" : "warn", value: s.param_stab != null ? s.param_stab.toFixed(2) : "—" },
+    { name: "Profit factor > 1.3", state: s.pf != null && s.pf > 1.3 ? "pass" : "warn", value: s.pf != null ? s.pf.toFixed(2) : "—" },
+    { name: "Win rate > 45%", state: s.win_rate != null && s.win_rate > 0.45 ? "pass" : "warn", value: s.win_rate != null ? `${(s.win_rate * 100).toFixed(1)}%` : "—" },
+  ];
+
+  // Params (synthetic for selected strategy)
+  const params = getParams(s);
+
+  return (
+    <>
+      <div className="row-flex" style={{ marginBottom: 14, justifyContent: "space-between" }}>
+        <button onClick={() => onNavigate("explorer")} style={{ fontSize: 11 }}>
+          ← Back to Explorer
+        </button>
+        <div className="row-flex">
+          <span className="mono dim" style={{ fontSize: 10 }}>last_updated</span>
+          <code className="mono" style={{ fontSize: 11 }}>2026-05-23T14:18:02Z</code>
+          <span className="muted">·</span>
+          <span className="staleness">↻ 5s poll</span>
+        </div>
+      </div>
+
+      {/* Title strip */}
+      <div className="card" style={{ marginBottom: 16, padding: "18px 20px", display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center" }}>
+        <div>
+          <div className="mono dim" style={{ fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>Strategy</div>
+          <div className="mono" style={{ fontSize: 20, marginTop: 4 }}>
+            {s.strategy}
+            <span className="dim" style={{ margin: "0 10px" }}>·</span>
+            <span>{s.symbol}</span>
+            <span className="dim" style={{ margin: "0 10px" }}>·</span>
+            <span>{s.tf}</span>
+          </div>
+          <div className="row-flex" style={{ marginTop: 8, gap: 8 }}>
+            <span className="tag">regime: {s.regime || "—"}</span>
+            <span className="tag">score {s.score?.toFixed(2) ?? "—"}</span>
+            {s.spans_zero && <span className="tag" style={{ color: "var(--red)", borderColor: "var(--red-border)" }}>bootstrap CI spans zero</span>}
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div className="mono dim" style={{ fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Final Verdict</div>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+            <span style={{
+              fontFamily: "var(--mono)",
+              fontWeight: 700,
+              fontSize: 26,
+              letterSpacing: "0.05em",
+              color: s.verdict === "KEEP" ? "var(--green)" : s.verdict === "REVIEW" ? "var(--amber)" : "var(--red)",
+            }}>{s.verdict}</span>
+          </div>
+          {committee.dissent && (
+            <div className="mono" style={{ fontSize: 10.5, color: "var(--amber)", marginTop: 4 }}>
+              ⚠ committee dissent
+            </div>
+          )}
+        </div>
+      </div>
+
+      {wfMissing && (
+        <Callout kind="bad" ico="✕">
+          <strong>Missing WF data — KEEP blocked.</strong> Strategy cannot receive KEEP verdict without walk-forward results.
+          Queue: <code className="mono">tar walk-forward --strategy {s.strategy} --symbol {s.symbol} --tf {s.tf}</code>
+        </Callout>
+      )}
+      {s.spans_zero && (
+        <Callout kind="bad" ico="!" >
+          <strong>Bootstrap CI spans zero.</strong> Statistical significance of OOS Sharpe not established —
+          the confidence interval includes zero. Treat results with hard caution; do not promote to forward test
+          without addressing.
+        </Callout>
+      )}
+
+      {/* Panel A — Key Metrics */}
+      <SectionLabel>A · Key Metrics</SectionLabel>
+      <div className="grid grid-4" style={{ marginBottom: 8 }}>
+        <Metric label="Sharpe (Backtest)" value={s.sharpe != null ? s.sharpe.toFixed(2) : "—"} sub="risk-adjusted return" tone={tone} />
+        <Metric label="OOS Sharpe (WF mean)" value={s.oos_sharpe != null ? s.oos_sharpe.toFixed(2) : "—"} sub="walk-forward · out-of-sample" tone={s.oos_sharpe > 0.8 ? "good" : s.oos_sharpe > 0 ? "warn" : "bad"} />
+        <Metric label="Sortino" value={s.sortino != null ? s.sortino.toFixed(2) : "—"} sub="downside-deviation adjusted" />
+        <Metric label="Win Rate" value={s.win_rate != null ? `${(s.win_rate * 100).toFixed(1)}%` : "—"} sub={`${s.trades ?? "—"} trades`} />
+      </div>
+      <div className="grid grid-4" style={{ marginBottom: 16 }}>
+        <Metric label="Profit Factor" value={s.pf != null ? s.pf.toFixed(2) : "—"} sub="*pre-cost · Stage 1 incomplete" tone={s.pf > 1.3 ? "" : "warn"} />
+        <Metric label="Max Drawdown" value={s.max_dd != null ? `${s.max_dd.toFixed(1)}%` : "—"} sub="*pre-vol-gate" tone={ddBadgeTone(s.max_dd)} />
+        <Metric label="Recovery Factor" value={s.max_dd != null && s.net_pnl != null ? (s.net_pnl / (s.max_dd * 100)).toFixed(2) : "—"} sub="net P&L / max DD$" />
+        <Metric label="Param Stability" value={s.param_stab != null ? s.param_stab.toFixed(2) : "—"} sub="0=unstable · 1=stable" tone={s.param_stab > 0.6 ? "good" : "warn"} />
+      </div>
+
+      {/* Panel B — Equity Curve */}
+      <SectionLabel right={
+        <div className="row-flex" style={{ gap: 14, fontSize: 10 }}>
+          <span><LegendDot color="var(--blue)" /> backtest</span>
+          <span><LegendDot color="var(--amber)" /> walk-forward OOS</span>
+          <span><LegendDot color="var(--green)" /> paper</span>
+        </div>
+      }>B · Equity Curve</SectionLabel>
+      <Card flat style={{ marginBottom: 16 }}>
+        <div className="card-body" style={{ padding: 14 }}>
+          <div style={{ height: 320, position: "relative" }}>
+            <canvas ref={chartRef} />
+          </div>
+        </div>
+      </Card>
+
+      {/* Panel C — Walk-Forward Splits */}
+      <SectionLabel right={
+        s.has_wf
+          ? <span className="muted mono" style={{ fontSize: 10 }}>{WF_SPLITS.length} splits · rolling 9m train / 3m test</span>
+          : <span className="reason-code">MISSING_WF</span>
+      }>C · Walk-Forward Splits</SectionLabel>
+      {s.has_wf ? (
+        <div className="table-wrap" style={{ marginBottom: 16 }}>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Train period</th>
+                <th>Test period</th>
+                <th className="num">IS Sharpe</th>
+                <th className="num">OOS Sharpe</th>
+                <th className="num">IS/OOS ratio</th>
+                <th>Stability</th>
+              </tr>
+            </thead>
+            <tbody>
+              {WF_SPLITS.map(w => (
+                <tr key={w.idx}>
+                  <td className="mono">{w.idx}</td>
+                  <td className="mono dim">{w.train}</td>
+                  <td className="mono">{w.test}</td>
+                  <td className="num mono">{w.is_sharpe.toFixed(2)}</td>
+                  <td className="num mono">{w.oos_sharpe.toFixed(2)}</td>
+                  <td className={`num mono ${w.ratio < 0.5 ? "red" : w.ratio < 0.7 ? "amber" : ""}`}>{w.ratio.toFixed(2)}</td>
+                  <td>
+                    {w.ratio < 0.5 && <Badge kind="FAIL">UNSTABLE</Badge>}
+                    {w.ratio >= 0.5 && w.ratio < 0.7 && <Badge kind="WARN">SOFT</Badge>}
+                    {w.ratio >= 0.7 && <Badge kind="PASS">STABLE</Badge>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <Card flat style={{ marginBottom: 16, padding: 30, textAlign: "center" }}>
+          <div className="mono dim">No walk-forward data for this strategy. Run <code>tar walk-forward</code>.</div>
+        </Card>
+      )}
+
+      {/* Panel D — Multi-Agent Committee */}
+      <SectionLabel right={
+        <div className="row-flex" style={{ gap: 10 }}>
+          {committee.dissent && <Badge kind="REVIEW">DISSENT</Badge>}
+          <span className="muted mono" style={{ fontSize: 10 }}>3 agents · consensus {committee.verdict}</span>
+        </div>
+      }>D · Research Committee</SectionLabel>
+      <div className="grid grid-3" style={{ marginBottom: 12 }}>
+        {committee.agents.map((a, i) => (
+          <div key={i} className="agent">
+            <div className="name">{a.name}</div>
+            <div className="stance">
+              <Badge kind={a.stance} />
+              <span className="dim mono" style={{ fontSize: 10 }}>conf {a.confidence.toFixed(2)}</span>
+            </div>
+            <div className="conf-bar">
+              <div className="fill" style={{ width: `${a.confidence * 100}%`, background: a.stance === "KEEP" ? "var(--green)" : a.stance === "REVIEW" ? "var(--amber)" : "var(--red)" }} />
+            </div>
+            <div className="concern">{a.concern}</div>
+          </div>
+        ))}
+      </div>
+      <details className="collapsible" style={{ marginBottom: 16 }}>
+        <summary>Committee markdown report — {s.strategy}_{s.symbol}_{s.tf}_committee.md</summary>
+        <div className="content">{`# Research Committee — ${s.strategy} · ${s.symbol} · ${s.tf}
+
+Verdict: ${committee.verdict}${committee.dissent ? " (dissent)" : ""}
+Quorum: 3/3 agents responded
+
+## Summary
+${committee.summary}
+
+## Agent stances
+${committee.agents.map(a => `- **${a.name}** — ${a.stance} (conf ${a.confidence.toFixed(2)})
+  > ${a.concern}`).join("\n")}
+
+## Recommendation
+${committee.verdict === "KEEP" ? "Promote to forward test (paper). Re-evaluate after 200 paper bars or 30d, whichever first." : ""}
+${committee.verdict === "REVIEW" ? "Hold for human review. Address dissent and re-run committee before promotion." : ""}
+${committee.verdict === "KILL" ? "Archive. Do not promote. Reason codes attached to strategy_memory.jsonl." : ""}`}</div>
+      </details>
+
+      {/* Panel E — Gate Status */}
+      <SectionLabel>E · Gate Status</SectionLabel>
+      <div className="grid grid-2" style={{ marginBottom: 16 }}>
+        <Card title="Hard Gates" right={<span className="muted mono" style={{ fontSize: 10 }}>{hardGates.filter(g => g.state === "pass").length}/{hardGates.length} pass</span>}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {hardGates.map((g, i) => <Gate key={i} {...g} />)}
+          </div>
+        </Card>
+        <Card title="Soft Gates" right={<span className="muted mono" style={{ fontSize: 10 }}>{softGates.filter(g => g.state === "pass").length}/{softGates.length} pass</span>}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {softGates.map((g, i) => <Gate key={i} {...g} />)}
+          </div>
+        </Card>
+      </div>
+
+      {/* Panel F — Parameter Block */}
+      <SectionLabel right={<span className="muted mono" style={{ fontSize: 10 }}>read-only · CLI edits only · one parameter at a time</span>}>F · Parameters</SectionLabel>
+      <div className="grid grid-2" style={{ marginBottom: 16 }}>
+        <Card title="Current Parameters">
+          <dl className="kv">
+            {params.map(p => (
+              <React.Fragment key={p.name}>
+                <dt>{p.name}</dt>
+                <dd>
+                  {p.value}
+                  {p.diff != null && (
+                    <span className={p.diff > 0 ? "amber" : "amber"} style={{ marginLeft: 8, fontSize: 10 }}>
+                      Δ {p.diff > 0 ? "+" : ""}{p.diff} vs baseline
+                    </span>
+                  )}
+                </dd>
+              </React.Fragment>
+            ))}
+          </dl>
+        </Card>
+        <Card title="Locked Baseline" right={<span className="muted mono" style={{ fontSize: 10 }}>last promote · 2026-04-12</span>}>
+          <dl className="kv">
+            {params.map(p => (
+              <React.Fragment key={p.name}>
+                <dt>{p.name}</dt>
+                <dd className="dim">{p.baseline ?? p.value}</dd>
+              </React.Fragment>
+            ))}
+          </dl>
+        </Card>
+      </div>
+
+      <Callout ico="i">
+        To change a parameter:&nbsp;
+        <code className="mono">tar set-param --strategy {s.strategy} --symbol {s.symbol} --tf {s.tf} --param &lt;name&gt; --value &lt;v&gt;</code>
+        <br />
+        <span className="dim">One change per run. Multi-param edits are blocked.</span>
+      </Callout>
+    </>
+  );
+}
+
+function SectionLabel({ children, right }) {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      padding: "8px 4px",
+      marginTop: 8,
+      marginBottom: 10,
+      borderBottom: "1px solid var(--border)",
+    }}>
+      <span className="mono" style={{ fontSize: 11, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+        {children}
+      </span>
+      {right && <span style={{ marginLeft: "auto" }}>{right}</span>}
+    </div>
+  );
+}
+
+function LegendDot({ color }) {
+  return <span style={{ display: "inline-block", width: 8, height: 2, background: color, verticalAlign: "middle", marginRight: 5 }} />;
+}
+
+// ---- synthetic generators ----
+
+function seedFrom(s) {
+  // simple string hash → seed
+  const str = `${s.strategy}|${s.symbol}|${s.tf}`;
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = (h * 16777619) >>> 0; }
+  return h;
+}
+
+function mulberry32(a) {
+  return function() {
+    let t = (a += 0x6D2B79F5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function generateEquityCurves(s) {
+  const rand = mulberry32(seedFrom(s));
+  const N = 180;
+  const labels = [];
+  const start = new Date(2024, 0, 1);
+  for (let i = 0; i < N; i++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + Math.floor(i * 5.5));
+    labels.push(d.toISOString().slice(0, 10));
+  }
+
+  // backtest: trend up if KEEP, sideways/down if KILL
+  const direction = s.verdict === "KEEP" ? 1 : s.verdict === "REVIEW" ? 0.3 : -0.5;
+  const vol = s.max_dd ? s.max_dd / 100 : 0.15;
+  let bt = 10000;
+  const backtest = [bt];
+  for (let i = 1; i < N; i++) {
+    const ret = direction * 0.0018 + (rand() - 0.5) * vol * 0.06;
+    bt *= 1 + ret;
+    backtest.push(bt);
+  }
+
+  // walk-forward OOS: starts at split boundary, more noisy
+  const wfStart = Math.floor(N * 0.65);
+  const wf = labels.map((_, i) => {
+    if (i < wfStart) return null;
+    const t = i - wfStart;
+    let v = backtest[wfStart];
+    const r2 = mulberry32(seedFrom(s) ^ 0xA5A5);
+    for (let k = 0; k <= t; k++) {
+      const ret = direction * 0.0011 + (r2() - 0.5) * vol * 0.08;
+      v *= 1 + ret;
+    }
+    return v;
+  });
+
+  // paper equity: very recent only
+  const paperStart = Math.floor(N * 0.88);
+  const paper = labels.map((_, i) => {
+    if (i < paperStart) return null;
+    const t = i - paperStart;
+    let v = (wf[paperStart] ?? backtest[paperStart]);
+    const r3 = mulberry32(seedFrom(s) ^ 0x5A5A);
+    for (let k = 0; k <= t; k++) {
+      const ret = direction * 0.0009 + (r3() - 0.5) * vol * 0.05;
+      v *= 1 + ret;
+    }
+    return v;
+  });
+
+  return { labels, backtest, wf, paper };
+}
+
+function getParams(s) {
+  // synthetic param set keyed loosely by strategy family
+  if (s.strategy.startsWith("ema")) {
+    return [
+      { name: "ema_fast", value: 12, baseline: 12 },
+      { name: "ema_slow", value: 34, baseline: 30, diff: 4 },
+      { name: "atr_period", value: 14, baseline: 14 },
+      { name: "atr_mult_stop", value: 2.2, baseline: 2.2 },
+      { name: "atr_mult_target", value: 3.0, baseline: 3.0 },
+      { name: "session_filter", value: "LDN+NY", baseline: "LDN+NY" },
+      { name: "min_trades_gate", value: 30, baseline: 30 },
+    ];
+  }
+  if (s.strategy.startsWith("atr")) {
+    return [
+      { name: "atr_period", value: 20, baseline: 14, diff: 6 },
+      { name: "atr_mult_stop", value: 2.8, baseline: 2.2 },
+      { name: "breakout_lookback", value: 50, baseline: 50 },
+      { name: "session_filter", value: "24h", baseline: "LDN+NY" },
+      { name: "min_trades_gate", value: 30, baseline: 30 },
+    ];
+  }
+  return [
+    { name: "lookback", value: 20, baseline: 20 },
+    { name: "threshold", value: 1.5, baseline: 1.5 },
+    { name: "session_filter", value: "LDN+NY", baseline: "LDN+NY" },
+    { name: "min_trades_gate", value: 30, baseline: 30 },
+  ];
+}
+
+window.PageDetail = PageDetail;
+
+</script>
+<script type="text/babel" data-presets="env,react">
+// Main app shell: env banner + sidebar + router
+
+const NAV = [
+  { id: "dashboard", label: "Pipeline", icon: "▸", kbd: "1", enabled: true },
+  { id: "explorer", label: "Strategies", icon: "▤", kbd: "2", enabled: true },
+  { id: "jobs", label: "Jobs", icon: "⌷", kbd: "3", enabled: false },
+  { id: "signals", label: "Signals", icon: "↯", kbd: "4", enabled: false },
+  { id: "optim", label: "Optimisation", icon: "◫", kbd: "5", enabled: false },
+  { id: "research", label: "Research", icon: "✎", kbd: "6", enabled: false },
+  { id: "audit", label: "Data & Audit", icon: "❡", kbd: "7", enabled: false },
+];
+
+const ENV_STATES = {
+  SAFE_TO_TEST: { cls: "safe", text: "No high-impact events in window. System cleared for signal generation." },
+  CAUTION: { cls: "caution", text: "Event scheduled within 4h window. Monitor closely; reduce position sizing." },
+  HOLD_TRADING: { cls: "hold", text: "Active high-impact window in progress. New signals paused until window closes." },
+  BLOCK_TRADING: { cls: "block", text: "Hard block active. Signal generation disabled. Cannot be overridden from UI." },
+};
+
+function App() {
+  const t = useTweaks(/*EDITMODE-BEGIN*/{
+    "theme": "dark",
+    "density": "normal",
+    "env_state": "SAFE_TO_TEST",
+    "accent": "blue"
+  }/*EDITMODE-END*/);
+
+  // Apply theme + density to root
+  React.useEffect(() => {
+    document.documentElement.setAttribute("data-theme", t.theme);
+    document.documentElement.setAttribute("data-density", t.density);
+    document.documentElement.style.setProperty(
+      "--accent",
+      t.accent === "amber" ? "var(--amber)" : t.accent === "green" ? "var(--green)" : t.accent === "violet" ? "var(--violet)" : "var(--blue)"
+    );
+    document.documentElement.style.setProperty(
+      "--accent-bg",
+      t.accent === "amber" ? "var(--amber-bg)" : t.accent === "green" ? "var(--green-bg)" : t.accent === "violet" ? "oklch(70% 0.15 295 / 0.12)" : "var(--blue-bg)"
+    );
+  }, [t.theme, t.density, t.accent]);
+
+  const [page, setPage] = React.useState("dashboard");
+  const [selectedStrategy, setSelectedStrategy] = React.useState(null);
+
+  function navigate(target, payload) {
+    if (target === "detail") setSelectedStrategy(payload || STRATEGIES[0]);
+    setPage(target);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  // Keyboard nav
+  React.useEffect(() => {
+    function onKey(e) {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
+      const item = NAV.find(n => n.kbd === e.key);
+      if (item && item.enabled) navigate(item.id);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const envState = t.env_state;
+  const env = ENV_STATES[envState];
+
+  const pageTitle = {
+    dashboard: { title: "Pipeline Dashboard", crumb: "home / pipeline" },
+    explorer: { title: "Strategy Explorer", crumb: "strategies / explorer" },
+    detail: { title: selectedStrategy ? `${selectedStrategy.strategy}` : "Strategy Detail", crumb: `strategies / ${selectedStrategy ? `${selectedStrategy.strategy}_${selectedStrategy.symbol}_${selectedStrategy.tf}` : "—"}` },
+  }[page] || { title: "Not implemented", crumb: page };
+
+  return (
+    <div className="app">
+      {/* Env banner — top of every page */}
+      <div className={`env-banner ${env.cls}`}>
+        <span className="pulse" />
+        <span className="state-code">{envState}</span>
+        <span style={{ opacity: 0.9 }}>{env.text}</span>
+        <span className="right">
+          <span>paper_mode=<strong>true</strong></span>
+          <span>live_trading_allowed=<strong>false</strong></span>
+          <span>{new Date().toISOString().replace(/\.\d+Z$/, "Z")}</span>
+        </span>
+      </div>
+
+      {/* Sidebar */}
+      <nav className="sidebar">
+        <div className="brand">
+          <div className="mark">T</div>
+          <div className="name">TAR</div>
+          <div className="ver">v2.4</div>
+        </div>
+
+        <div className="section-label">Research</div>
+        {NAV.map(n => (
+          <div
+            key={n.id}
+            className={`nav-item ${page === n.id || (page === "detail" && n.id === "explorer") ? "active" : ""}`}
+            onClick={() => n.enabled && navigate(n.id)}
+            style={{ opacity: n.enabled ? 1 : 0.4, cursor: n.enabled ? "pointer" : "not-allowed" }}
+            title={n.enabled ? "" : "Not implemented in this prototype"}
+          >
+            <span className="nav-icon mono">{n.icon}</span>
+            <span>{n.label}</span>
+            <span className="nav-kbd">{n.kbd}</span>
+          </div>
+        ))}
+
+        <div className="spacer" />
+
+        <div className="footer">
+          <div className="row"><span>daemon</span><span className="ok">● running</span></div>
+          <div className="row"><span>queue</span><span>{JOBS.filter(j => j.status === "queued").length} queued</span></div>
+          <div className="row"><span>poll</span><span>5s</span></div>
+          <div className="row"><span>build</span><span>a92f1c8</span></div>
+        </div>
+      </nav>
+
+      {/* Main */}
+      <main className="main">
+        <div className="page-head">
+          <div>
+            <div className="crumb">{pageTitle.crumb}</div>
+            <h1>{pageTitle.title}</h1>
+          </div>
+          <div className="actions">
+            <span className="timestamp"><span className="dot" />last sync · 4s ago</span>
+            <button className="icon" title="Refresh">↻</button>
+          </div>
+        </div>
+
+        {page === "dashboard" && <PageDashboard tweaks={t} onNavigate={navigate} />}
+        {page === "explorer" && <PageExplorer onNavigate={navigate} />}
+        {page === "detail" && <PageDetail strategy={selectedStrategy} onNavigate={navigate} />}
+        {!["dashboard", "explorer", "detail"].includes(page) && (
+          <Card title="Not implemented">
+            <div style={{ padding: 24, textAlign: "center" }} className="muted">
+              <p>This screen is not part of the current prototype scope.</p>
+              <p className="dim mono" style={{ fontSize: 11 }}>scope: Pipeline Dashboard · Strategy Explorer · Strategy Detail</p>
+            </div>
+          </Card>
+        )}
+      </main>
+
+      {/* Tweaks */}
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Appearance">
+          <TweakRadio
+            label="Theme"
+            value={t.theme}
+            onChange={(v) => t.setTweak("theme", v)}
+            options={[{ value: "dark", label: "Dark" }, { value: "light", label: "Light" }]}
+          />
+          <TweakRadio
+            label="Density"
+            value={t.density}
+            onChange={(v) => t.setTweak("density", v)}
+            options={[
+              { value: "compact", label: "Compact" },
+              { value: "normal", label: "Normal" },
+              { value: "comfortable", label: "Roomy" },
+            ]}
+          />
+          <TweakColor
+            label="Accent"
+            value={t.accent}
+            onChange={(v) => t.setTweak("accent", v)}
+            options={[
+              { value: "blue", color: "oklch(70% 0.14 235)" },
+              { value: "green", color: "oklch(70% 0.15 150)" },
+              { value: "amber", color: "oklch(78% 0.15 75)" },
+              { value: "violet", color: "oklch(70% 0.15 295)" },
+            ]}
+          />
+        </TweakSection>
+        <TweakSection title="Environment Risk (simulate)">
+          <TweakSelect
+            label="State"
+            value={t.env_state}
+            onChange={(v) => t.setTweak("env_state", v)}
+            options={[
+              { value: "SAFE_TO_TEST", label: "SAFE_TO_TEST" },
+              { value: "CAUTION", label: "CAUTION" },
+              { value: "HOLD_TRADING", label: "HOLD_TRADING" },
+              { value: "BLOCK_TRADING", label: "BLOCK_TRADING (red banner)" },
+            ]}
+          />
+          <div className="mono dim" style={{ fontSize: 10, marginTop: 6, lineHeight: 1.5 }}>
+            Spec rule: BLOCK_TRADING cannot be overridden from UI in production.
+            This tweak exists only to preview banner states.
+          </div>
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+// Custom TweakColor variant accepting {value, color} objects
+function TweakColor({ label, value, onChange, options }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+      <div className="mono" style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
+      <div style={{ display: "flex", gap: 6 }}>
+        {options.map(o => (
+          <button
+            key={o.value}
+            onClick={() => onChange(o.value)}
+            style={{
+              width: 28, height: 28,
+              borderRadius: 4,
+              background: o.color,
+              border: value === o.value ? "2px solid var(--text)" : "1px solid var(--border)",
+              padding: 0,
+              cursor: "pointer",
+            }}
+            title={o.value}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Custom radio that uses our segmented style
+function TweakRadio({ label, value, onChange, options }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+      <div className="mono" style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
+      <div className="segmented" style={{ width: "fit-content" }}>
+        {options.map(o => (
+          <button key={o.value} className={value === o.value ? "active" : ""} onClick={() => onChange(o.value)}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TweakSelect({ label, value, onChange, options }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+      <div className="mono" style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function TweakSection({ title, children }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div className="mono" style={{
+        fontSize: 10,
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+        color: "var(--text-2)",
+        marginBottom: 10,
+        paddingBottom: 6,
+        borderBottom: "1px solid var(--border)",
+      }}>{title}</div>
+      {children}
+    </div>
+  );
+}
+
+function useTweaks(defaults) {
+  const [state, setState] = React.useState(defaults);
+
+  React.useEffect(() => {
+    function onMsg(e) {
+      if (e.data?.type === "__edit_mode_set_keys") {
+        setState(s => ({ ...s, ...e.data.edits }));
+      }
+    }
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
+  function setTweak(key, value) {
+    setState(s => ({ ...s, [key]: value }));
+    window.parent.postMessage({ type: "__edit_mode_set_keys", edits: { [key]: value } }, "*");
+  }
+
+  return { ...state, setTweak };
+}
+
+// Minimal TweaksPanel that wires the host protocol
+function TweaksPanel({ title = "Tweaks", children }) {
+  const [open, setOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    function onMsg(e) {
+      if (e.data?.type === "__activate_edit_mode") setOpen(true);
+      if (e.data?.type === "__deactivate_edit_mode") setOpen(false);
+    }
+    window.addEventListener("message", onMsg);
+    window.parent.postMessage({ type: "__edit_mode_available" }, "*");
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
+  function close() {
+    setOpen(false);
+    window.parent.postMessage({ type: "__edit_mode_dismissed" }, "*");
+  }
+
+  if (!open) return null;
+  return (
+    <div style={{
+      position: "fixed",
+      right: 20, bottom: 20,
+      width: 320,
+      maxHeight: "80vh",
+      background: "var(--panel)",
+      border: "1px solid var(--border-strong)",
+      borderRadius: 6,
+      boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+      padding: 16,
+      overflow: "auto",
+      zIndex: 9999,
+      fontFamily: "var(--sans)",
+    }}>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        marginBottom: 14,
+        paddingBottom: 10,
+        borderBottom: "1px solid var(--border)",
+      }}>
+        <span className="mono" style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em" }}>{title}</span>
+        <button className="icon" onClick={close} style={{ marginLeft: "auto", padding: "2px 8px" }}>✕</button>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+</script>
+</body>
+</html>

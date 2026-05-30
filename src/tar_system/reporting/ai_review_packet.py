@@ -16,8 +16,8 @@ from typing import Any
 
 from tar_system.audit.writer import append_audit_event
 from tar_system.controller.job_queue import queue_stats, read_jobs
-from tar_system.controller.research_loop import recommend_next_actions
 from tar_system.reporting.review_log import load_review_results
+from tar_system.reporting.static_analysis import DEFAULT_STATIC_ANALYSIS_DIR, load_static_analysis_snapshot
 from tar_system.scoring.scorer import score_strategy
 from tar_system.settings import LOG_DIR, REPORT_DIR
 
@@ -44,6 +44,8 @@ class AIReviewPacketConfig:
     results_dir: Path = Path("data/results")
     reports_dir: Path = Path(REPORT_DIR)
     log_dir: Path = Path(LOG_DIR)
+    static_analysis_dir: Path = DEFAULT_STATIC_ANALYSIS_DIR
+    infrastructure_watchlist_path: Path = Path("configs/local_infrastructure_watchlist.json")
     metrics_cache_path: Path = DEFAULT_METRICS_CACHE_PATH
     guardrails: list[str] = field(
         default_factory=lambda: [
@@ -82,17 +84,21 @@ def build_ai_review_snapshot(limit: int = 10, config: AIReviewPacketConfig | Non
     summary_stats = _summary_statistics(jobs, metrics)
     failure_diagnosis = _failure_diagnosis(jobs, metrics, cfg, limit)
     risk_assessment = _risk_assessment(jobs, metrics, limit)
+    static_analysis = load_static_analysis_snapshot(cfg.static_analysis_dir, limit=limit)
+    infrastructure_watchlist = _load_infrastructure_watchlist(cfg.infrastructure_watchlist_path)
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "paper_only": True,
         "guardrails": cfg.guardrails,
-        "warnings": metric_load["warnings"],
+        "warnings": [*metric_load["warnings"], *static_analysis["warnings"]],
         "summary_statistics": summary_stats,
         "failure_diagnosis": failure_diagnosis,
         "risk_assessment": risk_assessment,
+        "static_analysis": static_analysis,
+        "infrastructure_watchlist": infrastructure_watchlist,
         "queue_stats": queue_stats(),
         "queue_summary": _summarize_jobs(jobs, limit),
-        "next_actions": recommend_next_actions(limit),
+        "next_actions": _recommend_next_actions(limit),
         "best_metric_candidates": metrics[:limit],
         "worst_metric_candidates": list(reversed(metrics[-limit:])),
         "recent_review_log": review_rows,
@@ -144,6 +150,31 @@ def render_ai_review_packet(snapshot: dict[str, Any]) -> str:
     lines.append(f"- Low-sample metric candidates: {len(risk['low_sample_candidates'])}")
     lines.append(f"- High-drawdown metric candidates: {len(risk['high_drawdown_candidates'])}")
     lines.append(f"- Cost-sensitive completed jobs: {len(risk['cost_sensitive_jobs'])}")
+    static_analysis = snapshot["static_analysis"]
+    trial = static_analysis["trial"]
+    summary = static_analysis["summary"]
+    lines.extend(["", "## Static Analysis Trial"])
+    lines.append(f"- Primary tool: {trial['primary_tool']}")
+    lines.append(f"- Fallback tool: {trial['fallback_tool']}")
+    lines.append(f"- Mode: {trial['mode']}")
+    lines.append(f"- Trial start: {trial['start_date']}")
+    lines.append(f"- Review due: {trial['review_due']}")
+    lines.append(f"- Fallback condition: {trial['fallback_condition']}")
+    lines.append(f"- Source dir: {static_analysis['source_dir']}")
+    lines.append(f"- Files loaded: {len(static_analysis['files'])}")
+    lines.append(f"- Findings loaded: {summary['total_findings']}")
+    lines.extend(_counter_lines("Static findings by severity", sorted(summary["severity_counts"].items())))
+    lines.extend(["", "## Static Analysis Findings"])
+    lines.extend(_static_analysis_table(static_analysis["findings"]))
+    lines.extend(["", "## Local Infrastructure Watchlist"])
+    watchlist = snapshot.get("infrastructure_watchlist") or {}
+    if not watchlist:
+        lines.append("- No infrastructure watchlist found.")
+    else:
+        lines.append(f"- Updated: {watchlist.get('updated_at', 'unknown')}")
+        lines.extend(_watchlist_lines("Adopt now", watchlist.get("adopt_now", [])))
+        lines.extend(_watchlist_lines("Candidate next", watchlist.get("candidate_next", [])))
+        lines.extend(_watchlist_lines("Sandbox later", watchlist.get("sandbox_later", [])))
     lines.extend(["", "## Queue Stats"])
     for status, count in sorted(snapshot["queue_stats"].items()):
         lines.append(f"- {status}: {count}")
@@ -253,6 +284,37 @@ def _parse_metrics_name(path: Path) -> dict[str, str] | None:
 
 def _load_review_rows(limit: int) -> list[dict[str, Any]]:
     return load_review_results()[-limit:]
+
+
+def _recommend_next_actions(limit: int) -> list[str]:
+    stats = queue_stats()
+    actions: list[str] = []
+    if stats.get("QUEUED", 0) > 0:
+        actions.append(f"Run worker for {stats['QUEUED']} queued paper research jobs")
+    if stats.get("FAILED", 0) > 0:
+        actions.append(f"Review {stats['FAILED']} failed jobs before rerunning")
+    best_rows = [
+        row
+        for row in load_review_results()
+        if "score" in row
+        and str(row.get("verdict", "")).upper() in {"KEEP", "REVIEW"}
+        and float(row.get("score", 0.0) or 0.0) >= 45.0
+    ]
+    if best_rows:
+        best = max(best_rows, key=lambda row: float(row.get("score", 0.0) or 0.0))
+        actions.append(f"Review best scored candidate: {best['strategy']} {best['symbol']} {best['timeframe']} score={best['score']}")
+    else:
+        actions.append("No KEEP or strong REVIEW candidate is ready yet")
+    return actions[:limit]
+
+
+def _load_infrastructure_watchlist(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"warnings": [{"path": str(path), "reason": "INFRASTRUCTURE_WATCHLIST_LOAD_FAILED"}]}
 
 
 def _load_recent_audit_events(limit: int, config: AIReviewPacketConfig) -> list[dict[str, Any]]:
@@ -414,8 +476,36 @@ def _requested_review_output(summary: dict[str, Any], failure: dict[str, Any], r
         prompts.append("Call out candidates blocked by excessive drawdown.")
     if summary["failure_rate_pct"] > 50:
         prompts.append("Recommend a small conservative next test batch instead of a full sweep.")
+    prompts.append("Review OpenGrep static-analysis findings before making any AI-only code claims.")
     prompts.append("List any data, cost, walk-forward, or sample-size blockers.")
     return prompts
+
+
+def _static_analysis_table(rows: list[dict[str, Any]]) -> list[str]:
+    if not rows:
+        return ["- No static-analysis findings loaded."]
+    lines: list[str] = []
+    lines.append("| Tool | Severity | Rule | Path | Line | Message |")
+    lines.append("| --- | --- | --- | --- | ---: | --- |")
+    for row in rows:
+        message = str(row.get("message") or "").replace("|", "\\|").replace("\n", " ")[:180]
+        lines.append(
+            f"| {row.get('tool', '')} | {row.get('severity', '')} | {row.get('rule_id', '')} | "
+            f"{row.get('path', '')} | {row.get('line') or ''} | {message} |"
+        )
+    return lines
+
+
+def _watchlist_lines(title: str, rows: list[dict[str, Any]]) -> list[str]:
+    lines = [f"### {title}"]
+    if not rows:
+        return [*lines, "- None"]
+    for row in rows[:8]:
+        name = row.get("name", "unknown")
+        category = row.get("category", "")
+        role = row.get("local_role") or row.get("reason") or row.get("adoption_gate") or ""
+        lines.append(f"- {name}: {category} - {role}")
+    return lines
 
 
 def _severity(verdict: str, reason_codes: list[str]) -> str:

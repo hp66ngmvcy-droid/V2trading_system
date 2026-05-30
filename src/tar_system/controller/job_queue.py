@@ -56,6 +56,89 @@ QUEUE_COLUMNS = [
 ]
 ACTIVE_STATUSES = {"QUEUED", "RUNNING"}
 ActiveJobKey = tuple[str, str, str, str, str, str, str, str]
+QUEUE_COLUMN_SET = set(QUEUE_COLUMNS)
+QUEUE_COLUMN_TYPES = {
+    "from_date": "VARCHAR",
+    "to_date": "VARCHAR",
+    "forward_from_date": "VARCHAR",
+    "skip_walk_forward": "BOOLEAN",
+    "skip_forward_test": "BOOLEAN",
+    "max_walk_forward_splits": "INTEGER",
+    "research_stage": "VARCHAR",
+    "no_live": "BOOLEAN",
+    "no_mt5_promotion": "BOOLEAN",
+    "require_walk_forward": "BOOLEAN",
+    "require_min_trades": "BOOLEAN",
+    "min_trades": "INTEGER",
+}
+QUEUE_INSERT_SQL = """
+INSERT INTO research_jobs (
+    job_id, type, strategy, symbol, timeframe, file, broker, status, priority,
+    data_hash, params_hash, created_at, started_at, completed_at, result_path,
+    recommendation, cost_sensitive, swap_drag, session_filter_used, from_date,
+    to_date, forward_from_date, skip_walk_forward, skip_forward_test,
+    max_walk_forward_splits, research_stage, no_live, no_mt5_promotion,
+    require_walk_forward, require_min_trades, min_trades
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+"""
+QUEUE_INSERT_OR_REPLACE_SQL = """
+INSERT OR REPLACE INTO research_jobs (
+    job_id, type, strategy, symbol, timeframe, file, broker, status, priority,
+    data_hash, params_hash, created_at, started_at, completed_at, result_path,
+    recommendation, cost_sensitive, swap_drag, session_filter_used, from_date,
+    to_date, forward_from_date, skip_walk_forward, skip_forward_test,
+    max_walk_forward_splits, research_stage, no_live, no_mt5_promotion,
+    require_walk_forward, require_min_trades, min_trades
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+"""
+QUEUE_UPDATE_SQL = {
+    "type": "UPDATE research_jobs SET type = ? WHERE job_id = ?",
+    "strategy": "UPDATE research_jobs SET strategy = ? WHERE job_id = ?",
+    "symbol": "UPDATE research_jobs SET symbol = ? WHERE job_id = ?",
+    "timeframe": "UPDATE research_jobs SET timeframe = ? WHERE job_id = ?",
+    "file": "UPDATE research_jobs SET file = ? WHERE job_id = ?",
+    "broker": "UPDATE research_jobs SET broker = ? WHERE job_id = ?",
+    "status": "UPDATE research_jobs SET status = ? WHERE job_id = ?",
+    "priority": "UPDATE research_jobs SET priority = ? WHERE job_id = ?",
+    "data_hash": "UPDATE research_jobs SET data_hash = ? WHERE job_id = ?",
+    "params_hash": "UPDATE research_jobs SET params_hash = ? WHERE job_id = ?",
+    "created_at": "UPDATE research_jobs SET created_at = ? WHERE job_id = ?",
+    "started_at": "UPDATE research_jobs SET started_at = ? WHERE job_id = ?",
+    "completed_at": "UPDATE research_jobs SET completed_at = ? WHERE job_id = ?",
+    "result_path": "UPDATE research_jobs SET result_path = ? WHERE job_id = ?",
+    "recommendation": "UPDATE research_jobs SET recommendation = ? WHERE job_id = ?",
+    "cost_sensitive": "UPDATE research_jobs SET cost_sensitive = ? WHERE job_id = ?",
+    "swap_drag": "UPDATE research_jobs SET swap_drag = ? WHERE job_id = ?",
+    "session_filter_used": "UPDATE research_jobs SET session_filter_used = ? WHERE job_id = ?",
+    "from_date": "UPDATE research_jobs SET from_date = ? WHERE job_id = ?",
+    "to_date": "UPDATE research_jobs SET to_date = ? WHERE job_id = ?",
+    "forward_from_date": "UPDATE research_jobs SET forward_from_date = ? WHERE job_id = ?",
+    "skip_walk_forward": "UPDATE research_jobs SET skip_walk_forward = ? WHERE job_id = ?",
+    "skip_forward_test": "UPDATE research_jobs SET skip_forward_test = ? WHERE job_id = ?",
+    "max_walk_forward_splits": "UPDATE research_jobs SET max_walk_forward_splits = ? WHERE job_id = ?",
+    "research_stage": "UPDATE research_jobs SET research_stage = ? WHERE job_id = ?",
+    "no_live": "UPDATE research_jobs SET no_live = ? WHERE job_id = ?",
+    "no_mt5_promotion": "UPDATE research_jobs SET no_mt5_promotion = ? WHERE job_id = ?",
+    "require_walk_forward": "UPDATE research_jobs SET require_walk_forward = ? WHERE job_id = ?",
+    "require_min_trades": "UPDATE research_jobs SET require_min_trades = ? WHERE job_id = ?",
+    "min_trades": "UPDATE research_jobs SET min_trades = ? WHERE job_id = ?",
+}
+QUEUE_ALTER_SQL = {
+    "from_date": "ALTER TABLE research_jobs ADD COLUMN from_date VARCHAR",
+    "to_date": "ALTER TABLE research_jobs ADD COLUMN to_date VARCHAR",
+    "forward_from_date": "ALTER TABLE research_jobs ADD COLUMN forward_from_date VARCHAR",
+    "skip_walk_forward": "ALTER TABLE research_jobs ADD COLUMN skip_walk_forward BOOLEAN",
+    "skip_forward_test": "ALTER TABLE research_jobs ADD COLUMN skip_forward_test BOOLEAN",
+    "max_walk_forward_splits": "ALTER TABLE research_jobs ADD COLUMN max_walk_forward_splits INTEGER",
+    "research_stage": "ALTER TABLE research_jobs ADD COLUMN research_stage VARCHAR",
+    "no_live": "ALTER TABLE research_jobs ADD COLUMN no_live BOOLEAN",
+    "no_mt5_promotion": "ALTER TABLE research_jobs ADD COLUMN no_mt5_promotion BOOLEAN",
+    "require_walk_forward": "ALTER TABLE research_jobs ADD COLUMN require_walk_forward BOOLEAN",
+    "require_min_trades": "ALTER TABLE research_jobs ADD COLUMN require_min_trades BOOLEAN",
+    "min_trades": "ALTER TABLE research_jobs ADD COLUMN min_trades INTEGER",
+}
 
 
 def add_job(
@@ -235,10 +318,15 @@ def update_job(job_id: str, **updates: Any) -> dict[str, Any]:
             raise KeyError(f"Unknown job_id: {job_id}")
         return job
     _ensure_queue_table()
-    assignments = ", ".join(f"{key} = ?" for key in allowed)
-    values = list(allowed.values()) + [job_id]
     with _connect() as connection:
-        connection.execute(f"UPDATE research_jobs SET {assignments} WHERE job_id = ?", values)
+        connection.execute("BEGIN TRANSACTION")
+        try:
+            for key, value in allowed.items():
+                connection.execute(QUEUE_UPDATE_SQL[_queue_column(key)], [value, job_id])
+            connection.execute("COMMIT")
+        except Exception:
+            connection.execute("ROLLBACK")
+            raise
     updated = _get_job(job_id)
     if updated is None:
         raise KeyError(f"Unknown job_id: {job_id}")
@@ -305,6 +393,58 @@ def diagnose_failures(stale_running_minutes: int = 120) -> dict[str, Any]:
         "by_stage": by_stage.most_common(),
         "by_target": by_target.most_common(10),
         "stale_running": [_row_to_job(stale_cols, row) for row in stale_rows],
+    }
+
+
+def classify_failed_job(job: dict[str, Any]) -> str:
+    """Classify a failed job without mutating the queue."""
+    result_path = job.get("result_path")
+    if result_path and Path(str(result_path)).exists():
+        return "failed_with_result_path_exists"
+    if result_path:
+        return "failed_with_missing_result_path"
+    if job.get("skip_walk_forward") is True or job.get("skip_forward_test") is True:
+        return "failed_dashboard_or_fast_batch_no_result"
+    if job.get("completed_at") is None:
+        return "failed_no_completion_timestamp"
+    if job.get("started_at") is None:
+        return "failed_never_started"
+    return "failed_no_result_path"
+
+
+def queue_health(limit: int = 10) -> dict[str, Any]:
+    """Return a compact, non-mutating health summary for the research queue."""
+    jobs = read_jobs()
+    failed = [job for job in jobs if job.get("status") == "FAILED"]
+    active = [job for job in jobs if job.get("status") in ACTIVE_STATUSES]
+    failed_buckets: Counter[str] = Counter(classify_failed_job(job) for job in failed)
+    failed_by_stage: Counter[str] = Counter(str(job.get("research_stage") or "none") for job in failed)
+    failed_by_strategy: Counter[str] = Counter(str(job.get("strategy") or "unknown") for job in failed)
+    failed_by_symbol: Counter[str] = Counter(str(job.get("symbol") or "unknown") for job in failed)
+    failed_by_timeframe: Counter[str] = Counter(str(job.get("timeframe") or "unknown") for job in failed)
+    recent_failed = sorted(failed, key=lambda job: str(job.get("created_at") or ""), reverse=True)[:limit]
+    return {
+        "queue_stats": queue_stats(),
+        "total_jobs": len(jobs),
+        "active_jobs": len(active),
+        "failed_jobs": len(failed),
+        "failed_buckets": dict(failed_buckets),
+        "failed_by_stage": failed_by_stage.most_common(limit),
+        "failed_by_strategy": failed_by_strategy.most_common(limit),
+        "failed_by_symbol": failed_by_symbol.most_common(limit),
+        "failed_by_timeframe": failed_by_timeframe.most_common(limit),
+        "recent_failed_preview": [
+            {
+                "job_id": job.get("job_id"),
+                "strategy": job.get("strategy"),
+                "symbol": job.get("symbol"),
+                "timeframe": job.get("timeframe"),
+                "research_stage": job.get("research_stage"),
+                "created_at": job.get("created_at"),
+                "classification": classify_failed_job(job),
+            }
+            for job in recent_failed
+        ],
     }
 
 
@@ -381,7 +521,7 @@ def _insert_duckdb(job: dict[str, Any], mirror: bool = True, ensure: bool = True
     payload = {column: job.get(column) for column in QUEUE_COLUMNS}
     with _connect() as connection:
         connection.execute(
-            f"INSERT OR REPLACE INTO research_jobs ({', '.join(QUEUE_COLUMNS)}) VALUES ({', '.join(['?'] * len(QUEUE_COLUMNS))})",
+            QUEUE_INSERT_OR_REPLACE_SQL,
             [payload[column] for column in QUEUE_COLUMNS],
         )
     if mirror:
@@ -433,7 +573,7 @@ def _insert_duckdb_unless_active_duplicate(job: dict[str, Any]) -> dict[str, Any
                 connection.execute("COMMIT")
                 return _row_to_job(columns, duplicate)
             connection.execute(
-                f"INSERT INTO research_jobs ({', '.join(QUEUE_COLUMNS)}) VALUES ({', '.join(['?'] * len(QUEUE_COLUMNS))})",
+                QUEUE_INSERT_SQL,
                 [payload[column] for column in QUEUE_COLUMNS],
             )
             connection.execute("COMMIT")
@@ -445,23 +585,9 @@ def _insert_duckdb_unless_active_duplicate(job: dict[str, Any]) -> dict[str, Any
 
 def _ensure_queue_columns(connection: duckdb.DuckDBPyConnection) -> None:
     existing = {row[1] for row in connection.execute("PRAGMA table_info('research_jobs')").fetchall()}
-    additions = {
-        "from_date": "VARCHAR",
-        "to_date": "VARCHAR",
-        "forward_from_date": "VARCHAR",
-        "skip_walk_forward": "BOOLEAN",
-        "skip_forward_test": "BOOLEAN",
-        "max_walk_forward_splits": "INTEGER",
-        "research_stage": "VARCHAR",
-        "no_live": "BOOLEAN",
-        "no_mt5_promotion": "BOOLEAN",
-        "require_walk_forward": "BOOLEAN",
-        "require_min_trades": "BOOLEAN",
-        "min_trades": "INTEGER",
-    }
-    for column, column_type in additions.items():
+    for column in QUEUE_COLUMN_TYPES:
         if column not in existing:
-            connection.execute(f"ALTER TABLE research_jobs ADD COLUMN {column} {column_type}")
+            connection.execute(QUEUE_ALTER_SQL[_queue_column(column)])
 
 
 def _read_duckdb_jobs() -> list[dict[str, Any]]:
@@ -511,3 +637,9 @@ def _connect(retries: int = 20, delay: float = 0.2) -> duckdb.DuckDBPyConnection
                 raise
             time.sleep(delay * (attempt + 1))
     return duckdb.connect(str(DB_PATH))
+
+
+def _queue_column(column: str) -> str:
+    if column not in QUEUE_COLUMN_SET:
+        raise ValueError(f"Unknown queue column: {column}")
+    return column

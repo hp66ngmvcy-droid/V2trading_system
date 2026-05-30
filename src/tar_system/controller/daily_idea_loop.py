@@ -58,9 +58,10 @@ def run_daily_idea_loop(
             "query": online_query,
             "exa_multi_agent_search": multi_agent_search(
                 online_query,
-                num_results=5,
+                num_results=3,
                 max_workers=3,
                 source_quality="strict",
+                use_cache=True,
             ),
         }
         scout_path = _scout_output_path(online_query)

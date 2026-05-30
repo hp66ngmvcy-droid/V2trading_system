@@ -16,7 +16,6 @@ from tar_system.audit.writer import append_audit_event
 from tar_system.cache import result_index as _result_index
 from tar_system.controller.job_queue import (
     add_job,
-    clear_completed,
     diagnose_failures,
     queue_stats,
     read_jobs,
@@ -282,8 +281,8 @@ def _render_batch_controls(st: object, selected: dict[str, Any], checklist: list
     guard_cols = st.columns([1, 1, 1, 1, 1])
     max_jobs = guard_cols[0].number_input("Max queued jobs", min_value=1, max_value=50, value=3, step=1, key="tar_batch_max_jobs", help="Cap total active+queued jobs. Prevents the 500+ job backlog problem.")
     require_wf = guard_cols[1].checkbox("Require walk-forward", value=True, key="tar_batch_require_wf", help="Skip any job that has walk-forward disabled.")
-    require_mt = guard_cols[2].checkbox("Require min trades", value=False, key="tar_batch_require_min_trades", help="Skip results with too few trades to be statistically valid.")
-    min_trades = guard_cols[3].number_input("Min trades", min_value=1, max_value=500, value=30, step=1, key="tar_batch_min_trades", help="Minimum trade count required when 'Require min trades' is on.", disabled=not require_mt)
+    require_mt = guard_cols[2].checkbox("Require min trades", value=True, key="tar_batch_require_min_trades", help="Skip results with too few trades to be statistically valid.")
+    min_trades = guard_cols[3].number_input("Min trades", min_value=1, max_value=500, value=200, step=1, key="tar_batch_min_trades", help="Minimum trade count required when 'Require min trades' is on.", disabled=not require_mt)
     no_promote = guard_cols[4].checkbox("Block MT5 promotion", value=True, key="tar_batch_no_promote", help="Prevent any job from being promoted to MT5 live. Always on for paper batches.")
 
     batch_selected = {
@@ -328,10 +327,7 @@ def _render_secondary_controls(st: object, selected: dict[str, Any], status: dic
         append_activity("task_started", "Paper research job queued", {"job_id": job["job_id"], **selected})
         _audit_button("Queue Paper Research Job", selected, "QUEUED", "PAPER_ONLY", {"job_id": job["job_id"]})
         st.success(f"Queued paper job {job['job_id']}.")
-    if st.button("Clear Completed Queue Jobs", disabled=active, help="Remove completed/failed/skipped queue rows. Does not delete reports."):
-        clear_completed()
-        _audit_button("Clear Completed Queue Jobs", selected, "COMPLETED", "QUEUE_CLEANUP", {})
-        st.warning("Completed queue rows cleared.")
+    st.caption("Queue history is append-only from the dashboard. Use filters for review instead of deleting completed rows.")
 
 
 def _render_progress(st: object, status: dict[str, Any]) -> None:

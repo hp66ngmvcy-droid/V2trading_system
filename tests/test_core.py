@@ -18,6 +18,7 @@ from tar_system.strategies.asset_variants import default_variant
 from tar_system.strategies.base import Signal
 from tar_system.strategies.gold_v2 import GoldV2
 from tar_system.strategies.registry import ALIASES, REGISTRY, RESEARCH_REGISTRY, get_strategy
+from tar_system.strategies.vol_filtered_momentum_v1 import VolFilteredMomentumV1
 from tar_system.backtest.metrics import calculate_metrics
 from tar_system.backtest.engine import _safe_backtest_quantity
 from tar_system.portfolio.tracker import Trade
@@ -125,6 +126,28 @@ def _gold_row(**updates: object) -> pd.Series:
     return pd.Series(payload)
 
 
+def _vol_momentum_row(**updates: object) -> pd.Series:
+    payload: dict[str, object] = {
+        "timestamp": pd.Timestamp("2026-01-01 10:00:00", tz="UTC"),
+        "symbol": "XAUUSD",
+        "timeframe": "M15",
+        "open": 100.0,
+        "close": 101.0,
+        "high": 101.2,
+        "low": 99.8,
+        "atr": 1.0,
+        "atr_median_50": 1.0,
+        "ema_fast": 100.8,
+        "ema_slow": 100.0,
+        "ema_fast_slope": 0.0004,
+        "ema_slow_slope": 0.0001,
+        "rsi": 58.0,
+        "is_liquid_session": True,
+    }
+    payload.update(updates)
+    return pd.Series(payload)
+
+
 def test_gold_v2_blocks_asian_session_when_filter_enabled() -> None:
     signal = GoldV2(session_filter=True).generate_signal(_gold_row(is_liquid_session=False), "TRENDING")
     assert signal.side == "HOLD"
@@ -154,9 +177,11 @@ def test_btc_variant_has_session_filter_disabled() -> None:
 
 def test_strategy_registry_includes_canonical_strategies_and_resolves_aliases() -> None:
     assert "rsi_only_v3" in REGISTRY
+    assert "vol_filtered_momentum_v1" in REGISTRY
     assert "rsi_v3" not in REGISTRY
     assert get_strategy("rsi_only_v3").__class__ is REGISTRY["rsi_only_v3"]
     assert get_strategy("rsi_v3").__class__ is ALIASES["rsi_v3"]
+    assert get_strategy("vol_momo_v1").__class__ is ALIASES["vol_momo_v1"]
     assert all(get_strategy(name).__class__ is strategy_class for name, strategy_class in REGISTRY.items())
     assert set(RESEARCH_REGISTRY) == {"gold_v2", "rsi_reversion_v1"}
 
@@ -173,6 +198,20 @@ def test_gold_v2_blocks_flat_ema_and_allows_rising_buy() -> None:
     rising = GoldV2().generate_signal(_gold_row(ema_fast_slope=0.0005, ema_slow_slope=0.0001), "TRENDING")
     assert flat.reason_code == "EMA_SLOPE_TOO_FLAT"
     assert rising.side == "BUY"
+
+
+def test_vol_filtered_momentum_blocks_noise_and_allows_momentum() -> None:
+    strategy = VolFilteredMomentumV1()
+    noisy = strategy.generate_signal(_vol_momentum_row(open=100.95, close=101.0), "TRENDING")
+    buy = strategy.generate_signal(_vol_momentum_row(), "TRENDING")
+    assert noisy.reason_code == "EMA_SLOPE_TOO_FLAT"
+    assert buy.side == "BUY"
+    assert buy.metadata["body_atr"] >= strategy.min_body_atr
+
+
+def test_vol_filtered_momentum_blocks_extreme_volatility() -> None:
+    signal = VolFilteredMomentumV1().generate_signal(_vol_momentum_row(atr=3.0, atr_median_50=1.0), "TRENDING")
+    assert signal.reason_code == "ATR_TOO_HIGH_EXTREME_VOLATILITY"
 
 
 def test_parameter_anchor_library_loads() -> None:

@@ -5,12 +5,12 @@ import json
 from pathlib import Path
 
 from tar_system.controller.data_watcher import scan_raw_data
-from tar_system.controller.job_queue import add_job, claim_next_job, has_active_job, next_queued_job, read_jobs, update_job
+from tar_system.controller.job_queue import add_job, claim_next_job, has_active_job, next_queued_job, queue_health, read_jobs, update_job
 from tar_system.controller.research_controller import debate_recommendation, run_controller_once
 from tar_system.controller.research_loop import recommend_next_actions, run_research_loop
 from tar_system.dashboard.runtime_control import mark_data_tested
 from tar_system.environment.risk_state import EnvironmentDecision
-from tar_system.cli import show_queue_cmd
+from tar_system.cli import queue_health_cmd, show_queue_cmd
 
 
 def _raw_file(path: Path, text: str = "timestamp,open,high,low,close,volume\n2026-01-01,1,2,1,1.5,10\n") -> Path:
@@ -103,6 +103,41 @@ def test_job_queue_add_read_update(tmp_path, monkeypatch) -> None:
     assert next_queued_job()["job_id"] == job["job_id"]
     update_job(job["job_id"], status="COMPLETED", recommendation="KEEP")
     assert read_jobs()[0]["recommendation"] == "KEEP"
+
+
+def test_queue_health_classifies_failed_jobs(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    fast = add_job(
+        "gold_v2",
+        "XAUUSD",
+        "M15",
+        "data/raw/XAUUSD_M15.csv",
+        research_stage="dashboard_batch",
+        skip_walk_forward=True,
+        skip_forward_test=True,
+    )
+    update_job(fast["job_id"], status="FAILED", completed_at="2026-05-24T00:00:00")
+    incomplete = add_job("gold_v2", "EURUSD", "M15", "data/raw/EURUSD_M15.csv", research_stage="full")
+    update_job(incomplete["job_id"], status="FAILED")
+
+    health = queue_health()
+
+    assert health["queue_stats"]["FAILED"] == 2
+    assert health["failed_buckets"]["failed_dashboard_or_fast_batch_no_result"] == 1
+    assert health["failed_buckets"]["failed_no_completion_timestamp"] == 1
+    assert health["failed_by_stage"][0] in [("dashboard_batch", 1), ("full", 1)]
+
+
+def test_queue_health_cmd_can_write_report(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    job = add_job("gold_v2", "XAUUSD", "M15", "data/raw/XAUUSD_M15.csv")
+    update_job(job["job_id"], status="FAILED", completed_at="2026-05-24T00:00:00")
+
+    queue_health_cmd(argparse.Namespace(limit=5, output="runtime/queue-health.json"))
+
+    payload = json.loads(Path("runtime/queue-health.json").read_text(encoding="utf-8"))
+    assert payload["failed_jobs"] == 1
+    assert json.loads(capsys.readouterr().out)["failed_jobs"] == 1
 
 
 def test_job_queue_claim_marks_running_atomically(tmp_path, monkeypatch) -> None:
@@ -242,6 +277,32 @@ def test_controller_skips_block_and_hold_environment(tmp_path, monkeypatch) -> N
     result = run_controller_once()
     assert result["status"] == "SKIPPED"
     assert result["recommendation"] == "REVIEW"
+
+
+def test_controller_runs_queued_paper_signal_without_full_pipeline(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    add_job(
+        "gold_v2",
+        "XAUUSD",
+        "M15",
+        "data/raw/XAUUSD_M15.csv",
+        job_type="paper_signal",
+        require_walk_forward=False,
+        skip_walk_forward=True,
+        skip_forward_test=True,
+    )
+
+    def paper_signal_runner(*args: object) -> dict[str, object]:
+        return {"alert_ready": True, "risk_approved": True, "risk_reason": "APPROVED"}
+
+    result = run_controller_once(
+        pipeline_runner=lambda *_: (_ for _ in ()).throw(AssertionError("full pipeline should not run")),
+        paper_signal_runner=paper_signal_runner,
+    )
+
+    assert result["status"] == "COMPLETED"
+    assert result["recommendation"] == "KEEP"
+    assert result["result_path"] == "runtime/latest_paper_signal.json"
 
 
 def test_bull_bear_debate_and_cost_override() -> None:

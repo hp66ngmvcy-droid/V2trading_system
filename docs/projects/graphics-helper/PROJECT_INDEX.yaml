@@ -1,0 +1,45 @@
+project: graphics-helper
+status: draft
+owner: TBD
+created: 2026-05-24
+
+purpose: >
+  Hold future graphics helper workflows for asset cleanup, thumbnail support,
+  visual review, reusable templates, and generated image handling.
+
+folders:
+  requirements: 00_requirements
+  design: 01_design
+  engineering: 02_engineering
+  delivery: 03_delivery
+  decisions: 04_decisions
+  research: 05_research
+  assets: assets
+  screenshots: screenshots
+
+documents:
+  prd: 00_requirements/PRD.md
+  acceptance_criteria: 00_requirements/ACCEPTANCE_CRITERIA.md
+  app_flow: 01_design/APP_FLOW.md
+  ui_ux_brief: 01_design/UI_UX_BRIEF.md
+  trd: 02_engineering/TRD.md
+  backend_schema: 02_engineering/BACKEND_SCHEMA.md
+  implementation_plan: 03_delivery/IMPLEMENTATION_PLAN.md
+  qa_checklist: 03_delivery/QA_CHECKLIST.md
+  initial_adr: 04_decisions/ADR-0001-initial-direction.md
+  sources: 05_research/SOURCES.md
+
+code_paths: []
+data_paths: []
+runtime_paths: []
+
+agent_notes:
+  read_first:
+    - README.md
+    - PROJECT_INDEX.yaml
+    - 00_requirements/PRD.md
+  keep_clean:
+    - Do not add project files to the repo root.
+    - Put screenshots in screenshots/.
+    - Put source links in 05_research/SOURCES.md.
+    - Put decisions in 04_decisions/.

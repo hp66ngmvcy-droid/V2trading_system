@@ -1,0 +1,90 @@
+{
+  "generated_at": "2026-05-26T10:50:30+00:00",
+  "research_dir": "ideas/research_queue",
+  "candidate_dir": "ideas/backtest_candidates",
+  "rejected_dir": "ideas/rejected",
+  "output_path": "idea_reviews/candidate_selection_2026-05-26.md",
+  "output_json_path": "idea_reviews/candidate_selection_2026-05-26.json",
+  "reviewed_count": 5,
+  "translate_count": 0,
+  "blocked_count": 5,
+  "items": [
+    {
+      "path": "ideas/research_queue/online-scout-20260525-bcc4b0d614-a-multi-strategy-approach-to-trading-foreign-exchange-futures.md",
+      "folder": "research_queue",
+      "idea_id": "online-scout-20260525-bcc4b0d614",
+      "title": "A Multi Strategy Approach to Trading Foreign Exchange Futures",
+      "status": "hypothesis_extracted",
+      "source_note": "",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3322717",
+      "score": 95,
+      "recommendation": "PROXY_DECISION_REQUIRED",
+      "reasons": [
+        "source_quality_95",
+        "formula_extracted_data_blocked",
+        "proxy_decision_required"
+      ],
+      "next_action": "Add missing data or explicitly approve the incomplete proxy scope before candidate conversion."
+    },
+    {
+      "path": "ideas/research_queue/online-scout-20260525-05ab51a462-currency-momentum-strategies.md",
+      "folder": "research_queue",
+      "idea_id": "online-scout-20260525-05ab51a462",
+      "title": "Currency Momentum Strategies",
+      "status": "hypothesis_extracted",
+      "source_note": "",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1809776",
+      "score": 0,
+      "recommendation": "ALREADY_TESTED_REJECTED",
+      "reasons": [
+        "source_or_note_already_rejected"
+      ],
+      "next_action": "Keep for history; do not convert again."
+    },
+    {
+      "path": "ideas/research_queue/online-scout-20260525-60ebef8e01-a-comparative-study-of-technical-trading-strategies-using-a-gene.md",
+      "folder": "research_queue",
+      "idea_id": "online-scout-20260525-60ebef8e01",
+      "title": "A Comparative Study of Technical Trading Strategies Using a Genetic Algorithm",
+      "status": "hypothesis_extracted",
+      "source_note": "",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4515471",
+      "score": 0,
+      "recommendation": "ALREADY_TESTED_REJECTED",
+      "reasons": [
+        "source_or_note_already_rejected"
+      ],
+      "next_action": "Keep for history; do not convert again."
+    },
+    {
+      "path": "ideas/research_queue/online-scout-20260525-6c71c4f887-untitled.md",
+      "folder": "research_queue",
+      "idea_id": "online-scout-20260525-6c71c4f887",
+      "title": "Untitled source",
+      "status": "hypothesis_extracted",
+      "source_note": "",
+      "source_url": "https://www.wne.uw.edu.pl/download_file/4308/2141",
+      "score": 0,
+      "recommendation": "ALREADY_TESTED_REJECTED",
+      "reasons": [
+        "source_or_note_already_rejected"
+      ],
+      "next_action": "Keep for history; do not convert again."
+    },
+    {
+      "path": "ideas/research_queue/online-scout-20260525-c0a0b10349-momentum-and-trend-following-trading-strategies-for-currencies-r.md",
+      "folder": "research_queue",
+      "idea_id": "online-scout-20260525-c0a0b10349",
+      "title": "Momentum and Trend Following Trading Strategies for Currencies Revisited - Combining Academia and Industry",
+      "status": "hypothesis_extracted",
+      "source_note": "",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2949379",
+      "score": 0,
+      "recommendation": "ALREADY_TESTED_REJECTED",
+      "reasons": [
+        "source_or_note_already_rejected"
+      ],
+      "next_action": "Keep for history; do not convert again."
+    }
+  ]
+}

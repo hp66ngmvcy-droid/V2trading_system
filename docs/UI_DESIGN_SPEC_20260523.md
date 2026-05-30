@@ -4,7 +4,7 @@
 
 **What it is:** Paper-only quantitative trading research system. Ingests MT5 CSV data, runs backtests/walk-forward validation, scores strategies, generates paper signals, manages a research pipeline via async job queue.
 
-**What it is NOT:** No live trading. No external APIs. No cloud dependencies. Local-only. Read results from JSON/JSONL/Parquet files.
+**What it is NOT:** No live trading. No external APIs. No cloud dependencies. Local-first. Read results from JSON/JSONL/Parquet files. Human-only external chart links are allowed as reference/export paths, but automated strategy testing only consumes local imported OHLCV files.
 
 **Primary user:** Solo quant researcher running multi-step strategy validation pipeline.
 
@@ -13,13 +13,19 @@
 ## Tech Constraints (inform API layer design)
 
 - Backend: Python CLI (`tar` commands), outputs to JSON/JSONL files in `runtime/`, `data/`, `reports/`
-- No real-time broker feed — data is static CSV snapshots from MT5
+- No real-time broker feed — data is static CSV snapshots from MT5 or manually exported chart data
 - Paper mode hard-enforced: `PAPER_MODE=True`, `LIVE_TRADING_ALLOWED=False`
 - No Docker, no Ray, no Polars — lightweight deps only
 - Existing Streamlit dashboard (`src/tar_system/dashboard/app.py`) is current reference
 - File locations: `runtime/*.json`, `data/results/*.json`, `data/paper_strategies/*.json`, `reports/*.md`
 
 ---
+
+## Data Reference Boundary
+
+### Live Data Reference Link
+
+The Asset Data screen may provide a live chart link such as TradingView for the selected symbol/timeframe. This link is for human viewing and manual export only. The system must not scrape TradingView, depend on a browser session for tests, or use an external website as a direct training feed. Training, backtests, walk-forward validation, paper signals, and strategy scoring consume only local files imported into `data/raw/`, `data/validated/`, and `data/features/`.
 
 ## Screens Required
 

@@ -16,7 +16,7 @@ from tar_system.scoring.scorer import score_strategy
 from tar_system.strategies.asset_variants import default_variant
 
 
-BOARD_COLUMNS = ["TESTING", "REVIEW", "READY FOR MT5", "PROMOTED", "KILLED"]
+BOARD_COLUMNS = ["TESTING", "REVIEW", "READY FOR MANUAL MT5 REVIEW", "PROMOTED", "KILLED"]
 
 
 @dataclass(frozen=True)
@@ -66,6 +66,7 @@ def load_promotion_cards() -> list[PromotionCard]:
             "SAFE_TO_TEST",
             realistic_score=float(cost.get("realistic_score", 1.0)) if cost else 1.0,
             cost_sensitive=bool(cost.get("cost_sensitive", False)),
+            min_trades=200,
         )
         walk_forward_pass = bool(wf) and bool(wf.get("parameter_stability_score", 0) >= 60)
         monte_carlo_pass = bool(mc) and float(mc.get("robustness_score", 0.0)) >= 60.0
@@ -177,7 +178,7 @@ def _column_for(verdict: str, go_passed: bool, walk_forward_pass: bool, monte_ca
     if verdict == "KILL":
         return "KILLED"
     if verdict == "KEEP" and go_passed and walk_forward_pass and monte_carlo_pass and not cost_sensitive:
-        return "READY FOR MT5"
+        return "READY FOR MANUAL MT5 REVIEW"
     if verdict == "REVIEW":
         return "REVIEW"
     return "TESTING"

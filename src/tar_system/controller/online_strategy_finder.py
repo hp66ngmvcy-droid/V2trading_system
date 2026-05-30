@@ -16,14 +16,24 @@ from tar_system.controller.job_queue import active_job_keys, make_active_job_key
 from tar_system.strategies.registry import STRATEGIES
 
 
-def _run_broad_sweep(topics: list[str]) -> dict:
+def _run_broad_sweep(topics: list[str], num_results: int = 3, max_workers: int | None = None, source_quality: str = "strict", use_cache: bool = True) -> dict:
     try:
         from tar_system.research.exa_searcher import broad_sweep
-        return broad_sweep(topics)
+        return broad_sweep(topics, num_results=num_results, max_workers=max_workers, source_quality=source_quality, use_cache=use_cache)
     except RuntimeError as exc:
         return {"error": str(exc)}
     except Exception as exc:
         return {"error": f"exa_sweep failed: {exc}"}
+
+
+def _run_multi_agent_search(query: str, num_results: int = 3, max_workers: int | None = None, source_quality: str = "strict", use_cache: bool = True) -> dict:
+    try:
+        from tar_system.research.exa_searcher import multi_agent_search
+        return multi_agent_search(query, num_results=num_results, max_workers=max_workers, source_quality=source_quality, use_cache=use_cache)
+    except RuntimeError as exc:
+        return {"error": str(exc)}
+    except Exception as exc:
+        return {"error": f"exa_multi_agent_search failed: {exc}"}
 
 
 def find_and_queue_strategies(
@@ -38,6 +48,11 @@ def find_and_queue_strategies(
     from_date: str | None = None,
     to_date: str | None = None,
     web_topics: list[str] | None = None,
+    multi_agent_query: str | None = None,
+    web_num_results: int = 3,
+    web_max_workers: int | None = None,
+    source_quality: str = "strict",
+    web_use_cache: bool = True,
 ) -> dict[str, Any]:
     """Scan raw data and queue online strategy research jobs."""
     raw_dir = Path(raw_dir)
@@ -78,7 +93,8 @@ def find_and_queue_strategies(
             }
             for job in queued[:25]
         ],
-        "exa_sweep": _run_broad_sweep(web_topics) if web_topics else None,
+        "exa_sweep": _run_broad_sweep(web_topics, web_num_results, web_max_workers, source_quality, web_use_cache) if web_topics else None,
+        "exa_multi_agent_search": _run_multi_agent_search(multi_agent_query, web_num_results, web_max_workers, source_quality, web_use_cache) if multi_agent_query else None,
     }
 
 

@@ -33,7 +33,7 @@ def evaluate_go_no_go(
     beats_baseline_after_costs: bool = True,
     regime_count: int = 2,
     audit_trail_exists: bool = True,
-    min_trades: int = 20,
+    min_trades: int = 30,
     min_profit_factor: float = 1.1,
     max_drawdown: float = settings.DEFAULT_MAX_DRAWDOWN,
     walk_forward_oos_is_ratio: float = 1.0,
@@ -61,7 +61,7 @@ def evaluate_go_no_go(
     exit_ratio = metrics.get("average_win", 0.0) / average_loss if average_loss else metrics.get("profit_factor", 0.0)
     add("C1_edge_plausibility", metrics.get("profit_factor", 0.0) > 1.2, "C1_EDGE_PLAUSIBILITY_FAIL", "Profit factor must be > 1.2")
     add("C2_overfitting_risk", walk_forward_oos_is_ratio > 0.6, "C2_OVERFITTING_RISK_FAIL", "Walk-forward OOS/IS ratio must be > 0.6")
-    add("C3_sample_adequacy", metrics.get("total_trades", 0.0) >= 30, "C3_SAMPLE_ADEQUACY_FAIL", "Trade count must be >= 30")
+    add("C3_sample_adequacy", metrics.get("total_trades", 0.0) >= min_trades, "C3_SAMPLE_ADEQUACY_FAIL", f"Trade count must be >= {min_trades}")
     add("C4_regime_dependency", regime_count >= 2, "C4_REGIME_DEPENDENCY_FAIL", "Must perform in at least 2 regimes")
     add("C5_exit_calibration", exit_ratio >= 1.0, "C5_EXIT_CALIBRATION_FAIL", "Average win / average loss must be >= 1.0")
     add("C6_risk_concentration", metrics.get("max_drawdown", 1.0) < 0.2, "C6_RISK_CONCENTRATION_FAIL", "Max drawdown must be < 0.2")

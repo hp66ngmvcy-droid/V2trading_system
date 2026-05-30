@@ -1414,6 +1414,7 @@ def scout_cmd(args: argparse.Namespace) -> None:
         web_num_results=args.num_results,
         web_max_workers=args.max_workers,
         source_quality=args.source_quality,
+        web_use_cache=not args.no_cache,
     )
     if args.hypothesis_dir:
         from tar_system.research.hypothesis_notes import write_hypothesis_notes
@@ -1441,6 +1442,226 @@ def scout_to_hypotheses_cmd(args: argparse.Namespace) -> None:
         limit=args.limit,
     )
     print(json.dumps({"written": written, "count": len(written)}, indent=2, default=str))
+
+
+def review_hypotheses_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.hypothesis_review import review_hypotheses
+
+    result = review_hypotheses(
+        input_dir=args.input_dir,
+        output_dir=args.output_dir,
+        min_ready_score=args.min_ready_score,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def select_next_candidates_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.candidate_selection import select_next_candidates
+
+    result = select_next_candidates(
+        research_dir=args.research_dir,
+        candidate_dir=args.candidate_dir,
+        rejected_dir=args.rejected_dir,
+        output_dir=args.output_dir,
+        translation_blocked_dir=args.translation_blocked_dir,
+        proxy_decisions_dir=args.proxy_decisions_dir,
+        limit=args.limit,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def review_translation_blockers_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.translation_blockers import review_translation_blockers
+
+    result = review_translation_blockers(input_dir=args.input_dir, output_dir=args.output_dir)
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def review_data_requirements_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.data_requirements_review import review_data_requirements
+
+    result = review_data_requirements(
+        requirements_dir=args.requirements_dir,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def draft_proxy_decisions_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.proxy_decisions import draft_proxy_decisions
+
+    result = draft_proxy_decisions(
+        requirements_dir=args.requirements_dir,
+        raw_dir=args.raw_dir,
+        proxy_dir=args.proxy_dir,
+        output_dir=args.output_dir,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def run_phase_gate_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.controller.phase_gate import run_phase_gate
+
+    result = run_phase_gate(
+        phase_name=args.phase_name,
+        tests=args.tests,
+        output_dir=args.output_dir,
+        run_construction_audit=not args.skip_construction_audit,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+    if not result.passed:
+        raise SystemExit(1)
+
+
+def check_data_readiness_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.data_readiness import check_data_readiness
+
+    symbols = [item.strip().upper() for item in args.symbols.split(",") if item.strip()]
+    timeframes = [item.strip().upper() for item in args.timeframes.split(",") if item.strip()]
+    result = check_data_readiness(
+        symbols=symbols,
+        timeframes=timeframes,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        min_months=args.min_months,
+        min_rows=args.min_rows,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def audit_raw_data_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.raw_data_inventory import audit_raw_data
+
+    result = audit_raw_data(raw_dir=args.raw_dir, output_dir=args.output_dir)
+    print(json.dumps(asdict(result), indent=2, default=str))
+    if args.fail_on_issues and result.issue_count:
+        raise SystemExit(1)
+
+
+def plan_raw_data_cleanup_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.raw_data_inventory import plan_raw_data_cleanup
+
+    result = plan_raw_data_cleanup(raw_dir=args.raw_dir, output_dir=args.output_dir)
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def apply_raw_data_cleanup_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.raw_data_inventory import apply_raw_data_cleanup
+
+    if not args.confirm_reviewed_plan:
+        raise SystemExit("Refusing to move files without --confirm-reviewed-plan")
+    result = apply_raw_data_cleanup(
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        confirm=True,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def run_currency_momentum_proxy_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.currency_momentum_proxy import run_currency_momentum_proxy
+
+    symbols = [item.strip().upper() for item in args.symbols.split(",") if item.strip()]
+    result = run_currency_momentum_proxy(
+        symbols=symbols,
+        timeframe=args.timeframe,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        lookback_months=args.lookback_months,
+        exclude_recent_months=args.exclude_recent_months,
+        cost_bps=args.cost_bps,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def run_bounded_trend_proxy_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.bounded_trend_proxy import run_bounded_trend_proxy
+
+    symbols = [item.strip().upper() for item in args.symbols.split(",") if item.strip()]
+    fast_values = [int(item.strip()) for item in args.fast_values.split(",") if item.strip()]
+    slow_values = [int(item.strip()) for item in args.slow_values.split(",") if item.strip()]
+    result = run_bounded_trend_proxy(
+        symbols=symbols,
+        timeframe=args.timeframe,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        fast_values=fast_values,
+        slow_values=slow_values,
+        cost_bps=args.cost_bps,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def run_walk_forward_trend_proxy_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.walk_forward_trend_proxy import run_walk_forward_trend_proxy
+
+    symbols = [item.strip().upper() for item in args.symbols.split(",") if item.strip()]
+    ema_values = [int(item.strip()) for item in args.ema_values.split(",") if item.strip()]
+    result = run_walk_forward_trend_proxy(
+        symbols=symbols,
+        timeframe=args.timeframe,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        ema_values=ema_values,
+        train_months=args.train_months,
+        validation_months=args.validation_months,
+        test_months=args.test_months,
+        step_months=args.step_months,
+        cost_bps=args.cost_bps,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def run_vol_scaled_ema_mixture_proxy_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.vol_scaled_ema_mixture_proxy import run_vol_scaled_ema_mixture_proxy
+
+    symbols = [item.strip().upper() for item in args.symbols.split(",") if item.strip()]
+    pairs: list[tuple[int, int]] = []
+    for item in args.ema_pairs.split(","):
+        if not item.strip():
+            continue
+        fast, slow = item.strip().split("/", 1)
+        pairs.append((int(fast), int(slow)))
+    result = run_vol_scaled_ema_mixture_proxy(
+        symbols=symbols,
+        timeframe=args.timeframe,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        ema_pairs=pairs,
+        vol_window=args.vol_window,
+        threshold=args.threshold,
+        cost_bps=args.cost_bps,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
 
 
 def run_daily_idea_loop_cmd(args: argparse.Namespace) -> None:
@@ -1826,9 +2047,10 @@ def build_parser() -> argparse.ArgumentParser:
     scout_parser.add_argument("--force", action="store_true")
     scout_parser.add_argument("--topics", default=None, help="Comma-separated web search topics (requires EXA_API_KEY)")
     scout_parser.add_argument("--multi-agent-query", default=None, help="Run one Exa query through risk/performance/robustness search lenses")
-    scout_parser.add_argument("--num-results", type=int, default=5)
+    scout_parser.add_argument("--num-results", type=int, default=3)
     scout_parser.add_argument("--max-workers", type=int, default=None)
-    scout_parser.add_argument("--source-quality", choices=["balanced", "strict", "off"], default="balanced")
+    scout_parser.add_argument("--source-quality", choices=["balanced", "strict", "off"], default="strict")
+    scout_parser.add_argument("--no-cache", action="store_true", help="Disable local scout result cache")
     scout_parser.add_argument("--output", default=None, help="Optional JSON file path for saved scout output")
     scout_parser.add_argument("--hypothesis-dir", default=None, help="Optional directory for generated hypothesis notes")
     scout_parser.add_argument("--min-source-score", type=int, default=70)
@@ -1841,6 +2063,117 @@ def build_parser() -> argparse.ArgumentParser:
     scout_hypothesis_parser.add_argument("--min-source-score", type=int, default=70)
     scout_hypothesis_parser.add_argument("--limit", type=int, default=10)
     scout_hypothesis_parser.set_defaults(func=scout_to_hypotheses_cmd)
+
+    review_hypotheses_parser = subparsers.add_parser("review-hypotheses", help="Review extracted hypothesis notes without promoting them")
+    review_hypotheses_parser.add_argument("--input-dir", default="ideas/research_queue")
+    review_hypotheses_parser.add_argument("--output-dir", default="idea_reviews")
+    review_hypotheses_parser.add_argument("--min-ready-score", type=int, default=75)
+    review_hypotheses_parser.set_defaults(func=review_hypotheses_cmd)
+
+    select_candidates_parser = subparsers.add_parser("select-next-candidates", help="Rank research notes and flag duplicate or already-tested candidates")
+    select_candidates_parser.add_argument("--research-dir", default="ideas/research_queue")
+    select_candidates_parser.add_argument("--candidate-dir", default="ideas/backtest_candidates")
+    select_candidates_parser.add_argument("--rejected-dir", default="ideas/rejected")
+    select_candidates_parser.add_argument("--translation-blocked-dir", default="ideas/translation_blocked")
+    select_candidates_parser.add_argument("--proxy-decisions-dir", default="ideas/proxy_decisions")
+    select_candidates_parser.add_argument("--output-dir", default="idea_reviews")
+    select_candidates_parser.add_argument("--limit", type=int, default=20)
+    select_candidates_parser.set_defaults(func=select_next_candidates_cmd)
+
+    translation_blockers_parser = subparsers.add_parser("review-translation-blockers", help="Review sources blocked by missing exact trading rules")
+    translation_blockers_parser.add_argument("--input-dir", default="ideas/translation_blocked")
+    translation_blockers_parser.add_argument("--output-dir", default="idea_reviews")
+    translation_blockers_parser.set_defaults(func=review_translation_blockers_cmd)
+
+    data_requirements_parser = subparsers.add_parser("review-data-requirements", help="Review data requirement notes against local raw files")
+    data_requirements_parser.add_argument("--requirements-dir", default="ideas/data_requirements")
+    data_requirements_parser.add_argument("--raw-dir", default="data/raw")
+    data_requirements_parser.add_argument("--output-dir", default="idea_reviews")
+    data_requirements_parser.set_defaults(func=review_data_requirements_cmd)
+
+    proxy_decisions_parser = subparsers.add_parser("draft-proxy-decisions", help="Draft guarded reduced-proxy decision notes for data-blocked sources")
+    proxy_decisions_parser.add_argument("--requirements-dir", default="ideas/data_requirements")
+    proxy_decisions_parser.add_argument("--raw-dir", default="data/raw")
+    proxy_decisions_parser.add_argument("--proxy-dir", default="ideas/proxy_decisions")
+    proxy_decisions_parser.add_argument("--output-dir", default="idea_reviews")
+    proxy_decisions_parser.set_defaults(func=draft_proxy_decisions_cmd)
+
+    phase_gate_parser = subparsers.add_parser("run-phase-gate", help="Run the standard tests/security/construction audit loop for a phase")
+    phase_gate_parser.add_argument("--phase-name", required=True)
+    phase_gate_parser.add_argument("--tests", nargs="*", default=[])
+    phase_gate_parser.add_argument("--output-dir", default="idea_reviews/phase_gates")
+    phase_gate_parser.add_argument("--skip-construction-audit", action="store_true")
+    phase_gate_parser.set_defaults(func=run_phase_gate_cmd)
+
+    data_ready_parser = subparsers.add_parser("check-data-readiness", help="Check raw CSV coverage before hypothesis backtesting")
+    data_ready_parser.add_argument("--symbols", required=True, help="Comma-separated symbols")
+    data_ready_parser.add_argument("--timeframes", required=True, help="Comma-separated timeframes")
+    data_ready_parser.add_argument("--raw-dir", default="data/raw")
+    data_ready_parser.add_argument("--output-dir", default="reports/data_readiness")
+    data_ready_parser.add_argument("--min-months", type=int, default=36)
+    data_ready_parser.add_argument("--min-rows", type=int, default=1000)
+    data_ready_parser.set_defaults(func=check_data_readiness_cmd)
+
+    raw_data_parser = subparsers.add_parser("audit-raw-data", help="Inventory data/raw CSV files and flag naming issues")
+    raw_data_parser.add_argument("--raw-dir", default="data/raw")
+    raw_data_parser.add_argument("--output-dir", default="reports/raw_data_inventory")
+    raw_data_parser.add_argument("--fail-on-issues", action="store_true")
+    raw_data_parser.set_defaults(func=audit_raw_data_cmd)
+
+    raw_cleanup_parser = subparsers.add_parser("plan-raw-data-cleanup", help="Write a dry-run plan for moving noncanonical raw CSVs to source_exports")
+    raw_cleanup_parser.add_argument("--raw-dir", default="data/raw")
+    raw_cleanup_parser.add_argument("--output-dir", default="reports/raw_data_inventory")
+    raw_cleanup_parser.set_defaults(func=plan_raw_data_cleanup_cmd)
+
+    raw_cleanup_apply_parser = subparsers.add_parser("apply-raw-data-cleanup", help="Move noncanonical raw CSVs to source_exports after reviewing the dry-run plan")
+    raw_cleanup_apply_parser.add_argument("--raw-dir", default="data/raw")
+    raw_cleanup_apply_parser.add_argument("--output-dir", default="reports/raw_data_inventory")
+    raw_cleanup_apply_parser.add_argument("--confirm-reviewed-plan", action="store_true")
+    raw_cleanup_apply_parser.set_defaults(func=apply_raw_data_cleanup_cmd)
+
+    currency_momentum_parser = subparsers.add_parser("run-currency-momentum-proxy", help="Run paper-only cross-sectional currency momentum proxy backtest")
+    currency_momentum_parser.add_argument("--symbols", required=True, help="Comma-separated symbols")
+    currency_momentum_parser.add_argument("--timeframe", default="H1")
+    currency_momentum_parser.add_argument("--raw-dir", default="data/raw")
+    currency_momentum_parser.add_argument("--output-dir", default="reports/currency_momentum_proxy")
+    currency_momentum_parser.add_argument("--lookback-months", type=int, default=12)
+    currency_momentum_parser.add_argument("--exclude-recent-months", type=int, default=1)
+    currency_momentum_parser.add_argument("--cost-bps", type=float, default=2.0)
+    currency_momentum_parser.set_defaults(func=run_currency_momentum_proxy_cmd)
+
+    trend_proxy_parser = subparsers.add_parser("run-bounded-trend-proxy", help="Run paper-only bounded EMA trend proxy")
+    trend_proxy_parser.add_argument("--symbols", required=True, help="Comma-separated symbols")
+    trend_proxy_parser.add_argument("--timeframe", default="H1")
+    trend_proxy_parser.add_argument("--raw-dir", default="data/raw")
+    trend_proxy_parser.add_argument("--output-dir", default="reports/bounded_trend_proxy")
+    trend_proxy_parser.add_argument("--fast-values", default="10,20,50")
+    trend_proxy_parser.add_argument("--slow-values", default="50,100,200")
+    trend_proxy_parser.add_argument("--cost-bps", type=float, default=2.0)
+    trend_proxy_parser.set_defaults(func=run_bounded_trend_proxy_cmd)
+
+    walk_forward_trend_parser = subparsers.add_parser("run-walk-forward-trend-proxy", help="Run paper-only rolling walk-forward EMA trend proxy")
+    walk_forward_trend_parser.add_argument("--symbols", required=True, help="Comma-separated symbols")
+    walk_forward_trend_parser.add_argument("--timeframe", default="H1")
+    walk_forward_trend_parser.add_argument("--raw-dir", default="data/raw")
+    walk_forward_trend_parser.add_argument("--output-dir", default="reports/walk_forward_trend_proxy")
+    walk_forward_trend_parser.add_argument("--ema-values", default="10,20,50,100,200")
+    walk_forward_trend_parser.add_argument("--train-months", type=int, default=24)
+    walk_forward_trend_parser.add_argument("--validation-months", type=int, default=6)
+    walk_forward_trend_parser.add_argument("--test-months", type=int, default=6)
+    walk_forward_trend_parser.add_argument("--step-months", type=int, default=6)
+    walk_forward_trend_parser.add_argument("--cost-bps", type=float, default=2.0)
+    walk_forward_trend_parser.set_defaults(func=run_walk_forward_trend_proxy_cmd)
+
+    vol_scaled_parser = subparsers.add_parser("run-vol-scaled-ema-mixture-proxy", help="Run paper-only vol-scaled multi-horizon EMA mixture proxy")
+    vol_scaled_parser.add_argument("--symbols", required=True, help="Comma-separated symbols")
+    vol_scaled_parser.add_argument("--timeframe", default="H1")
+    vol_scaled_parser.add_argument("--raw-dir", default="data/raw")
+    vol_scaled_parser.add_argument("--output-dir", default="reports/vol_scaled_ema_mixture_proxy")
+    vol_scaled_parser.add_argument("--ema-pairs", default="8/24,16/48,32/96,64/192")
+    vol_scaled_parser.add_argument("--vol-window", type=int, default=200)
+    vol_scaled_parser.add_argument("--threshold", type=float, default=0.05)
+    vol_scaled_parser.add_argument("--cost-bps", type=float, default=2.0)
+    vol_scaled_parser.set_defaults(func=run_vol_scaled_ema_mixture_proxy_cmd)
 
     daily_idea_parser = subparsers.add_parser("run-daily-idea-loop", help="Write a paper-only daily idea review and optional online scout intake")
     daily_idea_parser.add_argument("--run-online", action="store_true")

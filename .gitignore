@@ -33,3 +33,5 @@ second_brain/vault/01_hubs/private_trading_memory/
 # Secrets and keys
 *.key
 *.pem
+.local_private/
+.claude/

@@ -57,7 +57,15 @@ def optimise_asset(
     search_ranges = _load_walk_forward_ranges(strategy_name, symbol, timeframe)
     narrowed = bool(search_ranges)
     if not narrowed:
-        base_parameters = {**base_parameters, **_anchor_parameters(symbol)}
+        import inspect as _inspect
+        from tar_system.strategies.registry import REGISTRY as _REG
+        _cls = _REG.get(strategy_name)
+        if _cls is not None:
+            _sig = _inspect.signature(_cls)
+            _accepted = set(_sig.parameters.keys())
+            if not base_parameters:
+                base_parameters = {k: v.default for k, v in _sig.parameters.items() if v.default is not _inspect.Parameter.empty and k not in ("name", "version")}
+            base_parameters = {**base_parameters, **{k: v for k, v in _anchor_parameters(symbol).items() if k in _accepted}}
     mutations = [("base", base_parameters)] + [(mutation.name, mutation.parameters) for mutation in one_parameter_mutations(base_parameters, max_variants=max_variants)]
     ranked: list[OptimisedVariant] = []
     for mutation_name, parameters in mutations:

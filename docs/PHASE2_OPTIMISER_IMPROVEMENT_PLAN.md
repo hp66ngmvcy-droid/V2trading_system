@@ -120,7 +120,8 @@ API bridge, if needed:
 - Walk-forward must complete before any KEEP verdict is issued.
 - One-trade winners are blocked at Gate 1.
 - All decisions need reason codes.
-- `SESSION_MEMORY.md` is updated at the end of each build session.
+- `docs/projects/idea-orchestrator-system/03_delivery/SESSION_MEMORY.md` is
+  updated at the end of each build session.
 
 ## Installed Sequence
 

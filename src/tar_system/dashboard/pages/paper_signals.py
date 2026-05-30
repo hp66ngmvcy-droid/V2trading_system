@@ -24,11 +24,26 @@ def render(st: object) -> None:
     sizing_model = cols[3].selectbox("Sizing", ["ATR_BASED", "FIXED_RISK_PCT", "FIXED_LOT", "HALF_KELLY"], index=0)
 
     action_cols = st.columns(3)
-    if action_cols[0].button("Generate Paper Signal", type="primary"):
-        from tar_system.controller.paper_signal_runner import run_paper_signal
+    if action_cols[0].button("Queue Paper Signal", type="primary"):
+        from tar_system.controller.job_queue import add_job
 
-        result = run_paper_signal(strategy, symbol, timeframe, broker, sizing_model)
-        st.success(f"Signal updated: {result.side} | {result.risk_reason}")
+        job = add_job(
+            strategy,
+            symbol,
+            timeframe,
+            f"data/raw/{symbol}_{timeframe}.csv",
+            broker,
+            job_type="paper_signal",
+            priority=5,
+            research_stage="paper_signal",
+            skip_walk_forward=True,
+            skip_forward_test=True,
+            require_walk_forward=False,
+            require_min_trades=False,
+            no_live=True,
+            no_mt5_promotion=True,
+        )
+        st.success(f"Queued paper signal job {job['job_id']}.")
     if action_cols[1].button("Refresh Health"):
         from tar_system.controller.strategy_health_monitor import evaluate_strategy_health
 

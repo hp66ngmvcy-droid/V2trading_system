@@ -207,7 +207,12 @@ def run_forward_test(
         )
     else:
         append_audit_event("forward_test_memory", strategy_name, symbol, timeframe, "SKIPPED", "REVIEW_ONLY", asdict(result))
-    append_audit_event("forward_test", strategy_name, symbol, timeframe, "COMPLETED" if not stopped else "PARTIAL", "FORWARD_TEST_COMPLETED" if not stopped else "STOP_REQUESTED", asdict(result))
+    _ft_meta = asdict(result)
+    if score.multi_agent is not None:
+        _ft_meta["multi_agent_verdict"] = score.multi_agent.verdict
+        _ft_meta["multi_agent_confidence"] = score.multi_agent.confidence
+        _ft_meta["multi_agent_dissent"] = score.multi_agent.dissent
+    append_audit_event("forward_test", strategy_name, symbol, timeframe, "COMPLETED" if not stopped else "PARTIAL", "FORWARD_TEST_COMPLETED" if not stopped else "STOP_REQUESTED", _ft_meta)
     return result
 
 

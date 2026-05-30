@@ -1,10 +1,14 @@
 ---
 idea_id: ema-wf-crossover-20260525
 title: EMA Walk-Forward Crossover — Translated from Academic Study
-status: backtest_candidate
+status: tested_rejected
 source_note: online-scout-20260525-6c71c4f887
 source_url: https://www.wne.uw.edu.pl/download_file/4308/2141
 translated_at: 2026-05-25
+tested_at: 2026-05-25
+test_report: reports/walk_forward_trend_proxy/20260525T210238Z_walk_forward_trend_proxy.md
+test_verdict: KILL
+test_reason: DUPLICATE_SOURCE_NEGATIVE_AFTER_COSTS
 ---
 
 # EMA Walk-Forward Crossover — Backtest Plan
@@ -118,8 +122,33 @@ PYTHONPATH=src venv/bin/python -m tar_system.cli queue-job \
 ---
 
 ## Review Gate
-- [ ] EURUSD M15 data file exists before queuing
-- [ ] Cost assumption matches current broker spread
-- [ ] Pass 1 result reviewed before queuing Pass 2
-- [ ] No promotion before out-of-sample and walk-forward review
-- [ ] Human sign-off required before moving to code_candidates
+- [x] EURUSD/GBPUSD H1 proxy data reviewed through the WNE walk-forward test
+- [x] Cost assumption included at 2 bps per position change
+- [x] Walk-forward result reviewed
+- [x] No promotion before out-of-sample and walk-forward review
+- [x] Human sign-off required before moving to code_candidates
+
+## Closure
+
+This candidate is closed as a duplicate of
+`walk-forward-ema-robustness-20260525`, which used the same source note and
+tested the same EMA walk-forward thesis on available local H1 data.
+
+Result:
+
+- Best row: EURUSD
+- Windows: 5
+- Cumulative return: -3.3096%
+- Sharpe: -0.1737
+- Verdict: KILL
+- Reason: NEGATIVE_AFTER_COSTS
+
+Report:
+
+- `reports/walk_forward_trend_proxy/20260525T210238Z_walk_forward_trend_proxy.md`
+
+Decision:
+
+- Do not queue this M15/H1 EMA crossover candidate.
+- Do not create strategy code, MT5 exports, or live trading paths from this
+  source without a materially different filter or portfolio-construction thesis.

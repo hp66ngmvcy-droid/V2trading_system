@@ -1,0 +1,218 @@
+{
+  "generated_at": "2026-05-25T00:29:14+00:00",
+  "query": "forex momentum EMA strategy edge paper backtest",
+  "exa_multi_agent_search": {
+    "risk": [
+      {
+        "title": "Momentum and Trend Following Trading Strategies for Currencies Revisited - Combining Academia and Industry",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2949379",
+        "highlights": [
+          "to this page indefinitely\nCopy URL\nCopy DOI\n# Momentum and Trend Following Trading Strategies for Currencies Revisited - Combining Academia and Industry\n22 PagesPosted: 11 Apr 2017Last revised: 11 Jan 2019\n[...]\nSee all articles by\n[...]\nick Rohrbach**## Janick Rohrbach\n[...]\nof Applied Sciences\n[...]\nerg Osterrieder\n[...]\nUniversity of Twente; Bern Business School\n[...]\nDate Written: June 6, 2017\n[...]\nMomentum trading strategies are thoroughly described in the academic literature and used in many trading strategies by hedge funds, asset managers, and proprietary traders. Baz et al. (2015) describe a momentum strategy for different asset classes in great detail from a practitioner\u2019s point of view. Using a geometric Brownian Motion for the dynamics of the returns of financial instruments, we extensively explain the motivation and background behind each step of a momentum trading strategy. Constants and parameters that are used for the practical implementation are derived in a theoretical setting and deviations from those used in Baz et al. (2015) are shown. The trading signal is computed as a mixture of exponential moving averages with different time horizons. We give a statistical justification for the optimal selection of time horizons. Furthermore, we test our approach on global currency markets, including G10 currencies, emerging market currencies, and cryptocurrencies. Both a time series portfolio and a cross-sectional portfolio are considered. We find that the strategy works best for traditional fiat currencies when considering a time series based momentum strategy. For cryptocurrencies, a cross-sectional approach is more suitable. The momentum strategy exhibits higher Sharpe ratios for more volatile currencies. Thus, emerging market currencies and cryptocurrencies have better performances than the G10 currencies. This is the first comprehensive study showing both the underlying statistical reasons of how such trading strategies are constructed in the industry as well as empirical results using a large universe of currencies, including cryptocurrencies.\n[...]\n**Keywords:**Momentum, Currency Markets, G10, Emerging Markets, Cryptocurrencies, Bitcoin, Moving Average Crossover, Cross-Sectional Momentum, Time Series Momentum, Trend-Following\n[...]\n**JEL Classification:**C40, C50, G00, G10, G15, G17, F17, F30, F31, F32"
+        ],
+        "source_quality": {
+          "score": 95,
+          "label": "high",
+          "reasons": [
+            "trusted_or_research_host",
+            "research_or_validation_terms"
+          ]
+        }
+      },
+      {
+        "title": "",
+        "url": "https://www.bayes.city.ac.uk/__data/assets/pdf_file/0006/111120/fxmom_final_cepr.pdf",
+        "highlights": [
+          "We provide a broad empirical investigation of momentum strategies in the foreign ex\u0002change market. We find a significant cross-sectional spread in excess returns of up to\n[...]\n. However, there seem to be very effective limits to arbitrage which prevent\n[...]\nKeywords: Momentum Returns, Limits to Arbitrage, Idiosyncratic Volatility, Carry Trades.\n[...]\nThe main contribution of this paper is to study the economic anatomy of momentum profits\n[...]\n(a)\n[...]\nan in-\n[...]\nof systematic versus unsystematic risk for understanding momentum returns, (b) carefully\n[...]\ncomparing momentum strategies to carry trades and technical trading rules, (c) quantifying\n[...]\nthe importance of transaction costs, and investigating non-standard sources of momentum\n[...]\nreturns, such as (d) under- and over-reaction or (e) limits to arbitrage.\n[...]\nIn order to rationalize these high excess returns of currency momentum strategies, we in\u0002vestigate whether currency momentum is significantly affected by (i) transaction costs, (ii)\n[...]\nbusiness cycle risk and other traditional risk factors, and (iii) different forms of limits to\n[...]\narbitrage. We find that momentum returns are indeed fairly sensitive to transaction costs.\n[...]\nAdjusting returns for bid-ask spreads lowers the profitability of momentum strategies sig\u0002nificantly since momentum portfolios are skewed towards currencies with high transaction\n[...]\nTechnical trading in FX markets. Technical trading in FX is in most cases the same as\n[...]\nstrategies include filter rules and moving average rules. A filter rule gives the signal to invest\n[...]\ntake a short\n[...]\n) in a\n[...]\nif a defined upwards (downwards) exchange rate change\n[...]\ntransaction costs. Third, we take a close look at possible limits to arbitrage (which are a key\n[...]\nthe recent literature\n[...]\ninvestigate the role of\n[...]\npanel first, we find\n[...]\n4.3. Comparing Momentum and Technical Trading Rules\n[...]\nTo investigate this issue, we compute returns to three benchmark moving average cross-over\n[...]\nTo assess whether returns to the moving average rules described above capture returns to the\n[...]\nIt can be seen that, even though moving average rule returns and currency momentum\n[...]\n4.4. Comparing Currency Momentum and the Carry Trade\n[...]\nCross-sectional regressions. Finally, we want to separate the effects of lagged excess re\u0002turns and lagged interest rate differentials on future excess returns. To this end, we run Fama\u0002MacBeth type cross-sectional regressions of currency excess returns (or spot rate changes)\n[...]\ntransaction costs play for momentum returns\n[...]\nThe results show that transaction costs could be an important factor for understanding\n[...]\nthe best strategy (with f, h = 1) drop from nearly 10% to about 4% p.a. and they wipe out\n[...]\nprofit of many other\n[...]\ntransaction costs on\n[...]\nNext, given that the quoted spread is known to be too high relative to effective spreads,\n[...]\nbid-ask spread adjustments indicate\n[...]\nFurther scrutinizing this issue, we can break up the importance of transaction costs into\n[...]\nAppendix (Table A.4\n[...]\nconclusions emerge from this exercise. First,\n[...]\nturnover can be extremely high, reaching values of more than 70% per month for the strategy\n[...]\nwith a one month formation and holding period. Second, the winner and loser currencies do\n[...]\nhave higher transaction costs than the average exchange rate and the markup ranges from\n[...]\nabout 2.5 to 7 basis points per month. Accordingly, trading in the winner and loser currencies\n[...]\n(as is necessary to set up a momentum strategy) is more costly than trading in the average\n[...]\ncurrency pair. Hence, transaction costs clearly matter to a considerable extent.\n[...]\nHowever, given that transaction costs should be expected to decline over time due to more\n[...]\nReuters), it seems unclear whether transaction costs are able to fully explain momentum\n[...]\nMomentum Returns and Business Cycle Risk"
+        ],
+        "source_quality": {
+          "score": 60,
+          "label": "medium",
+          "reasons": [
+            "research_or_validation_terms"
+          ]
+        }
+      },
+      {
+        "title": "A Comparative Study of Technical Trading Strategies Using a Genetic Algorithm",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4515471",
+        "highlights": [
+          "# A Comparative Study of Technical Trading Strategies Using a Genetic Algorithm\n[...]\nComput Econ 55, 349\u2013381 (2020). https://doi.org/10.1007/s10614-016-9641-9\n[...]\n23 PagesPosted: 25 Jul 2023Last revised: 21 Aug 2023\n[...]\nTraditional approaches to the study of technical analysis (TA) often focus on the performance of a single indicator, which seems to fall short in scope and depth. We use a genetic algorithm (GA) to optimize trading strategies in the three major Forex markets, in order to verify the adequacy of TA strategies and rules to attain consistent superior returns, by comparing momentum, trend and breakout indicators. The indicators with the parameters generated through our GA consistently outperform the equivalent indicators applying parameters commonly used by the trading industry. EUR/USD and GBP/USD markets present interesting return figures before trading costs. The inclusion of spreads and commissions deteriorates returns substantially, suggesting these markets, under a more realistic set of assumptions, may be efficient. Trend indicators generate better outcomes and GBP/USD qualifies as the most profitable market. Different aggregate returns in different markets may stand as evidence of distinct maturation stages under an evolving efficiency market perspective. Our GA is able to search a wider solution space than traditional configurations and presents the possibility of recovering latent data, avoiding premature convergence.\n[...]\n**Keywords:**Genetic Algorithm&#x3b; Optimization; Finance; Technical Analysis; Forex"
+        ],
+        "source_quality": {
+          "score": 95,
+          "label": "high",
+          "reasons": [
+            "trusted_or_research_host",
+            "research_or_validation_terms"
+          ]
+        }
+      },
+      {
+        "title": "A Multi Strategy Approach to Trading Foreign Exchange Futures",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3322717",
+        "highlights": [
+          "# A Multi Strategy Approach to Trading Foreign Exchange Futures\n[...]\n26 PagesPosted: 28 Jan 2019Last revised: 30 Jan 2019\n[...]\nIn this article we present a systematic multi-strategy approach to trading foreign exchange futures for a managed futures portfolio. Our central finding is that there is more alpha to be derived from combining different indicators compared to hand engineering each indicator. We show that combining technical indicators like momentum and mean reversion with fx carry indicators leads to significant improvement over individual indicators. Through an end to end systematic portfolio construction methodology, including indicator construction, normalization and combination we are able to improve the Sharpe Ratio of the resulting portfolio over the best performing single indicator by 60% when evaluated in an unbiased walk forward backtest.\n[...]\n**Keywords:**Foreign Exchange, Derivatives, Portfolio Construction, Multi-strategy, Managed Futures\n[...]\n, F3\n[...]\n, G1"
+        ],
+        "source_quality": {
+          "score": 95,
+          "label": "high",
+          "reasons": [
+            "trusted_or_research_host",
+            "research_or_validation_terms"
+          ]
+        }
+      },
+      {
+        "title": "Do momentum-based strategies work in emerging currency markets?",
+        "url": "https://ideas.repec.org/a/eee/pacfin/v17y2009i4p479-493.html",
+        "highlights": [
+          "Do momentum-based strategies work in emerging currency markets?\n[...]\nExisting studies on the profitability of trading rules in the currency market focus mainly on the currencies of developed countries. The profitability of technical trading rules on the currencies of emerging economies is surprisingly understudied. This paper evaluates the profitability of technical trading rules in emerging currency markets. Similar to Okunev and White [Okunev, J. and White, D., (2003) \"Do Momentum-based Strategies Still Work in Foreign Currency Markets?\" Journal of Financial and Quantitative Analysis 38, 425-447.], 354 long/short moving average rules for six currencies are investigated. It is found that investing in emerging currencies can generate a considerable annual return of over 20%, even after a 5% annual transaction cost is imposed. The trading-rule profits are relatively stable across the 20\u00c2 year sample period. Furthermore, the impact of financial crises on the trading-rule returns is also examined. It is found that the profitability of the trading rules is improved after the crises.\n[...]\n- Chong, Terence Tai-Leung & Ip, Hugo Tak-Sang, 2009. \" Do momentum-based strategies work in emerging currency markets?,\" Pacific-Basin Finance Journal, Elsevier, vol. 17(4), pages 479-493, September.\n[...]\n- Hugo Tak-Sang, IP & Terence Tai-Leung, Chong, 2006. \" Do Momentum-based Strategies Work in Emerging Currency Markets?,\" Departmental Working Papers_181, Chinese University of Hong Kong, Department of Economics.\n[...]\nNeely, Christopher J. & Weller, Paul A., 2013. \" Lessons from the evolution of foreign exchange trading strategies,\" Journal of Banking & Finance, Elsevier, vol. 37(10), pages 3783-3798.\n[...]\nIvanova, Yuliya & Neely, Christopher J. & Weller, Paul & Famiglietti, Matthew T., 2021. \" Can risk explain the profitability of technical trading in currency markets?,\" Journal of International Money and Finance, Elsevier, vol. 110(C).\n[...]\n- Matthew Famiglietti & Yuliya Ivanova & Christopher J. Neely & Paul A. Weller, 2014. \" Can risk explain the profitability of technical trading in currency markets?,\" Working Papers 2014-033, Federal Reserve Bank of St. Louis, revised 1\n[...]\n20\n[...]\nMenkhoff, Lukas & Sarno, Lucio & Schmeling, Maik & Schrimpf, Andreas, 2012. \" Currency momentum strategies,\" Journal of Financial Economics, Elsevier, vol. 106(3), pages 660-684.\n[...]\n- Lukas Menkhoff & Lucio Sarno & Maik Schmeling & Andreas Schrimpf, 2011. \" Currency Momentum Strategies,\" BIS Working Papers 366, Bank for International Settlements.\n[...]\n- Lukas Menkhoff & Lucio Sarno & Maik Schmeling & Andreas Schrimpf, 2012. \" Currency Momentum Strategies,\" Working Paper series 09_12, Rimini Centre for Economic Analysis.\n[...]\n- Menkhoff, Lukas & Sarno, Lucio & Schrimpf, Paul & Schmeling, Maik, 2012. \" Currency Momentum Strategies,\" CEPR Discussion Papers 8747, C.E.P.R. Discussion Papers.\n[...]\nEmerging currencies Trading rules Information ratio;"
+        ],
+        "source_quality": {
+          "score": 60,
+          "label": "medium",
+          "reasons": [
+            "research_or_validation_terms"
+          ]
+        }
+      }
+    ],
+    "performance": [
+      {
+        "title": "Currency Momentum Strategies",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1809776",
+        "highlights": [
+          "DOI\n#\n[...]\nMomentum Strategies\n86 PagesPosted: 21 Apr 2011Last revised: 7 Nov 2011\n[...]\nWe provide a broad empirical investigation of momentum strategies in the foreign exchange market. We find a significant cross-sectional spread in excess returns of up to 10% p.a. between past winner and loser currencies. This spread in excess returns is not explained by traditional risk factors, it is partially explained by transaction costs and shows behavior consistent with investor under- and over-reaction. Moreover, cross-sectional currency momentum has very different properties from the widely studied carry trade and is not highly correlated with returns of benchmark technical trading rules. However, there seem to be very effective limits to arbitrage which prevent momentum returns from being easily exploitable in currency markets.\n[...]\n**Keywords:**Momentum returns, Limits to Arbitrage, Idiosyncratic Volatility, Carry Trades"
+        ],
+        "source_quality": {
+          "score": 95,
+          "label": "high",
+          "reasons": [
+            "trusted_or_research_host",
+            "research_or_validation_terms"
+          ]
+        }
+      },
+      {
+        "title": "Momentum and Trend Following Trading Strategies for Currencies Revisited - Combining Academia and Industry",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2949379",
+        "highlights": [
+          "Permalink\nUsing these links will ensure access to this page indefinitely\nCopy URL\nCopy DOI\n# Momentum and Trend Following Trading Strategies for Currencies Revisited - Combining Academia and Industry\n22 PagesPosted: 11 Apr 2017Last revised: 11 Jan 2019\nSee all articles by Janick Rohrbach**## Janick Rohrbach\n[...]\nZurich University of Applied Sciences\n[...]\n## Silvan Suremann\n[...]\nZurich University of Applied Sciences\n[...]\n## Joerg Osterrieder\n[...]\nUniversity of Twente; Bern Business School\n[...]\nDate Written: June 6, 2017\n[...]\nMomentum trading strategies are thoroughly described in the academic literature and used in many trading strategies by hedge funds, asset managers, and proprietary traders. Baz et al. (2015) describe a momentum strategy for different asset classes in great detail from a practitioner\u2019s point of view. Using a geometric Brownian Motion for the dynamics of the returns of financial instruments, we extensively explain the motivation and background behind each step of a momentum trading strategy. Constants and parameters that are used for the practical implementation are derived in a theoretical setting and deviations from those used in Baz et al. (2015) are shown. The trading signal is computed as a mixture of exponential moving averages with different time horizons. We give a statistical justification for the optimal selection of time horizons. Furthermore, we test our approach on global currency markets, including G10 currencies, emerging market currencies, and cryptocurrencies. Both a time series portfolio and a cross-sectional portfolio are considered. We find that the strategy works best for traditional fiat currencies when considering a time series based momentum strategy. For cryptocurrencies, a cross-sectional approach is more suitable. The momentum strategy exhibits higher Sharpe ratios for more volatile currencies. Thus, emerging market currencies and cryptocurrencies have better performances than the G10 currencies. This is the first comprehensive study showing both the underlying statistical reasons of how such trading strategies are constructed in the industry as well as empirical results using a large universe of currencies, including cryptocurrencies.\n[...]\n**Keywords:**Momentum, Currency Markets, G10, Emerging Markets, Cryptocurrencies, Bitcoin, Moving Average Crossover, Cross-Sectional Momentum, Time Series Momentum, Trend-Following"
+        ],
+        "source_quality": {
+          "score": 95,
+          "label": "high",
+          "reasons": [
+            "trusted_or_research_host",
+            "research_or_validation_terms"
+          ]
+        }
+      },
+      {
+        "title": "",
+        "url": "https://www.bayes.city.ac.uk/__data/assets/pdf_file/0006/111120/fxmom_final_cepr.pdf",
+        "highlights": [
+          "We provide a broad empirical investigation of momentum strategies in the foreign ex\u0002change market. We find a significant cross-sectional spread in excess returns of up to\n[...]\nand shows behavior consistent with investor under- and over-reaction. Moreover, cross\u0002sectional currency momentum has very different properties from the widely studied\n[...]\ncarry trade and is not highly correlated with returns of benchmark technical trading\n[...]\nrules. However, there seem to be very effective limits to arbitrage which prevent mo\u0002mentum returns from being easily exploitable in currency markets.\n[...]\nThe main contribution of this paper is to study the economic anatomy of momentum profits\n[...]\nto carry trades and technical trading rules\n[...]\nreturns, such as\n[...]\nand over-reaction or\n[...]\ne) limits to arbitrage\n[...]\nWe find large and significant excess returns to currency momentum strategies of up to 10%\n[...]\nIn order to rationalize these high excess returns of currency momentum strategies, we in\u0002vestigate whether currency momentum is significantly affected by (i) transaction costs, (ii)\n[...]\nbusiness cycle risk and other traditional risk factors, and (iii) different forms of limits to\n[...]\narbitrage. We find that momentum returns are indeed fairly sensitive to transaction costs.\n[...]\nTurning to excess returns in the left panel first, we find that momentum strategies yield\n[...]\nsubstantial (and statistically highly significant) excess returns of about 6 \u2212 10% for short\n[...]\nSharpe Ratios. In order to get a first measure of risk-adjusted returns, Panel B of Table\n[...]\nCorroborating the evidence above,\n[...]\nseem highly profitable, at least for a subset of strategies. For example, the annualized Sharpe\n[...]\nRatio of the MOM(1,1) strategy is 0.95, which seems very high, even in comparison to carry\n[...]\ntrades (see,e\n[...]\ng., Menkhoff, Sarno, Schmel\n[...]\n, and Sch\n[...]\npf, 2011, who report an annualized\n[...]\nSharpe Ratio of 0.82 for a carry trade strategy). Hence, even when taking risk into account\n[...]\n4.3. Comparing Momentum and Technical Trading Rules\n[...]\nIt can be seen that, even though moving average rule returns and currency momentum\n[...]\n4.4. Comparing Currency Momentum and the Carry Trade\n[...]\nCross-sectional regressions. Finally, we want to separate the effects of lagged excess re\u0002turns and lagged interest rate differentials on future excess returns. To this end, we run Fama\u0002MacBeth type cross-sectional regressions of currency excess returns (or spot rate changes)\n[...]\nPost-formation Momentum Returns\n[...]\nThe results show that transaction costs could be an important factor for understanding\n[...]\n, Kleshchelski\n[...]\n2006; Burnside, Eichenbaum, and Rebelo, 2007\n[...]\nWhen applying the full spread, returns for\n[...]\nthe best strategy (with f, h = 1) drop from nearly 10% to about 4% p.a. and they wipe out\n[...]\nprofit of many other\n[...]\nNext, given that the quoted spread is known to be too high relative to effective spreads,\n[...]\nSaretto\n[...]\n09)\n[...]\nreport results for momentum excess returns after\n[...]\nResults for these more realistic bid-ask spread adjustments indicate that transaction costs\n[...]\nthis issue, we\n[...]\nbreak up the importance\n[...]\nTable A.4\n[...]\nemerge from this exercise\n[...]\nturnover can be extremely high, reaching values of more than 70% per month for the strategy\n[...]\nwith a one month formation and holding period\n[...]\nSecond, the winner and loser\n[...]\nhave higher transaction costs than the average exchange rate and the markup ranges from\n[...]\nabout 2.5 to 7 basis points per month. Accordingly, trading in the winner and loser currencies\n[...]\n(as is necessary to set up a momentum strategy) is more costly than trading in\n[...]\ncurrency pair. Hence, transaction costs clearly matter to a considerable extent.\n[...]\nthat transaction costs should be\n[...]\nto decline over time due to more"
+        ],
+        "source_quality": {
+          "score": 60,
+          "label": "medium",
+          "reasons": [
+            "research_or_validation_terms"
+          ]
+        }
+      },
+      {
+        "title": "A Comparative Study of Technical Trading Strategies Using a Genetic Algorithm",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4515471",
+        "highlights": [
+          "# A Comparative Study of Technical Trading Strategies Using a Genetic Algorithm\n[...]\nComput Econ 55, 349\u2013381 (2020). https://doi.org/10.1007/s10614-016-9641-9\n[...]\n23 PagesPosted: 25 Jul 2023Last revised: 21 Aug 2023\n[...]\nTraditional approaches to the study of technical analysis (TA) often focus on the performance of a single indicator, which seems to fall short in scope and depth. We use a genetic algorithm (GA) to optimize trading strategies in the three major Forex markets, in order to verify the adequacy of TA strategies and rules to attain consistent superior returns, by comparing momentum, trend and breakout indicators. The indicators with the parameters generated through our GA consistently outperform the equivalent indicators applying parameters commonly used by the trading industry. EUR/USD and GBP/USD markets present interesting return figures before trading costs. The inclusion of spreads and commissions deteriorates returns substantially, suggesting these markets, under a more realistic set of assumptions, may be efficient. Trend indicators generate better outcomes and GBP/USD qualifies as the most profitable market. Different aggregate returns in different markets may stand as evidence of distinct maturation stages under an evolving efficiency market perspective. Our GA is able to search a wider solution space than traditional configurations and presents the possibility of recovering latent data, avoiding premature convergence.\n[...]\n**Keywords:**Genetic Algorithm&#x3b; Optimization; Finance; Technical Analysis; Forex"
+        ],
+        "source_quality": {
+          "score": 95,
+          "label": "high",
+          "reasons": [
+            "trusted_or_research_host",
+            "research_or_validation_terms"
+          ]
+        }
+      },
+      {
+        "title": "Combining mean reversion and momentum trading strategies in",
+        "url": "https://ideas.repec.org/a/eee/jbfina/v34y2010i11p2720-2727.html",
+        "highlights": [
+          "Combining mean reversion and momentum trading strategies in foreign exchange markets -- --\n[...]\nThe literature on equity markets documents the existence of mean reversion and momentum phenomena. Researchers in foreign exchange markets find that foreign exchange rates also display behaviors akin to momentum and mean reversion. This paper implements a trading strategy combining mean reversion and momentum in foreign exchange markets. The strategy was originally designed for equity markets, but it also generates abnormal returns when applied to uncovered interest parity deviations for five countries. I find that the pattern for the positions thus created in the foreign exchange markets is qualitatively similar to that found in the equity markets. Quantitatively, this strategy performs better in foreign exchange markets than in equity markets. Also, it outperforms traditional foreign exchange trading strategies, such as carry trades and moving average rules.\n[...]\nMenkhoff, Lukas & Sarno, Lucio & Schmeling, Maik & Schrimpf, Andreas, 2012. \" Currency momentum strategies,\" Journal of Financial Economics, Elsevier, vol. 106(3), pages 660-684.\n[...]\nLukas Menkhoff &\n[...]\nMenkhoff,\n[...]\nNeely, Christopher J. & Weller, Paul A., 2013. \" Lessons from the evolution of foreign exchange trading strategies,\" Journal of Banking & Finance, Elsevier, vol. 37(10), pages 3783-3798.\n[...]\n\" Lessons from the evolution of\n[...]\nUncovered interest parity Mean reversion Momentum Foreign exchange Trading strategies;"
+        ],
+        "source_quality": {
+          "score": 60,
+          "label": "medium",
+          "reasons": [
+            "research_or_validation_terms"
+          ]
+        }
+      }
+    ],
+    "robustness": [
+      {
+        "title": "Momentum and Trend Following Trading Strategies for Currencies Revisited - Combining Academia and Industry",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2949379",
+        "highlights": [
+          "# Momentum and Trend Following Trading Strategies for Currencies Revisited - Combining Academia and Industry\n22 PagesPosted: 11 Apr 2017Last revised: 11 Jan 2019\n[...]\nMomentum trading strategies are thoroughly described in the academic literature and used in many trading strategies by hedge funds, asset managers, and proprietary traders. Baz et al. (2015) describe a momentum strategy for different asset classes in great detail from a practitioner\u2019s point of view. Using a geometric Brownian Motion for the dynamics of the returns of financial instruments, we extensively explain the motivation and background behind each step of a momentum trading strategy. Constants and parameters that are used for the practical implementation are derived in a theoretical setting and deviations from those used in Baz et al. (2015) are shown. The trading signal is computed as a mixture of exponential moving averages with different time horizons. We give a statistical justification for the optimal selection of time horizons. Furthermore, we test our approach on global currency markets, including G10 currencies, emerging market currencies, and cryptocurrencies. Both a time series portfolio and a cross-sectional portfolio are considered. We find that the strategy works best for traditional fiat currencies when considering a time series based momentum strategy. For cryptocurrencies, a cross-sectional approach is more suitable. The momentum strategy exhibits higher Sharpe ratios for more volatile currencies. Thus, emerging market currencies and cryptocurrencies have better performances than the G10 currencies. This is the first comprehensive study showing both the underlying statistical reasons of how such trading strategies are constructed in the industry as well as empirical results using a large universe of currencies, including cryptocurrencies.\n[...]\n**Keywords:**Momentum, Currency Markets, G10, Emerging Markets, Cryptocurrencies, Bitcoin, Moving Average Crossover, Cross-Sectional Momentum, Time Series Momentum, Trend-Following"
+        ],
+        "source_quality": {
+          "score": 95,
+          "label": "high",
+          "reasons": [
+            "trusted_or_research_host",
+            "research_or_validation_terms"
+          ]
+        }
+      },
+      {
+        "title": "",
+        "url": "https://www.wne.uw.edu.pl/download_file/4308/2141",
+        "highlights": [
+          "Abstract: This study aimed to apply the algorithmic trading strategy on major\n[...]\nwhile the MA\n[...]\ncross strategy was employed for the trend-following strategy. Backtests were performed on 6\n[...]\nmajor pairs in the period from January 1, 2000, to June 30, 2023, and daily, and intraday data\n[...]\nFollowing (TF) strategies with a benchmark (B) strategy using economic and statistical signif\u0002icance tests. An independent t-test was used to compare the mean returns of different trading\n[...]\nstrategies. The mean returns are derived from observed returns for all out-of-sample periods.\n[...]\n\u2022 Implement a rolling walk-forward optimization to solve the overfitting problem.\n[...]\n\u2022 Implement a more realistic backtesting process that takes into account factors such as\n[...]\ninitial deposits, transaction costs, and trade volume.\n[...]\n\u2022 Walk forward optimization - define roll size and divide each window into training, vali\u0002dation, and testing periods.\n[...]\n\u2022 All combinations of Exponential Moving Average (EMA) - generate all combinations of\n[...]\n\u2022 Best combination of Exponential Moving Average (EMA) - find the best EMA combina\u0002tion with the highest SR.\n[...]\n\u2022 Backtesting - determine initial deposit, transaction cost, and trading volume to com\u0002pare the performance of trading strategy including machine learning-based and trend\u0002following strategies.\n[...]\nIn this study, the exponential moving average (EMA) was utilized as an indicator to iden\u0002tify trading signals for the trend-following strategy. Moving averages are commonly used as\n[...]\nsmoothing tools to reduce noise in financial data. There are various ways to use EMA to gener\u0002ate trading signals, but in this study, only fast and slow EMA crossover was considered. Specif\u0002ically, EMA10, EMA20, EMA50, EMA100, and EMA200 were used with a walk-forward\n[...]\napproach. This indicates that 10 combinations of fast and slow EMAs were investigated in\n[...]\neach rolling walk-forward window. The Sharpe ratio was used to optimize the moving average\n[...]\ncrossover strategy in each window. A buy signal occurs when the fast EMA crosses above the\n[...]\nbelow the slow EMA, indicating a downtrend. Table 6 shows a detailed algorithm describing\n[...]\nEMA crossover strategy\n[...]\n3.6 Rolling walk forward optimization\n[...]\nTo avoid overfitting problems and data-snooping bias, a rolling walk-forward approach\n[...]\nwas implemented. This approach entails iterative training of the model on a fixed training set,\n[...]\ntuning hyperparameters on a fixed validation set, and subsequently making predictions on a\n[...]\nfixed test set. The parameters of the rolling walk-forward approach are illustrated in Figure 3.\n[...]\nThe dataset is divided into 40 windows, each window containing different train, validation, and\n[...]\ntest sets. The rolling size is set at six months and in each window, the train, validation, and test\n[...]\nsets advance by six months until\n[...]\nend of the dataset.\n[...]\nTable 7 shows number of data for the rolling walk-forward approach. The training set is 68\n[...]\npercent, and the test set is 14 percent of\n[...]\ntotal data in one\n[...]\nrolling walk-forward approach\u2019s window for both daily and 4-hour frequency data. For daily\n[...]\nfrequency data, 600 days of price data were used for the training set, followed by 156 days for\n[...]\nthe validation set, and 126 days for\n[...]\ntest set in each window. This method was applied to\n[...]\nTrend Following strategy\n[...]\n3.8 Backtest assumption\n[...]\nThe primary objective of this study is to generate trading signals with the highest Sharpe\n[...]\nRatio (SR), rather than precisely predicting returns that closely match real returns. Therefore,\n[...]\nwhen calculating the Sharpe Ratio (SR), transaction costs should be taken into account. The\n[...]\nperformance of a strategy without transaction costs can significantly diverge from reality, es\u0002pecially as the trading frequency increases. The assumption of backtesting is detailed in the"
+        ],
+        "source_quality": {
+          "score": 95,
+          "label": "high",
+          "reasons": [
+            "trusted_or_research_host",
+            "research_or_validation_terms"
+          ]
+        }
+      },
+      {
+        "title": "Currency Momentum Strategies",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1809776",
+        "highlights": [
+          "We provide a broad empirical investigation of momentum strategies in the foreign exchange market. We find a significant cross-sectional spread in excess returns of up to 10% p.a. between past winner and loser currencies. This spread in excess returns is not explained by traditional risk factors, it is partially explained by transaction costs and shows behavior consistent with investor under- and over-reaction. Moreover, cross-sectional currency momentum has very different properties from the widely studied carry trade and is not highly correlated with returns of benchmark technical trading rules. However, there seem to be very effective limits to arbitrage which prevent momentum returns from being easily exploitable in currency markets.\n[...]\n**Keywords:**Momentum returns, Limits to Arbitrage, Idiosyncratic Volatility, Carry Trades"
+        ],
+        "source_quality": {
+          "score": 95,
+          "label": "high",
+          "reasons": [
+            "trusted_or_research_host",
+            "research_or_validation_terms"
+          ]
+        }
+      },
+      {
+        "title": "A Comparative Study of Technical Trading Strategies Using a Genetic Algorithm",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4515471",
+        "highlights": [
+          "\u201338\n[...]\n020\n[...]\nhttps://doi.org/10.1007/s10614-016-9641-9\n[...]\n23 PagesPosted: 25 Jul 2023Last revised: 21 Aug 2023\n[...]\nTraditional approaches to the study of technical analysis (TA) often focus on the performance of a single indicator, which seems to fall short in scope and depth. We use a genetic algorithm (GA) to optimize trading strategies in the three major Forex markets, in order to verify the adequacy of TA strategies and rules to attain consistent superior returns, by comparing momentum, trend and breakout indicators. The indicators with the parameters generated through our GA consistently outperform the equivalent indicators applying parameters commonly used by the trading industry. EUR/USD and GBP/USD markets present interesting return figures before trading costs. The inclusion of spreads and commissions deteriorates returns substantially, suggesting these markets, under a more realistic set of assumptions, may be efficient. Trend indicators generate better outcomes and GBP/USD qualifies as the most profitable market. Different aggregate returns in different markets may stand as evidence of distinct maturation stages under an evolving efficiency market perspective. Our GA is able to search a wider solution space than traditional configurations and presents the possibility of recovering latent data, avoiding premature convergence.\n[...]\n**Keywords:**Genetic Algorithm&#x3b; Optimization; Finance; Technical Analysis; Forex"
+        ],
+        "source_quality": {
+          "score": 95,
+          "label": "high",
+          "reasons": [
+            "trusted_or_research_host",
+            "research_or_validation_terms"
+          ]
+        }
+      }
+    ]
+  }
+}

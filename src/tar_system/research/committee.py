@@ -16,6 +16,7 @@ from typing import Any
 from tar_system.audit.writer import append_audit_event
 from tar_system.positioning.scorer import get_positioning_context
 from tar_system.scoring.gates import run_gates
+from tar_system.scoring.multi_agent_scorer import score_multi_agent
 from tar_system.scoring.scorer import score_strategy
 
 KEEP = "KEEP"
@@ -134,6 +135,7 @@ def run_research_committee(
     )
     md_path.write_text(render_committee_markdown(result, committee_input), encoding="utf-8")
     json_path.write_text(json.dumps(asdict(result), indent=2, default=str), encoding="utf-8")
+    _ma = score_multi_agent({k: _as_float(v) for k, v in metrics.items() if isinstance(v, (int, float))})
     append_audit_event(
         "research_committee",
         strategy,
@@ -141,7 +143,14 @@ def run_research_committee(
         timeframe,
         recommendation,
         "PAPER_ONLY_RESEARCH_COMMITTEE",
-        {"markdown": str(md_path), "json": str(json_path), "confidence": confidence},
+        {
+            "markdown": str(md_path),
+            "json": str(json_path),
+            "confidence": confidence,
+            "multi_agent_verdict": _ma.verdict,
+            "multi_agent_confidence": _ma.confidence,
+            "multi_agent_dissent": _ma.dissent,
+        },
     )
     return result
 
@@ -271,6 +280,14 @@ def _technical_analyst(payload: CommitteeInput) -> AgentReport:
     gate = run_gates({k: _as_float(v) for k, v in metrics.items() if isinstance(v, (int, float, bool))}, payload.timeframe, require_oos=bool(payload.walk_forward))
     evidence = [f"score_strategy={score_result.score}"]
     concerns = list(score_result.reason_codes) + list(gate.reason_codes)
+    if score_result.multi_agent is not None:
+        ma = score_result.multi_agent
+        evidence.append(f"multi_agent_consensus={ma.verdict} confidence={ma.confidence:.2f}")
+        if ma.dissent:
+            concerns.append("multi_agent_dissent: agents disagreed after cross-review")
+        for av in ma.agent_verdicts:
+            if av.verdict != "KEEP":
+                concerns.extend(av.reasons)
     if gate.verdict == KEEP:
         evidence.append("structural_gate=KEEP")
     else:

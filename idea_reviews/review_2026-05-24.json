@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-05-24T23:56:12+00:00",
+  "review_path": "idea_reviews/review_2026-05-24.md",
+  "review_json_path": "idea_reviews/review_2026-05-24.json",
+  "paper_only": true,
+  "online_ready": true,
+  "online_scout_ran": false,
+  "online_scout_saved_to": null,
+  "hypothesis_notes_written": 0,
+  "research_queue_count": 0,
+  "backtest_candidate_count": 0,
+  "code_candidate_count": 0,
+  "ui_candidate_count": 0,
+  "security_review_count": 0,
+  "next_actions": [
+    "Run daily online scout with a focused query if new sources are needed",
+    "No research queue notes waiting; add user ideas or run scout when online is ready",
+    "Review 591 failed jobs before broad reruns"
+  ]
+}

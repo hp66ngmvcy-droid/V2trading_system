@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -55,17 +55,19 @@ def debate_recommendation(metrics: dict[str, float], cost_sensitive: bool) -> De
 def run_controller_once(
     pipeline_runner: Callable[[argparse.Namespace], None] | None = None,
     cost_runner: Callable[[str, str, str, str], Any] | None = None,
+    paper_signal_runner: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     job = job_queue.claim_next_job()
     if job is None:
         return {"status": "idle", "message": "no queued jobs"}
-    return run_job(job, pipeline_runner=pipeline_runner, cost_runner=cost_runner)
+    return run_job(job, pipeline_runner=pipeline_runner, cost_runner=cost_runner, paper_signal_runner=paper_signal_runner)
 
 
 def run_job(
     job: dict[str, Any],
     pipeline_runner: Callable[[argparse.Namespace], None] | None = None,
     cost_runner: Callable[[str, str, str, str], Any] | None = None,
+    paper_signal_runner: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     from tar_system.cli import run_full_pipeline_cmd
     from tar_system.validation.cost_analysis import run_cost_analysis
@@ -89,6 +91,9 @@ def run_job(
     if env.state == "HOLD_TRADING":
         append_audit_event("research_controller", strategy, symbol, timeframe, "SKIPPED", "HOLD_TRADING_ANALYSIS_ONLY", {"job_id": job_id})
         return job_queue.update_job(job_id, status="SKIPPED", completed_at=_now(), recommendation="REVIEW", result_path=None)
+
+    if str(job.get("type") or "full_pipeline") == "paper_signal":
+        return _run_paper_signal_job(job, paper_signal_runner=paper_signal_runner)
 
     require_wf = bool(job.get("require_walk_forward", True))
     skip_wf = bool(job.get("skip_walk_forward", False))
@@ -216,6 +221,39 @@ def _queue_second_strategy_if_needed(job: dict[str, Any]) -> None:
             max_walk_forward_splits=int(job.get("max_walk_forward_splits") or 100),
             research_stage=str(job.get("research_stage") or "full"),
         )
+
+
+def _run_paper_signal_job(job: dict[str, Any], paper_signal_runner: Callable[..., Any] | None = None) -> dict[str, Any]:
+    from tar_system.controller.paper_signal_runner import run_paper_signal
+
+    runner = paper_signal_runner or run_paper_signal
+    strategy = str(job["strategy"])
+    symbol = str(job["symbol"])
+    timeframe = str(job["timeframe"])
+    broker = str(job.get("broker") or "current_broker_demo")
+    job_id = str(job["job_id"])
+    sizing_model = str(job.get("sizing_model") or "ATR_BASED")
+
+    append_audit_event("research_controller", strategy, symbol, timeframe, "STARTED", "PAPER_SIGNAL_JOB_STARTED", {"job_id": job_id})
+    try:
+        result = runner(strategy, symbol, timeframe, broker, sizing_model)
+        payload = asdict(result) if hasattr(result, "__dataclass_fields__") else dict(result)
+        recommendation = "KEEP" if bool(payload.get("alert_ready")) and bool(payload.get("risk_approved")) else "REVIEW"
+        updated = job_queue.update_job(
+            job_id,
+            status="COMPLETED",
+            completed_at=_now(),
+            recommendation=recommendation,
+            result_path="runtime/latest_paper_signal.json",
+        )
+        append_audit_event("research_controller", strategy, symbol, timeframe, "COMPLETED", "PAPER_SIGNAL_JOB_COMPLETED", {"job_id": job_id, "signal": payload})
+        return updated
+    except SystemExit as exc:
+        append_audit_event("research_controller", strategy, symbol, timeframe, "FAILED", "PAPER_SIGNAL_JOB_FAILED", {"job_id": job_id, "error": str(exc)})
+        return job_queue.update_job(job_id, status="FAILED", completed_at=_now(), recommendation="REVIEW", result_path=None)
+    except Exception as exc:
+        append_audit_event("research_controller", strategy, symbol, timeframe, "FAILED", "PAPER_SIGNAL_JOB_FAILED", {"job_id": job_id, "error": str(exc)})
+        return job_queue.update_job(job_id, status="FAILED", completed_at=_now(), recommendation="REVIEW", result_path=None)
 
 
 def _now() -> str:
