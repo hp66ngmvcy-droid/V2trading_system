@@ -1,0 +1,66 @@
+{
+  "sources": [
+    {
+      "label": "SSRN quantitative finance",
+      "url": "https://papers.ssrn.com/sol3/topten/topTenResults.cfm?groupingId=618851&netorjrnl=jrnl",
+      "tags": ["strategy", "indicator"],
+      "enabled": true
+    },
+    {
+      "label": "arXiv quant-fin recent",
+      "url": "https://arxiv.org/list/q-fin.TR/recent",
+      "tags": ["strategy", "indicator"],
+      "enabled": true
+    },
+    {
+      "label": "Quantpedia blog",
+      "url": "https://quantpedia.com/blog/",
+      "tags": ["strategy", "idea"],
+      "enabled": true
+    },
+    {
+      "label": "Risk.net news",
+      "url": "https://www.risk.net/latest-news",
+      "tags": ["risk_update"],
+      "enabled": true
+    },
+    {
+      "label": "Investopedia technical analysis",
+      "url": "https://www.investopedia.com/technical-analysis-4689657",
+      "tags": ["indicator"],
+      "enabled": true
+    },
+    {
+      "label": "Alpha Architect research",
+      "url": "https://alphaarchitect.com/blog/",
+      "tags": ["strategy", "idea"],
+      "enabled": true
+    },
+    {
+      "label": "Bank for International Settlements working papers",
+      "url": "https://www.bis.org/list/wppdf/index.htm",
+      "tags": ["risk_update", "strategy"],
+      "enabled": false
+    },
+    {
+      "label": "Ernie Chan blog",
+      "url": "https://epchan.blogspot.com/",
+      "tags": ["strategy", "idea"],
+      "enabled": true
+    }
+  ],
+  "lm_studio": {
+    "base_url": "http://localhost:1234/v1",
+    "model": "local-model",
+    "max_tokens": 300,
+    "temperature": 0.1
+  },
+  "webclaw": {
+    "timeout_seconds": 30,
+    "max_chars": 6000
+  },
+  "output": {
+    "research_queue_dir": "ideas/research_queue",
+    "min_confidence": 0.5
+  }
+}
