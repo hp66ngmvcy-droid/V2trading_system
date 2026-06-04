@@ -1,0 +1,35 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "M15",
+  "strategy_name": "atr_breakout_v3",
+  "tuned_at": "2026-06-03T21:57:11Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.9725
+      },
+      "metrics": {
+        "total_trades": 2564.0,
+        "win_rate": 29.95,
+        "profit_factor": 0.9725,
+        "net_profit": -149.5266,
+        "max_drawdown_pct": 4.2,
+        "sharpe_ratio": -0.1622,
+        "expectancy": -0.0583
+      },
+      "note": "raw_pf=0.9765 costed_pf=0.9725"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.9725,
+    "sharpe_ratio": -0.1622,
+    "max_drawdown_pct": 4.2,
+    "total_trades": 2564.0,
+    "win_rate": 29.95
+  }
+}

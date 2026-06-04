@@ -1,0 +1,35 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "M15",
+  "strategy_name": "rsi_only_v3",
+  "tuned_at": "2026-06-03T22:18:23Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.9368
+      },
+      "metrics": {
+        "total_trades": 11355.0,
+        "win_rate": 40.51,
+        "profit_factor": 0.9368,
+        "net_profit": -843.2036,
+        "max_drawdown_pct": 9.42,
+        "sharpe_ratio": -0.4028,
+        "expectancy": -0.0743
+      },
+      "note": "raw_pf=0.8908 costed_pf=0.9368"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.9368,
+    "sharpe_ratio": -0.4028,
+    "max_drawdown_pct": 9.42,
+    "total_trades": 11355.0,
+    "win_rate": 40.51
+  }
+}

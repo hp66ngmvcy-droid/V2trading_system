@@ -169,14 +169,18 @@ class StrategyTuner:
         # MT5 gate — use final Stage 3 metrics
         final = s3.metrics
         blocks = []
-        if final.get("profit_factor", 0) < MT5_MIN_PF:
-            blocks.append(f"PF {final['profit_factor']:.2f} < {MT5_MIN_PF}")
-        if final.get("sharpe_ratio", 0) < MT5_MIN_SHARPE:
-            blocks.append(f"Sharpe {final['sharpe_ratio']:.2f} < {MT5_MIN_SHARPE}")
-        if final.get("max_drawdown_pct", 100) > MT5_MAX_DRAWDOWN_PCT:
-            blocks.append(f"DD {final['max_drawdown_pct']:.2f}% > {MT5_MAX_DRAWDOWN_PCT}%")
-        if int(final.get("total_trades", 0)) < 30:
-            blocks.append(f"trades {int(final['total_trades'])} < 30")
+        pf = final.get("profit_factor", 0.0)
+        sr = final.get("sharpe_ratio", 0.0)
+        dd = final.get("max_drawdown_pct", 100.0)
+        tr = int(final.get("total_trades", 0))
+        if pf < MT5_MIN_PF:
+            blocks.append(f"PF {pf:.2f} < {MT5_MIN_PF}")
+        if sr < MT5_MIN_SHARPE:
+            blocks.append(f"Sharpe {sr:.2f} < {MT5_MIN_SHARPE}")
+        if dd > MT5_MAX_DRAWDOWN_PCT:
+            blocks.append(f"DD {dd:.2f}% > {MT5_MAX_DRAWDOWN_PCT}%")
+        if tr < 30:
+            blocks.append(f"trades {tr} < 30")
 
         block_reason = "; ".join(blocks) if blocks else ""
         return self._result(stages, optimal, block_reason)

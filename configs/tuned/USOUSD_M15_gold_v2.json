@@ -1,0 +1,35 @@
+{
+  "symbol": "USOUSD",
+  "timeframe": "M15",
+  "strategy_name": "gold_v2",
+  "tuned_at": "2026-06-03T22:02:34Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.7719
+      },
+      "metrics": {
+        "total_trades": 2029.0,
+        "win_rate": 34.3,
+        "profit_factor": 0.7719,
+        "net_profit": -1992.8566,
+        "max_drawdown_pct": 20.01,
+        "sharpe_ratio": -1.8403,
+        "expectancy": -0.9822
+      },
+      "note": "raw_pf=0.2362 costed_pf=0.7719"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.7719,
+    "sharpe_ratio": -1.8403,
+    "max_drawdown_pct": 20.01,
+    "total_trades": 2029.0,
+    "win_rate": 34.3
+  }
+}

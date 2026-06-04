@@ -2,7 +2,7 @@
   "symbol": "XAUUSD",
   "timeframe": "M15",
   "strategy_name": "rsi_reversion_v1",
-  "tuned_at": "2026-05-30T17:24:47Z",
+  "tuned_at": "2026-05-30T19:36:56Z",
   "mt5_ready": false,
   "mt5_block_reason": "STAGE1_COST_KILL",
   "stages": [

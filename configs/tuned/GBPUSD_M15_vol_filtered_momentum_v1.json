@@ -1,0 +1,35 @@
+{
+  "symbol": "GBPUSD",
+  "timeframe": "M15",
+  "strategy_name": "vol_filtered_momentum_v1",
+  "tuned_at": "2026-06-03T23:06:47Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.8714
+      },
+      "metrics": {
+        "total_trades": 242.0,
+        "win_rate": 26.86,
+        "profit_factor": 0.8714,
+        "net_profit": -73.0816,
+        "max_drawdown_pct": 1.03,
+        "sharpe_ratio": -0.9079,
+        "expectancy": -0.302
+      },
+      "note": "raw_pf=0.4613 costed_pf=0.8714"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.8714,
+    "sharpe_ratio": -0.9079,
+    "max_drawdown_pct": 1.03,
+    "total_trades": 242.0,
+    "win_rate": 26.86
+  }
+}

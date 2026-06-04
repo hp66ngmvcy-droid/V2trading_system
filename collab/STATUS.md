@@ -8,7 +8,9 @@ Rule: if a note is marked `DONE` and `Review State` is `REVIEWED`, do not reopen
 
 | Priority | State | Owner | Note | Summary | Next Action |
 | --- | --- | --- | --- | --- | --- |
-| - | - | - | - | No active collab tasks. | Run `PYTHONPATH=src venv/bin/python collab/tools/read_collab.py` before starting new collab work. |
+| 1 | READY | Codex | [2026-06-04_fix-h1-hour-utc-missing.md](claude_notes/2026-06-04_fix-h1-hour-utc-missing.md) | H1 features missing `hour_utc` — session gate kills all H1 trades in tuner | Check parquet, rebuild H1 features, re-run H1 tune |
+| 2 | READY | Codex | [2026-06-04_gold-v2-param-sweep-m15-m30.md](claude_notes/2026-06-04_gold-v2-param-sweep-m15-m30.md) | `gold_v2` M15+M30 at PF 1.14 / Sharpe 0.95 — needs signal tightening to clear MT5 gates | Sweep entry strictness params, keep ATR cap + session fixed |
+| 3 | READY | Codex | [2026-06-04_momentum-crossover-v3-param-sweep.md](claude_notes/2026-06-04_momentum-crossover-v3-param-sweep.md) | `momentum_crossover_v3` raw PF 0.94 — closest to viable of all failing strategies | Sweep entry threshold + R:R + min hold bars to clear Stage 1 |
 
 ## Completed And Reviewed
 
