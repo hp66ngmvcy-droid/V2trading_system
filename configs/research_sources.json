@@ -49,6 +49,40 @@
       "enabled": true
     }
   ],
+  "api_sources": [
+    {
+      "label": "Finnhub forex news",
+      "api_type": "finnhub_news",
+      "category": "forex",
+      "tags": ["risk_update", "strategy"],
+      "enabled": true,
+      "note": "Requires FINNHUB_API_KEY in .env — free at finnhub.io"
+    },
+    {
+      "label": "Finnhub general market news",
+      "api_type": "finnhub_news",
+      "category": "general",
+      "tags": ["risk_update"],
+      "enabled": true,
+      "note": "Requires FINNHUB_API_KEY in .env"
+    },
+    {
+      "label": "Twelve Data XAUUSD quote",
+      "api_type": "twelve_data_quote",
+      "symbol": "XAU/USD",
+      "tags": ["risk_update"],
+      "enabled": true,
+      "note": "Requires TWELVE_DATA_KEY in .env — free at twelvedata.com"
+    },
+    {
+      "label": "Twelve Data EURUSD quote",
+      "api_type": "twelve_data_quote",
+      "symbol": "EUR/USD",
+      "tags": ["risk_update"],
+      "enabled": false,
+      "note": "Disabled by default — enable if trading EURUSD"
+    }
+  ],
   "lm_studio": {
     "base_url": "http://localhost:1234/v1",
     "model": "local-model",

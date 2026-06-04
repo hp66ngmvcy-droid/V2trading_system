@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Nightly research scraper: webclaw → LM Studio → ideas/research_queue/.
+"""Nightly research scraper: webclaw + API sources → LM Studio → ideas/research_queue/.
 
 Usage:
     python scripts/nightly_research_scrape.py
     python scripts/nightly_research_scrape.py --dry-run
     python scripts/nightly_research_scrape.py --config configs/research_sources.json
+
+API keys (optional — set in .env or environment):
+    FINNHUB_API_KEY   — from finnhub.io (free tier)
+    TWELVE_DATA_KEY   — from twelvedata.com (free tier)
 """
 
 from __future__ import annotations
@@ -13,12 +17,19 @@ import argparse
 import hashlib
 import json
 import logging
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
+
+FINNHUB_KEY = os.getenv("FINNHUB_API_KEY", "")
+TWELVE_KEY = os.getenv("TWELVE_DATA_KEY", "")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -65,6 +76,52 @@ def scrape(url: str, timeout: int, max_chars: int) -> str | None:
     except subprocess.TimeoutExpired:
         log.warning("webclaw timeout for %s", url)
         return None
+
+
+def fetch_api(source: dict, max_chars: int) -> str | None:
+    """Fetch text from a structured API source (Finnhub, Twelve Data)."""
+    api_type = source.get("api_type")
+    try:
+        if api_type == "finnhub_news":
+            if not FINNHUB_KEY:
+                log.warning("FINNHUB_API_KEY not set — skipping %s", source["label"])
+                return None
+            category = source.get("category", "general")
+            r = httpx.get(
+                "https://finnhub.io/api/v1/news",
+                params={"category": category, "token": FINNHUB_KEY},
+                timeout=20,
+            )
+            r.raise_for_status()
+            items = r.json()[:10]  # top 10 headlines
+            lines = [f"{i['headline']}\n{i.get('summary','')}" for i in items if i.get("headline")]
+            return "\n\n".join(lines)[:max_chars] or None
+
+        if api_type == "twelve_data_quote":
+            if not TWELVE_KEY:
+                log.warning("TWELVE_DATA_KEY not set — skipping %s", source["label"])
+                return None
+            symbol = source.get("symbol", "XAU/USD")
+            r = httpx.get(
+                "https://api.twelvedata.com/quote",
+                params={"symbol": symbol, "apikey": TWELVE_KEY},
+                timeout=20,
+            )
+            r.raise_for_status()
+            d = r.json()
+            text = (
+                f"Symbol: {d.get('symbol')} | Name: {d.get('name')}\n"
+                f"Price: {d.get('close')} | Change: {d.get('percent_change')}%\n"
+                f"52w high: {d.get('fifty_two_week',{}).get('high')} | "
+                f"52w low: {d.get('fifty_two_week',{}).get('low')}\n"
+                f"Volume: {d.get('volume')} | Exchange: {d.get('exchange')}\n"
+                f"Timestamp: {d.get('datetime')}"
+            )
+            return text
+
+    except Exception as e:
+        log.warning("API fetch failed for %s: %s", source.get("label"), e)
+    return None
 
 
 def classify(text: str, cfg: dict) -> dict | None:
@@ -164,6 +221,9 @@ def main() -> None:
 
     saved = rejected = failed = 0
 
+    api_sources = [s for s in cfg.get("api_sources", []) if s.get("enabled", True)]
+    log.info("api_sources: %d enabled", len(api_sources))
+
     for source in sources:
         url = source["url"]
         log.info("scraping: %s", url)
@@ -194,8 +254,40 @@ def main() -> None:
         write_result(source, classification, text, output_dir, date_str, args.dry_run)
         saved += 1
 
+    # API sources
+    for source in api_sources:
+        log.info("api fetch: %s", source["label"])
+        text = fetch_api(source, wc_cfg["max_chars"])
+        if not text:
+            failed += 1
+            continue
+
+        source.setdefault("url", f"api://{source.get('api_type','unknown')}/{source.get('label','')}")
+
+        if args.dry_run:
+            log.info("[DRY RUN] api fetched %d chars from %s", len(text), source["label"])
+            classification = {"category": "risk_update", "confidence": 0.9,
+                              "one_line_summary": "dry-run api placeholder"}
+        else:
+            classification = classify(text, lm_cfg)
+            if not classification:
+                failed += 1
+                continue
+
+        category = classification.get("category", "reject")
+        confidence = float(classification.get("confidence", 0.0))
+
+        if category == "reject" or confidence < min_conf:
+            log.info("rejected (%s conf=%.2f): %s", category, confidence, source["label"])
+            rejected += 1
+            continue
+
+        write_result(source, classification, text, output_dir, date_str, args.dry_run)
+        saved += 1
+
     log.info("done — saved=%d rejected=%d failed=%d", saved, rejected, failed)
-    if failed == len(sources):
+    total = len(sources) + len(api_sources)
+    if total > 0 and failed == total:
         sys.exit(1)
 
 
