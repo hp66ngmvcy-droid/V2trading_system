@@ -7,7 +7,10 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 PLIST_LABEL="com.v2tar.nightly-research-scrape"
 PLIST_PATH="$HOME/Library/LaunchAgents/${PLIST_LABEL}.plist"
-PYTHON="$(which python3)"
+PYTHON="${REPO}/venv/bin/python"
+if [[ ! -x "$PYTHON" ]]; then
+  PYTHON="$(which python3)"
+fi
 LOG_DIR="$REPO/logs"
 mkdir -p "$LOG_DIR"
 

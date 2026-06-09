@@ -9,6 +9,7 @@ Usage:
 API keys (optional — set in .env or environment):
     FINNHUB_API_KEY   — from finnhub.io (free tier)
     TWELVE_DATA_KEY   — from twelvedata.com (free tier)
+    NVIDIA_API_KEY    — from build.nvidia.com (free tier, fallback when LM Studio offline)
 """
 
 from __future__ import annotations
@@ -30,6 +31,7 @@ load_dotenv()
 
 FINNHUB_KEY = os.getenv("FINNHUB_API_KEY", "")
 TWELVE_KEY = os.getenv("TWELVE_DATA_KEY", "")
+NVIDIA_KEY = os.getenv("NVIDIA_API_KEY", "")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -124,7 +126,23 @@ def fetch_api(source: dict, max_chars: int) -> str | None:
     return None
 
 
-def classify(text: str, cfg: dict) -> dict | None:
+def _call_llm(cfg: dict, payload: dict, headers: dict | None) -> dict | None:
+    r = httpx.post(
+        f"{cfg['base_url']}/chat/completions",
+        json=payload,
+        headers=headers or {},
+        timeout=60,
+    )
+    r.raise_for_status()
+    content = r.json()["choices"][0]["message"]["content"].strip()
+    if content.startswith("```"):
+        content = content.split("```")[1]
+        if content.startswith("json"):
+            content = content[4:]
+    return json.loads(content)
+
+
+def classify(text: str, cfg: dict, fallback_cfg: dict | None = None, fallback_headers: dict | None = None) -> dict | None:
     payload = {
         "model": cfg["model"],
         "messages": [{"role": "user", "content": CLASSIFY_PROMPT.format(text=text)}],
@@ -132,19 +150,18 @@ def classify(text: str, cfg: dict) -> dict | None:
         "temperature": cfg["temperature"],
     }
     try:
-        r = httpx.post(
-            f"{cfg['base_url']}/chat/completions",
-            json=payload,
-            timeout=60,
-        )
-        r.raise_for_status()
-        content = r.json()["choices"][0]["message"]["content"].strip()
-        # strip markdown code fences if model wraps output
-        if content.startswith("```"):
-            content = content.split("```")[1]
-            if content.startswith("json"):
-                content = content[4:]
-        return json.loads(content)
+        return _call_llm(cfg, payload, None)
+    except (httpx.ConnectError, httpx.ConnectTimeout) as e:
+        if fallback_cfg and fallback_headers:
+            log.warning("LM Studio unreachable (%s) — trying NVIDIA NIM fallback", e)
+            payload["model"] = fallback_cfg["model"]
+            try:
+                return _call_llm(fallback_cfg, payload, fallback_headers)
+            except Exception as e2:
+                log.warning("NVIDIA NIM classify failed: %s", e2)
+        else:
+            log.warning("LM Studio unreachable and no fallback configured: %s", e)
+        return None
     except Exception as e:
         log.warning("LM Studio classify failed: %s", e)
         return None
@@ -210,6 +227,10 @@ def main() -> None:
     cfg = load_config(args.config)
     lm_cfg = cfg["lm_studio"]
     wc_cfg = cfg["webclaw"]
+    nim_cfg = cfg.get("nvidia_nim")
+    nim_headers = {"Authorization": f"Bearer {NVIDIA_KEY}"} if (nim_cfg and NVIDIA_KEY) else None
+    if nim_cfg and not NVIDIA_KEY:
+        log.warning("nvidia_nim configured but NVIDIA_API_KEY not set — fallback disabled")
     out_cfg = cfg["output"]
     min_conf = float(out_cfg.get("min_confidence", 0.5))
     output_dir = REPO_ROOT / out_cfg["research_queue_dir"]
@@ -238,7 +259,7 @@ def main() -> None:
             classification = {"category": "strategy_idea", "confidence": 0.9,
                               "one_line_summary": "dry-run placeholder"}
         else:
-            classification = classify(text, lm_cfg)
+            classification = classify(text, lm_cfg, nim_cfg, nim_headers)
             if not classification:
                 failed += 1
                 continue
@@ -269,7 +290,7 @@ def main() -> None:
             classification = {"category": "risk_update", "confidence": 0.9,
                               "one_line_summary": "dry-run api placeholder"}
         else:
-            classification = classify(text, lm_cfg)
+            classification = classify(text, lm_cfg, nim_cfg, nim_headers)
             if not classification:
                 failed += 1
                 continue
