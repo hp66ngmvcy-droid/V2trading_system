@@ -2,9 +2,9 @@
   "symbol": "XAUUSD",
   "timeframe": "H1",
   "strategy_name": "vol_filtered_momentum_v1",
-  "tuned_at": "2026-06-03T23:14:33Z",
+  "tuned_at": "2026-06-10T19:01:34Z",
   "mt5_ready": false,
-  "mt5_block_reason": "PF 0.00 < 1.2; Sharpe 0.00 < 1.5; DD 100.00% > 5.0%; trades 0 < 30",
+  "mt5_block_reason": "Sharpe 1.43 < 1.5",
   "stages": [
     {
       "stage": "stage1_costs",
@@ -27,56 +27,70 @@
       "stage": "stage2_atr",
       "passed": true,
       "best_config": {
+        "atr_cap": 21.0086,
         "percentile": 0.95,
-        "cap": 21.0086,
-        "total_trades": 0.0,
-        "win_rate": 0.0,
-        "profit_factor": 0.0,
-        "net_profit": 0.0,
-        "max_drawdown_pct": 0.0,
-        "sharpe_ratio": 0.0,
-        "expectancy": 0.0
+        "total_trades": 749.0,
+        "win_rate": 32.18,
+        "profit_factor": 1.1549,
+        "net_profit": 450.0354,
+        "max_drawdown_pct": 3.06,
+        "sharpe_ratio": 0.9679,
+        "expectancy": 0.6008
       },
       "metrics": {
+        "atr_cap": 21.0086,
         "percentile": 0.95,
-        "cap": 21.0086,
-        "total_trades": 0.0,
-        "win_rate": 0.0,
-        "profit_factor": 0.0,
-        "net_profit": 0.0,
-        "max_drawdown_pct": 0.0,
-        "sharpe_ratio": 0.0,
-        "expectancy": 0.0
+        "total_trades": 749.0,
+        "win_rate": 32.18,
+        "profit_factor": 1.1549,
+        "net_profit": 450.0354,
+        "max_drawdown_pct": 3.06,
+        "sharpe_ratio": 0.9679,
+        "expectancy": 0.6008
       },
-      "note": "best percentile=0.95 cap=None"
+      "note": "best percentile=0.95 cap=21.0086"
     },
     {
       "stage": "stage3_sessions",
-      "passed": false,
+      "passed": true,
       "best_config": {
-        "label": "7-20 (baseline)",
+        "label": "7-16 (London+Overlap)",
         "start_utc": 7,
-        "end_utc": 20
+        "end_utc": 16,
+        "total_trades": 601.0,
+        "win_rate": 33.61,
+        "profit_factor": 1.238,
+        "net_profit": 508.7045,
+        "max_drawdown_pct": 1.64,
+        "sharpe_ratio": 1.4334,
+        "expectancy": 0.8464
       },
       "metrics": {
         "start_utc": 7,
-        "end_utc": 20
+        "end_utc": 16,
+        "total_trades": 601.0,
+        "win_rate": 33.61,
+        "profit_factor": 1.238,
+        "net_profit": 508.7045,
+        "max_drawdown_pct": 1.64,
+        "sharpe_ratio": 1.4334,
+        "expectancy": 0.8464
       },
-      "note": "best session=7-20 (baseline)"
+      "note": "best session=7-16 (London+Overlap)"
     }
   ],
   "optimal_config": {
-    "atr_cap": 0.0,
+    "atr_cap": 21.0086,
     "atr_percentile": 0.95,
     "session_start_utc": 7,
-    "session_end_utc": 20,
-    "session_label": "7-20 (baseline)"
+    "session_end_utc": 16,
+    "session_label": "7-16 (London+Overlap)"
   },
   "summary": {
-    "profit_factor": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "total_trades": 0.0,
-    "win_rate": 0.0
+    "profit_factor": 1.238,
+    "sharpe_ratio": 1.4334,
+    "max_drawdown_pct": 1.64,
+    "total_trades": 601.0,
+    "win_rate": 33.61
   }
 }

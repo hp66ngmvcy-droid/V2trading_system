@@ -2,9 +2,9 @@
   "symbol": "XAUUSD",
   "timeframe": "H1",
   "strategy_name": "gold_v2",
-  "tuned_at": "2026-06-03T23:11:27Z",
+  "tuned_at": "2026-06-10T19:02:09Z",
   "mt5_ready": false,
-  "mt5_block_reason": "PF 0.00 < 1.2; Sharpe 0.00 < 1.5; DD 100.00% > 5.0%; trades 0 < 30",
+  "mt5_block_reason": "PF 1.12 < 1.2; Sharpe 0.77 < 1.5",
   "stages": [
     {
       "stage": "stage1_costs",
@@ -27,56 +27,70 @@
       "stage": "stage2_atr",
       "passed": true,
       "best_config": {
+        "atr_cap": 21.0086,
         "percentile": 0.95,
-        "cap": 21.0086,
-        "total_trades": 0.0,
-        "win_rate": 0.0,
-        "profit_factor": 0.0,
-        "net_profit": 0.0,
-        "max_drawdown_pct": 0.0,
-        "sharpe_ratio": 0.0,
-        "expectancy": 0.0
+        "total_trades": 1113.0,
+        "win_rate": 34.23,
+        "profit_factor": 0.9753,
+        "net_profit": -78.5626,
+        "max_drawdown_pct": 3.4,
+        "sharpe_ratio": -0.1717,
+        "expectancy": -0.0706
       },
       "metrics": {
+        "atr_cap": 21.0086,
         "percentile": 0.95,
-        "cap": 21.0086,
-        "total_trades": 0.0,
-        "win_rate": 0.0,
-        "profit_factor": 0.0,
-        "net_profit": 0.0,
-        "max_drawdown_pct": 0.0,
-        "sharpe_ratio": 0.0,
-        "expectancy": 0.0
+        "total_trades": 1113.0,
+        "win_rate": 34.23,
+        "profit_factor": 0.9753,
+        "net_profit": -78.5626,
+        "max_drawdown_pct": 3.4,
+        "sharpe_ratio": -0.1717,
+        "expectancy": -0.0706
       },
-      "note": "best percentile=0.95 cap=None"
+      "note": "best percentile=0.95 cap=21.0086"
     },
     {
       "stage": "stage3_sessions",
       "passed": false,
       "best_config": {
-        "label": "7-20 (baseline)",
-        "start_utc": 7,
-        "end_utc": 20
+        "label": "8-15 (Core Tight)",
+        "start_utc": 8,
+        "end_utc": 15,
+        "total_trades": 638.0,
+        "win_rate": 36.21,
+        "profit_factor": 1.1153,
+        "net_profit": 186.2912,
+        "max_drawdown_pct": 1.77,
+        "sharpe_ratio": 0.7685,
+        "expectancy": 0.292
       },
       "metrics": {
-        "start_utc": 7,
-        "end_utc": 20
+        "start_utc": 8,
+        "end_utc": 15,
+        "total_trades": 638.0,
+        "win_rate": 36.21,
+        "profit_factor": 1.1153,
+        "net_profit": 186.2912,
+        "max_drawdown_pct": 1.77,
+        "sharpe_ratio": 0.7685,
+        "expectancy": 0.292
       },
-      "note": "best session=7-20 (baseline)"
+      "note": "best session=8-15 (Core Tight)"
     }
   ],
   "optimal_config": {
-    "atr_cap": 0.0,
+    "atr_cap": 21.0086,
     "atr_percentile": 0.95,
-    "session_start_utc": 7,
-    "session_end_utc": 20,
-    "session_label": "7-20 (baseline)"
+    "session_start_utc": 8,
+    "session_end_utc": 15,
+    "session_label": "8-15 (Core Tight)"
   },
   "summary": {
-    "profit_factor": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "total_trades": 0.0,
-    "win_rate": 0.0
+    "profit_factor": 1.1153,
+    "sharpe_ratio": 0.7685,
+    "max_drawdown_pct": 1.77,
+    "total_trades": 638.0,
+    "win_rate": 36.21
   }
 }

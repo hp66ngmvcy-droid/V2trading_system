@@ -6,6 +6,14 @@ Extends `CLAUDE.md`. Read `CLAUDE.md` first, then this file.
 
 ACTIVE
 
+## Start Here
+
+1. Read `CLAUDE.md`.
+2. Read this file.
+3. Read `MEMORY.md`.
+4. Read `collab/STATUS.md`.
+5. Read the relevant project skill under `skills/`.
+
 ## Purpose
 
 Local paper-only trading research, strategy testing, walk-forward validation,
