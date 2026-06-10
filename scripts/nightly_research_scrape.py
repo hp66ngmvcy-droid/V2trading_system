@@ -65,7 +65,7 @@ def load_config(path: Path) -> dict:
 def scrape(url: str, timeout: int, max_chars: int) -> str | None:
     try:
         result = subprocess.run(
-            ["webclaw", "extract", url, "--format", "text"],
+            ["webclaw", url, "--format", "text"],
             capture_output=True, text=True, timeout=timeout
         )
         if result.returncode != 0:
