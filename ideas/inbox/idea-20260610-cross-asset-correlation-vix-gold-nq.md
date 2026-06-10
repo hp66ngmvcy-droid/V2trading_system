@@ -54,9 +54,10 @@ The correlation breakdown between NQ and Gold during high-VIX regimes is the tra
 | Asset | Source | Status |
 |-------|--------|--------|
 | XAUUSD | Already in system | ✅ Have |
-| NQ continuous futures | yfinance `NQ=F` (front-month) or Norgate for roll-adjusted | ❌ Need |
-| VIX index | yfinance `^VIX` or FRED `VIXCLS` | ❌ Need |
-| DXY | yfinance `DX-Y.NYB` or FRED `DTWEXBGS` | ❌ Need |
+| NQ futures (front-month) | Yahoo Finance `NQ=F` → `data/validated/NQ_D1.parquet` | ✅ 1764 bars (7y) |
+| VIX index | Yahoo Finance `^VIX` → `data/validated/VIX_D1.parquet` | ✅ 1762 bars (7y) |
+| DXY | Yahoo Finance `DX-Y.NYB` → `data/validated/DXY_D1.parquet` | ✅ 1763 bars (7y) |
+| Gold futures | Yahoo Finance `GC=F` → `data/validated/GOLD_D1.parquet` | ✅ 1763 bars (7y) |
 
 ## Success Criteria
 
@@ -68,10 +69,10 @@ The correlation breakdown between NQ and Gold during high-VIX regimes is the tra
 
 ## Next Steps
 
-1. Check data availability: `./bt check-data-readiness` for NQ, VIX, DXY
-2. Write data requirements note to `ideas/data_requirements/`
-3. Build strategy module: `src/tar_system/strategies/cross_asset_correlation_v1.py`
-4. Backtest on daily bars first (sufficient frequency for regime-based signal)
+1. ~~Check data availability~~ ✅ All data fetched and validated
+2. Build strategy module: `src/tar_system/strategies/cross_asset_correlation_v1.py`
+3. Backtest on daily bars: `./bt tune GOLD D1 cross_asset_correlation_v1`
+4. Validate 2022 OOS period specifically
 
 ## Notes
 
