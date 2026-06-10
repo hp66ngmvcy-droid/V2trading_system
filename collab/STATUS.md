@@ -8,14 +8,14 @@ Rule: if a note is marked `DONE` and `Review State` is `REVIEWED`, do not reopen
 
 | Priority | State | Owner | Note | Summary | Next Action |
 | --- | --- | --- | --- | --- | --- |
-| 1 | READY | Codex | [2026-06-04_fix-h1-hour-utc-missing.md](claude_notes/2026-06-04_fix-h1-hour-utc-missing.md) | H1 features missing `hour_utc` — session gate kills all H1 trades in tuner | Check parquet, rebuild H1 features, re-run H1 tune |
-| 2 | READY | Codex | [2026-06-04_gold-v2-param-sweep-m15-m30.md](claude_notes/2026-06-04_gold-v2-param-sweep-m15-m30.md) | `gold_v2` M15+M30 at PF 1.14 / Sharpe 0.95 — needs signal tightening to clear MT5 gates | Sweep entry strictness params, keep ATR cap + session fixed |
-| 3 | READY | Codex | [2026-06-04_momentum-crossover-v3-param-sweep.md](claude_notes/2026-06-04_momentum-crossover-v3-param-sweep.md) | `momentum_crossover_v3` raw PF 0.94 — closest to viable of all failing strategies | Sweep entry threshold + R:R + min hold bars to clear Stage 1 |
+| 1 | READY | Codex | [2026-06-04_gold-v2-param-sweep-m15-m30.md](claude_notes/2026-06-04_gold-v2-param-sweep-m15-m30.md) | `gold_v2` M15+M30 at PF 1.14 / Sharpe 0.95 — needs signal tightening to clear MT5 gates | Sweep entry strictness params, keep ATR cap + session fixed |
+| 2 | READY | Codex | [2026-06-04_momentum-crossover-v3-param-sweep.md](claude_notes/2026-06-04_momentum-crossover-v3-param-sweep.md) | `momentum_crossover_v3` — params added (entry_threshold, min_hold_bars), sweep not yet run | Run tune-strategy sweep on M15, target costed PF > 1.0, trades >= 30 |
 
 ## Completed And Reviewed
 
 | State | Review State | Note | Completion | Summary |
 | --- | --- | --- | --- | --- |
+| DONE | REVIEWED | [2026-06-04_fix-h1-hour-utc-missing.md](claude_notes/2026-06-04_fix-h1-hour-utc-missing.md) | [done note](codex_notes/2026-06-04_fix-h1-hour-utc-missing_done.md) | H1 hour_utc rebuilt; gold_v2 H1 went from 0→PF 1.12; vol_filtered_momentum_v1 H1 retuned. Neither MT5-ready yet but bug fixed. |
 | DONE | REVIEWED | [2026-05-17_fix-search-terminates-early.md](claude_notes/2026-05-17_fix-search-terminates-early.md) | [done note](codex_notes/2026-05-17_fix-search-terminates-early_done.md) | next_generation fallback added; search no longer dies at gen 0 when all seeds score <35. 236 tests pass. |
 | DONE | REVIEWED | [2026-05-17_fix-sharpe-oos-always-zero.md](claude_notes/2026-05-17_fix-sharpe-oos-always-zero.md) | [done note](codex_notes/2026-05-17_fix-sharpe-oos-always-zero_done.md) | _sharpe() added to stitch_metrics; sharpe_oos now correctly reflects OOS walk-forward Sharpe. 236 tests pass. |
 | DONE | REVIEWED | [2026-05-17_fix-bootstrap-false-positive.md](claude_notes/2026-05-17_fix-bootstrap-false-positive.md) | [done note](codex_notes/2026-05-17_fix-bootstrap-false-positive_done.md) | Bootstrap CI gate now only fires when bootstrap keys present; KEEP no longer blocked by missing data. 236 tests pass. |
