@@ -46,16 +46,18 @@ class CrossAssetCorrelationV1:
     name: str = "cross_asset_correlation_v1"
     version: str = "0.1.0"
 
-    _gold_hist: deque = field(default_factory=deque, init=False, repr=False)
-    _nq_hist: deque = field(default_factory=deque, init=False, repr=False)
+    _gold_ret: deque = field(default_factory=deque, init=False, repr=False)
+    _nq_ret: deque = field(default_factory=deque, init=False, repr=False)
+    _gold_prev: float = field(default=0.0, init=False, repr=False)
+    _nq_prev: float = field(default=0.0, init=False, repr=False)
     _dxy_hist: deque = field(default_factory=deque, init=False, repr=False)
     _vix: pd.Series | None = field(default=None, init=False, repr=False)
     _nq: pd.Series | None = field(default=None, init=False, repr=False)
     _dxy: pd.Series | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
-        self._gold_hist = deque(maxlen=self.corr_window)
-        self._nq_hist = deque(maxlen=self.corr_window)
+        self._gold_ret = deque(maxlen=self.corr_window)
+        self._nq_ret = deque(maxlen=self.corr_window)
         self._dxy_hist = deque(maxlen=self.dxy_slope_window)
         self._vix = _load_close("VIX_D1")
         self._nq = _load_close("NQ_D1")
@@ -84,19 +86,25 @@ class CrossAssetCorrelationV1:
         hold = Signal(side="HOLD", confidence=0.0, stop_loss=None,
                       take_profit=None, reason_code=rc.SIGNAL_HOLD, **base)
 
-        self._gold_hist.append(entry)
-
         vix = self._get(self._vix, ts)
         nq = self._get(self._nq, ts)
         dxy = self._get(self._dxy, ts)
 
+        # Accumulate daily returns (not price levels)
+        if self._gold_prev > 0:
+            self._gold_ret.append((entry - self._gold_prev) / self._gold_prev)
+        self._gold_prev = entry
+
         if nq is not None:
-            self._nq_hist.append(nq)
+            if self._nq_prev > 0:
+                self._nq_ret.append((nq - self._nq_prev) / self._nq_prev)
+            self._nq_prev = nq
+
         if dxy is not None:
             self._dxy_hist.append(dxy)
 
-        # Need full correlation window
-        if len(self._gold_hist) < self.corr_window or len(self._nq_hist) < self.corr_window:
+        # Need full window of returns
+        if len(self._gold_ret) < self.corr_window or len(self._nq_ret) < self.corr_window:
             return hold
 
         # VIX stress gate
@@ -111,8 +119,8 @@ class CrossAssetCorrelationV1:
                 if dxy_pct > self.dxy_slope_suppress:
                     return hold
 
-        # Rolling correlation Gold vs NQ
-        corr = float(pd.Series(list(self._gold_hist)).corr(pd.Series(list(self._nq_hist))))
+        # Rolling correlation of daily returns Gold vs NQ
+        corr = float(pd.Series(list(self._gold_ret)).corr(pd.Series(list(self._nq_ret))))
         if pd.isna(corr) or corr >= self.corr_threshold:
             return hold
 
