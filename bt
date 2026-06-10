@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# bt — local backtest/tune shortcut for V2trading_system
+# Usage:
+#   bt tune SYMBOL TIMEFRAME STRATEGY [param=val ...]
+#   bt backtest SYMBOL TIMEFRAME STRATEGY
+#   bt wf SYMBOL TIMEFRAME STRATEGY
+#   bt score SYMBOL TIMEFRAME STRATEGY
+#   bt rank
+#   bt queue
+#   bt env
+
+set -euo pipefail
+REPO="$(cd "$(dirname "$0")" && pwd)"
+PY="$REPO/venv/bin/python"
+CLI="$PY -m tar_system.cli"
+cd "$REPO"
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+  tune)
+    # bt tune XAUUSD M15 gold_v2 [param=val ...]
+    symbol="${1:?symbol required}"; shift
+    tf="${1:?timeframe required}"; shift
+    strat="${1:?strategy required}"; shift
+    echo "[bt] tuning $strat $symbol $tf..."
+    $CLI tune-strategy --strategy "$strat" --symbol "$symbol" --timeframe "$tf" ${@:+--params "$@"}
+    ;;
+  backtest|bt)
+    symbol="${1:?symbol required}"; shift
+    tf="${1:?timeframe required}"; shift
+    strat="${1:?strategy required}"; shift
+    echo "[bt] backtesting $strat $symbol $tf..."
+    $CLI run-backtest --strategy "$strat" --symbol "$symbol" --timeframe "$tf" "$@"
+    ;;
+  wf)
+    symbol="${1:?symbol required}"; shift
+    tf="${1:?timeframe required}"; shift
+    strat="${1:?strategy required}"; shift
+    echo "[bt] walk-forward $strat $symbol $tf..."
+    $CLI run-walk-forward --strategy "$strat" --symbol "$symbol" --timeframe "$tf" "$@"
+    ;;
+  score)
+    symbol="${1:?symbol required}"; shift
+    tf="${1:?timeframe required}"; shift
+    strat="${1:?strategy required}"; shift
+    echo "[bt] scoring $strat $symbol $tf..."
+    $CLI score-strategy --strategy "$strat" --symbol "$symbol" --timeframe "$tf" "$@"
+    ;;
+  rank)
+    echo "[bt] ranking strategies..."
+    $CLI rank-strategies "$@"
+    ;;
+  queue)
+    echo "[bt] queue status..."
+    $CLI show-queue "$@"
+    ;;
+  env)
+    $CLI check-environment
+    ;;
+  scrape)
+    echo "[bt] running nightly scraper..."
+    $PY scripts/nightly_research_scrape.py "$@"
+    ;;
+  help|--help|-h|*)
+    echo "bt — V2 local backtest shortcut"
+    echo ""
+    echo "  bt tune   SYMBOL TF STRATEGY [param=val ...]"
+    echo "  bt backtest SYMBOL TF STRATEGY"
+    echo "  bt wf     SYMBOL TF STRATEGY"
+    echo "  bt score  SYMBOL TF STRATEGY"
+    echo "  bt rank"
+    echo "  bt queue"
+    echo "  bt env"
+    echo "  bt scrape [--dry-run]"
+    echo ""
+    echo "Examples:"
+    echo "  bt tune XAUUSD M15 gold_v2"
+    echo "  bt tune XAUUSD M15 gold_v2 reward_risk=3.0"
+    echo "  bt wf XAUUSD M15 vol_filtered_momentum_v1"
+    echo "  bt scrape --dry-run"
+    ;;
+esac
