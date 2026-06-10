@@ -28,7 +28,7 @@ def _card(**updates: object) -> PromotionCard:
         "gross_score": 80.0,
         "session_filter": True,
         "go_no_go": {"passed": True, "criteria": []},
-        "column": "READY FOR MT5",
+        "column": "READY FOR MANUAL MT5 REVIEW",
     }
     payload.update(updates)
     return PromotionCard(**payload)
@@ -108,6 +108,24 @@ def test_promotion_board_uses_killed_memory_verdict(tmp_path, monkeypatch) -> No
     assert cards[0].symbol == "XAUUSD"
     assert cards[0].timeframe == "M15"
     assert cards[0].column == "KILLED"
+
+
+def test_promotion_board_requires_200_trades_for_manual_mt5_review(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    Path("data/results").mkdir(parents=True)
+    base = Path("data/results/gold_v2_XAUUSD_M15")
+    Path(f"{base}_metrics.json").write_text(
+        json.dumps({"profit_factor": 3.0, "total_trades": 50, "average_win": 2, "average_loss": -1, "max_drawdown": 0.05, "win_rate": 0.7, "expectancy": 1}),
+        encoding="utf-8",
+    )
+    Path(f"{base}_walk_forward.json").write_text(json.dumps({"parameter_stability_score": 80}), encoding="utf-8")
+    Path(f"{base}_monte_carlo.json").write_text(json.dumps({"robustness_score": 80}), encoding="utf-8")
+    Path(f"{base}_parameter_sensitivity.json").write_text(json.dumps({"fragile": False, "stability_score": 80}), encoding="utf-8")
+
+    cards = load_promotion_cards()
+
+    assert cards[0].go_no_go["passed"] is False
+    assert cards[0].column != "READY FOR MANUAL MT5 REVIEW"
 
 
 def test_daily_summary_loads_without_data(tmp_path, monkeypatch) -> None:

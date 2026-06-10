@@ -1,0 +1,96 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "M15",
+  "strategy_name": "gold_v2",
+  "tuned_at": "2026-06-03T23:31:05Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "PF 1.14 < 1.2; Sharpe 0.95 < 1.5",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": true,
+      "best_config": {
+        "with_costs_pf": 1.0381
+      },
+      "metrics": {
+        "total_trades": 1215.0,
+        "win_rate": 35.23,
+        "profit_factor": 1.0381,
+        "net_profit": 110.4913,
+        "max_drawdown_pct": 1.23,
+        "sharpe_ratio": 0.2474,
+        "expectancy": 0.0909
+      },
+      "note": "raw_pf=1.037 costed_pf=1.0381"
+    },
+    {
+      "stage": "stage2_atr",
+      "passed": true,
+      "best_config": {
+        "atr_cap": 11.7281,
+        "percentile": 0.95,
+        "total_trades": 1032.0,
+        "win_rate": 34.79,
+        "profit_factor": 0.9964,
+        "net_profit": -7.3838,
+        "max_drawdown_pct": 1.23,
+        "sharpe_ratio": -0.0224,
+        "expectancy": -0.0072
+      },
+      "metrics": {
+        "atr_cap": 11.7281,
+        "percentile": 0.95,
+        "total_trades": 1032.0,
+        "win_rate": 34.79,
+        "profit_factor": 0.9964,
+        "net_profit": -7.3838,
+        "max_drawdown_pct": 1.23,
+        "sharpe_ratio": -0.0224,
+        "expectancy": -0.0072
+      },
+      "note": "best percentile=0.95 cap=11.7281"
+    },
+    {
+      "stage": "stage3_sessions",
+      "passed": false,
+      "best_config": {
+        "label": "8-17 (Core)",
+        "start_utc": 8,
+        "end_utc": 17,
+        "total_trades": 652.0,
+        "win_rate": 36.96,
+        "profit_factor": 1.142,
+        "net_profit": 163.3717,
+        "max_drawdown_pct": 0.62,
+        "sharpe_ratio": 0.9548,
+        "expectancy": 0.2506
+      },
+      "metrics": {
+        "start_utc": 8,
+        "end_utc": 17,
+        "total_trades": 652.0,
+        "win_rate": 36.96,
+        "profit_factor": 1.142,
+        "net_profit": 163.3717,
+        "max_drawdown_pct": 0.62,
+        "sharpe_ratio": 0.9548,
+        "expectancy": 0.2506
+      },
+      "note": "best session=8-17 (Core)"
+    }
+  ],
+  "optimal_config": {
+    "atr_cap": 11.7281,
+    "atr_percentile": 0.95,
+    "session_start_utc": 8,
+    "session_end_utc": 17,
+    "session_label": "8-17 (Core)"
+  },
+  "summary": {
+    "profit_factor": 1.142,
+    "sharpe_ratio": 0.9548,
+    "max_drawdown_pct": 0.62,
+    "total_trades": 652.0,
+    "win_rate": 36.96
+  }
+}

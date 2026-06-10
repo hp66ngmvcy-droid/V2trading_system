@@ -21,6 +21,9 @@ class Position:
     entry_price: float
     timestamp: pd.Timestamp
     entry_cost: float = 0.0
+    take_profit: float | None = None
+    stop_loss: float | None = None
+    contract_size: float = 1.0
 
 
 @dataclass
@@ -39,6 +42,7 @@ class Trade:
     spread_cost: float = 0.0
     total_cost: float = 0.0
     net_pnl: float = 0.0
+    contract_size: float = 1.0
 
 
 @dataclass
@@ -63,7 +67,7 @@ class PortfolioTracker:
         return float(self.initial_capital + self.realised_pnl)
 
     def exposure(self) -> float:
-        notional = sum(position.quantity * position.entry_price for position in self.open_positions)
+        notional = sum(position.quantity * position.entry_price * position.contract_size for position in self.open_positions)
         return notional / self.current_equity if self.current_equity else 0.0
 
     def drawdown(self) -> float:
@@ -77,7 +81,7 @@ class PortfolioTracker:
         opposite = "SELL" if fill.side == "BUY" else "BUY"
         existing = next((pos for pos in self.open_positions if pos.symbol == fill.symbol and pos.side == opposite), None)
         if existing:
-            gross_pnl = (fill.price - existing.entry_price) * existing.quantity
+            gross_pnl = (fill.price - existing.entry_price) * existing.quantity * existing.contract_size
             if existing.side == "SELL":
                 gross_pnl *= -1
             total_cost = existing.entry_cost + fill.total_cost
@@ -99,10 +103,14 @@ class PortfolioTracker:
                     spread_cost=fill.spread_cost,
                     total_cost=total_cost,
                     net_pnl=pnl,
+                    contract_size=existing.contract_size,
                 )
             )
         else:
-            self.open_positions.append(Position(fill.symbol, fill.side, fill.quantity, fill.price, fill.timestamp, fill.total_cost))
+            tp = fill.metadata.get("take_profit") if fill.metadata else None
+            sl = fill.metadata.get("stop_loss") if fill.metadata else None
+            cs = float(fill.metadata.get("contract_size") or 1.0) if fill.metadata else 1.0
+            self.open_positions.append(Position(fill.symbol, fill.side, fill.quantity, fill.price, fill.timestamp, fill.total_cost, take_profit=tp, stop_loss=sl, contract_size=cs))
         self.equity_curve.append((fill.timestamp, self.current_equity))
         self._update_loss_guard()
 
@@ -111,9 +119,16 @@ class PortfolioTracker:
             return 0.0
         total = 0.0
         for position in self.open_positions:
-            pnl = (mark_price - position.entry_price) * position.quantity
+            pnl = (mark_price - position.entry_price) * position.quantity * position.contract_size
             total += pnl if position.side == "BUY" else -pnl
         return total
+
+    def drawdown_marked(self, mark_price: float = 0.0) -> float:
+        """Drawdown including open position unrealised PnL at current bar price."""
+        marked_equity = self.initial_capital + self.realised_pnl + self.unrealised_pnl(mark_price)
+        base_equities = [equity for _, equity in self.equity_curve]
+        peak = max(base_equities + [marked_equity]) if base_equities else marked_equity
+        return (peak - marked_equity) / peak if peak else 0.0
 
     def win_rate(self) -> float:
         if not self.closed_trades:

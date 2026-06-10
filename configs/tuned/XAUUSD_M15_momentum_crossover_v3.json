@@ -1,0 +1,35 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "M15",
+  "strategy_name": "momentum_crossover_v3",
+  "tuned_at": "2026-06-03T22:26:26Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.9939
+      },
+      "metrics": {
+        "total_trades": 12605.0,
+        "win_rate": 30.69,
+        "profit_factor": 0.9939,
+        "net_profit": -82.8526,
+        "max_drawdown_pct": 4.59,
+        "sharpe_ratio": -0.0318,
+        "expectancy": -0.0066
+      },
+      "note": "raw_pf=0.9403 costed_pf=0.9939"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.9939,
+    "sharpe_ratio": -0.0318,
+    "max_drawdown_pct": 4.59,
+    "total_trades": 12605.0,
+    "win_rate": 30.69
+  }
+}

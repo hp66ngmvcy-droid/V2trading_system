@@ -1,0 +1,72 @@
+{
+  "phase_name": "candidate selection and duplicate closure",
+  "generated_at": "2026-05-25T22:11:13+00:00",
+  "passed": true,
+  "report_path": "idea_reviews/phase_gates/20260525T221113Z_candidate-selection-and-duplicate-closure.md",
+  "report_json_path": "idea_reviews/phase_gates/20260525T221113Z_candidate-selection-and-duplicate-closure.json",
+  "commands": [
+    {
+      "name": "compile",
+      "command": [
+        "/Users/whs1/Dev/V2trading_system/venv/bin/python",
+        "-m",
+        "compileall",
+        "src/tar_system"
+      ],
+      "return_code": 0,
+      "passed": true,
+      "output_tail": "Listing 'src/tar_system'...\nListing 'src/tar_system/agents'...\nListing 'src/tar_system/analysis'...\nListing 'src/tar_system/assets'...\nListing 'src/tar_system/audit'...\nListing 'src/tar_system/backtest'...\nListing 'src/tar_system/brokers'...\nListing 'src/tar_system/cache'...\nListing 'src/tar_system/controller'...\nListing 'src/tar_system/dashboard'...\nListing 'src/tar_system/dashboard/components'...\nListing 'src/tar_system/dashboard/pages'...\nListing 'src/tar_system/data'...\nListing 'src/tar_system/discovery'...\nListing 'src/tar_system/environment'...\nListing 'src/tar_system/execution'...\nListing 'src/tar_system/exports'...\nListing 'src/tar_system/features'...\nListing 'src/tar_system/forward_test'...\nListing 'src/tar_system/legacy'...\nListing 'src/tar_system/live'...\nListing 'src/tar_system/memory'...\nListing 'src/tar_system/obsidian'...\nListing 'src/tar_system/optimisation'...\nListing 'src/tar_system/pipeline'...\nListing 'src/tar_system/portfolio'...\nListing 'src/tar_system/positioning'...\nListing 'src/tar_system/regime'...\nListing 'src/tar_system/reporting'...\nListing 'src/tar_system/research'...\nListing 'src/tar_system/risk'...\nListing 'src/tar_system/scoring'...\nListing 'src/tar_system/security'...\nListing 'src/tar_system/strategies'...\nListing 'src/tar_system/tuner'...\nListing 'src/tar_system/validation'...\nListing 'src/tar_system/web_ui'...\n"
+    },
+    {
+      "name": "tests",
+      "command": [
+        "/Users/whs1/Dev/V2trading_system/venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/test_candidate_selection.py",
+        "tests/test_hypothesis_review.py",
+        "tests/test_phase_gate.py"
+      ],
+      "return_code": 0,
+      "passed": true,
+      "output_tail": "============================= test session starts ==============================\nplatform darwin -- Python 3.14.4, pytest-9.0.3, pluggy-1.6.0\nrootdir: /Users/whs1/Dev/V2trading_system\nconfigfile: pytest.ini\nplugins: xdist-3.8.0, typeguard-4.5.2, anyio-4.13.0\ncollected 6 items\n\ntests/test_candidate_selection.py ..                                     [ 33%]\ntests/test_hypothesis_review.py ..                                       [ 66%]\ntests/test_phase_gate.py ..                                              [100%]\n\n============================== 6 passed in 0.81s ===============================\n"
+    },
+    {
+      "name": "pip_check",
+      "command": [
+        "/Users/whs1/Dev/V2trading_system/venv/bin/python",
+        "-m",
+        "pip",
+        "check"
+      ],
+      "return_code": 0,
+      "passed": true,
+      "output_tail": "No broken requirements found.\n"
+    },
+    {
+      "name": "security_check",
+      "command": [
+        "/Users/whs1/Dev/V2trading_system/venv/bin/python",
+        "-m",
+        "tar_system.cli",
+        "security-check"
+      ],
+      "return_code": 0,
+      "passed": true,
+      "output_tail": "{\n  \"passed\": true,\n  \"findings\": []\n}\n"
+    },
+    {
+      "name": "construction_audit",
+      "command": [
+        "/Users/whs1/Dev/V2trading_system/venv/bin/python",
+        "-m",
+        "tar_system.cli",
+        "run-local-construction-audit",
+        "--fail-on-findings"
+      ],
+      "return_code": 0,
+      "passed": true,
+      "output_tail": "{\n  \"tool\": \"opengrep\",\n  \"target\": \"src\",\n  \"scan_status\": \"COMPLETED\",\n  \"scan_return_code\": 0,\n  \"scan_output_path\": \"runtime/static_analysis/opengrep.json\",\n  \"packet_path\": \"runtime/ai_review_packet.md\",\n  \"packet_json_path\": \"runtime/ai_review_packet.json\",\n  \"total_findings\": 0,\n  \"severity_counts\": {},\n  \"passed\": true,\n  \"scan_only\": true\n}\n\n               \n               \n+-------------+\n| Scan Status |\n+-------------+\n  Scanning 215 files tracked by git with 1059 Code rules:\n                                                                                                                        \n  Language    | Rules | Files          Origin    | Rules                                                                \n -------------+-------+-------        -----------+-------                                                               \n  <multilang> |    47 |   215          Community |  1059                                                                \n  python      |   243 |   208                                                                                           \n                                                                                                                        \n                \n                \n+--------------+\n| Scan Summary |\n+--------------+\nSome files were skipped or only partially analyzed.\n  Scan was limited to files tracked by git.\n\nRan 290 rules on 215 files: 0 findings.\n"
+    }
+  ]
+}

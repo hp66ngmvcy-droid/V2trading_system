@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-05-26T09:41:25+00:00",
+  "input_dir": "ideas/translation_blocked",
+  "output_path": "idea_reviews/translation_blockers_2026-05-26.md",
+  "output_json_path": "idea_reviews/translation_blockers_2026-05-26.json",
+  "blocked_count": 1,
+  "items": [
+    {
+      "path": "ideas/translation_blocked/multi-strategy-fx-futures-20260525.md",
+      "idea_id": "multi-strategy-fx-futures-20260525",
+      "title": "Multi-Strategy FX Futures - Formula Extracted, Data Blocked",
+      "status": "formula_extracted_data_blocked",
+      "source_note": "online-scout-20260525-bcc4b0d614",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3322717",
+      "missing_rules": [
+        "Daily rolled FX futures data or a documented spot-FX proxy decision",
+        "1-year and 10-year yield data for each currency geography",
+        "Linked equity index data for each currency",
+        "Commodity index data: GSCI, Brent crude, gold, agriculture",
+        "A local data mapping from futures symbols to available V2 symbols",
+        "A cost model suitable for futures or documented spot-FX approximation",
+        "A decision on whether to start with single-indicator proxies before portfolio"
+      ],
+      "next_action": "Resolve data coverage or document a reduced proxy before candidate conversion."
+    }
+  ]
+}

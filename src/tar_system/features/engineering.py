@@ -16,6 +16,10 @@ def build_features(
     volatility_window: int = 20,
 ) -> pd.DataFrame:
     work = df.sort_values("timestamp").copy()
+    # Prefer tick volume for forex data where real volume is unavailable.
+    if "volume" not in work.columns or work["volume"].eq(0).all():
+        fallback = work["<TICKVOL>"] if "<TICKVOL>" in work.columns else work["tickvol"] if "tickvol" in work.columns else None
+        work["volume"] = fallback if fallback is not None else float("nan")
     work["ema_fast"] = work["close"].ewm(span=fast_window, adjust=False).mean()
     work["ema_slow"] = work["close"].ewm(span=slow_window, adjust=False).mean()
     work["ema_fast_slope"] = ((work["ema_fast"] - work["ema_fast"].shift(3)) / 3 / work["close"]).fillna(0)
@@ -41,8 +45,11 @@ def build_features(
     work["macd_signal"] = work["macd"].ewm(span=9, adjust=False).mean()
     work["returns"] = work["close"].pct_change()
     work["rolling_volatility"] = work["returns"].rolling(volatility_window).std()
+    work["volume_sma"] = work["volume"].rolling(volatility_window).mean()
     work["rolling_high"] = work["high"].rolling(volatility_window).max()
     work["rolling_low"] = work["low"].rolling(volatility_window).min()
+    work["prior_rolling_high"] = work["rolling_high"].shift(1)
+    work["prior_rolling_low"] = work["rolling_low"].shift(1)
     work["bollinger_mid"] = work["close"].rolling(20).mean()
     rolling_std = work["close"].rolling(20).std()
     work["bollinger_upper"] = work["bollinger_mid"] + 2 * rolling_std
@@ -52,7 +59,9 @@ def build_features(
     work["price_in_band"] = ((work["close"] - work["bollinger_lower"]) / band_range).clip(0, 1).fillna(0.5)
     price_range = (work["rolling_high"] - work["rolling_low"]).replace(0, pd.NA)
     work["range_compression"] = (work["atr"] / price_range).fillna(0)
-    work["session_label"] = pd.to_datetime(work["timestamp"], utc=True).dt.hour.map(_session_label)
+    timestamps = pd.to_datetime(work["timestamp"], utc=True)
+    work["hour_utc"] = timestamps.dt.hour
+    work["session_label"] = work["hour_utc"].map(_session_label)
     work["is_liquid_session"] = work["session_label"].isin({"LONDON", "OVERLAP", "NEW_YORK"})
     return work
 

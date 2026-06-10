@@ -36,7 +36,12 @@ def default_checkpoint(run_id: str, strategy: str, symbol: str, timeframe: str, 
 def read_checkpoint() -> dict[str, Any] | None:
     if not RUNTIME_PATH.exists():
         return None
-    return json.loads(RUNTIME_PATH.read_text(encoding="utf-8"))
+    try:
+        return json.loads(RUNTIME_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        corrupt_path = RUNTIME_PATH.with_suffix(".corrupt.json")
+        corrupt_path.write_text(RUNTIME_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+        return None
 
 
 def write_checkpoint(status: dict[str, Any]) -> Path:

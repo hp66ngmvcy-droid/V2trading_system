@@ -1,0 +1,35 @@
+{
+  "symbol": "EURUSD",
+  "timeframe": "M15",
+  "strategy_name": "rsi_trend_v4",
+  "tuned_at": "2026-06-03T22:18:04Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.6206
+      },
+      "metrics": {
+        "total_trades": 239.0,
+        "win_rate": 19.67,
+        "profit_factor": 0.6206,
+        "net_profit": -109.7354,
+        "max_drawdown_pct": 1.26,
+        "sharpe_ratio": -3.0597,
+        "expectancy": -0.4591
+      },
+      "note": "raw_pf=0.2379 costed_pf=0.6206"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.6206,
+    "sharpe_ratio": -3.0597,
+    "max_drawdown_pct": 1.26,
+    "total_trades": 239.0,
+    "win_rate": 19.67
+  }
+}

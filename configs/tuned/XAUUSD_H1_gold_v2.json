@@ -1,0 +1,82 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "H1",
+  "strategy_name": "gold_v2",
+  "tuned_at": "2026-06-03T23:11:27Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "PF 0.00 < 1.2; Sharpe 0.00 < 1.5; DD 100.00% > 5.0%; trades 0 < 30",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": true,
+      "best_config": {
+        "with_costs_pf": 1.0165
+      },
+      "metrics": {
+        "total_trades": 1191.0,
+        "win_rate": 34.42,
+        "profit_factor": 1.0165,
+        "net_profit": 62.1783,
+        "max_drawdown_pct": 3.4,
+        "sharpe_ratio": 0.1094,
+        "expectancy": 0.0522
+      },
+      "note": "raw_pf=1.0515 costed_pf=1.0165"
+    },
+    {
+      "stage": "stage2_atr",
+      "passed": true,
+      "best_config": {
+        "percentile": 0.95,
+        "cap": 21.0086,
+        "total_trades": 0.0,
+        "win_rate": 0.0,
+        "profit_factor": 0.0,
+        "net_profit": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_ratio": 0.0,
+        "expectancy": 0.0
+      },
+      "metrics": {
+        "percentile": 0.95,
+        "cap": 21.0086,
+        "total_trades": 0.0,
+        "win_rate": 0.0,
+        "profit_factor": 0.0,
+        "net_profit": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_ratio": 0.0,
+        "expectancy": 0.0
+      },
+      "note": "best percentile=0.95 cap=None"
+    },
+    {
+      "stage": "stage3_sessions",
+      "passed": false,
+      "best_config": {
+        "label": "7-20 (baseline)",
+        "start_utc": 7,
+        "end_utc": 20
+      },
+      "metrics": {
+        "start_utc": 7,
+        "end_utc": 20
+      },
+      "note": "best session=7-20 (baseline)"
+    }
+  ],
+  "optimal_config": {
+    "atr_cap": 0.0,
+    "atr_percentile": 0.95,
+    "session_start_utc": 7,
+    "session_end_utc": 20,
+    "session_label": "7-20 (baseline)"
+  },
+  "summary": {
+    "profit_factor": 0.0,
+    "sharpe_ratio": 0.0,
+    "max_drawdown_pct": 0.0,
+    "total_trades": 0.0,
+    "win_rate": 0.0
+  }
+}

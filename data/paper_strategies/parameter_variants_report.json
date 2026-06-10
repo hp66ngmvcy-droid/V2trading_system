@@ -1,0 +1,42 @@
+{
+  "conservative": {
+    "verdict": "KEEP",
+    "score": 8,
+    "sharpe_ratio": 6.2353755550588446,
+    "max_drawdown_pct": 0.027478623825903232,
+    "win_rate": 0.6666666666666666,
+    "total_return_pct": 0.09794934811893374,
+    "total_trades": 6,
+    "rationale": "\u2713 Strong Sharpe (6.24) | \u2713 Low Drawdown (2.7%) | \u2713 Strong Win Rate (66.7%) | \u26a0 Positive Return (9.8%)"
+  },
+  "moderate": {
+    "verdict": "KEEP",
+    "score": 9,
+    "sharpe_ratio": 12.511595153742007,
+    "max_drawdown_pct": 0.03330959123835445,
+    "win_rate": 0.7777777777777778,
+    "total_return_pct": 0.2498051390962983,
+    "total_trades": 9,
+    "rationale": "\u2713 Strong Sharpe (12.51) | \u2713 Low Drawdown (3.3%) | \u2713 Strong Win Rate (77.8%) | \u2713 Strong Return (25.0%)"
+  },
+  "aggressive": {
+    "verdict": "KEEP",
+    "score": 9,
+    "sharpe_ratio": 11.296231190092497,
+    "max_drawdown_pct": 0.04941967814956251,
+    "win_rate": 0.75,
+    "total_return_pct": 0.3293480232478234,
+    "total_trades": 12,
+    "rationale": "\u2713 Strong Sharpe (11.30) | \u2713 Low Drawdown (4.9%) | \u2713 Strong Win Rate (75.0%) | \u2713 Strong Return (32.9%)"
+  },
+  "breakout": {
+    "verdict": "KEEP",
+    "score": 9,
+    "sharpe_ratio": 4.336301784377166,
+    "max_drawdown_pct": 0.08555871316231248,
+    "win_rate": 0.5833333333333334,
+    "total_return_pct": 0.14264744802714535,
+    "total_trades": 12,
+    "rationale": "\u2713 Strong Sharpe (4.34) | \u2713 Low Drawdown (8.6%) | \u2713 Strong Win Rate (58.3%) | \u2713 Strong Return (14.3%)"
+  }
+}

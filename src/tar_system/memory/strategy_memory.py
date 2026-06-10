@@ -35,6 +35,55 @@ MEMORY_COLUMNS: dict[str, str] = {
     "notes": "VARCHAR",
     "created_at": "TIMESTAMP",
 }
+MEMORY_COLUMN_SET = set(MEMORY_COLUMNS)
+MEMORY_CREATE_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS strategy_memory (
+    strategy VARCHAR,
+    version VARCHAR,
+    base_strategy VARCHAR,
+    variant_name VARCHAR,
+    symbol VARCHAR,
+    timeframe VARCHAR,
+    broker VARCHAR,
+    asset_profile_json JSON,
+    broker_profile_json JSON,
+    parameters JSON,
+    parameters_json JSON,
+    metrics JSON,
+    backtest_metrics_json JSON,
+    walk_forward_metrics_json JSON,
+    forward_test_metrics_json JSON,
+    score DOUBLE,
+    verdict VARCHAR,
+    reason_codes JSON,
+    promoted BOOLEAN,
+    notes VARCHAR,
+    created_at TIMESTAMP
+)
+"""
+MEMORY_ALTER_SQL = {
+    "strategy": "ALTER TABLE strategy_memory ADD COLUMN strategy VARCHAR",
+    "version": "ALTER TABLE strategy_memory ADD COLUMN version VARCHAR",
+    "base_strategy": "ALTER TABLE strategy_memory ADD COLUMN base_strategy VARCHAR",
+    "variant_name": "ALTER TABLE strategy_memory ADD COLUMN variant_name VARCHAR",
+    "symbol": "ALTER TABLE strategy_memory ADD COLUMN symbol VARCHAR",
+    "timeframe": "ALTER TABLE strategy_memory ADD COLUMN timeframe VARCHAR",
+    "broker": "ALTER TABLE strategy_memory ADD COLUMN broker VARCHAR",
+    "asset_profile_json": "ALTER TABLE strategy_memory ADD COLUMN asset_profile_json JSON",
+    "broker_profile_json": "ALTER TABLE strategy_memory ADD COLUMN broker_profile_json JSON",
+    "parameters": "ALTER TABLE strategy_memory ADD COLUMN parameters JSON",
+    "parameters_json": "ALTER TABLE strategy_memory ADD COLUMN parameters_json JSON",
+    "metrics": "ALTER TABLE strategy_memory ADD COLUMN metrics JSON",
+    "backtest_metrics_json": "ALTER TABLE strategy_memory ADD COLUMN backtest_metrics_json JSON",
+    "walk_forward_metrics_json": "ALTER TABLE strategy_memory ADD COLUMN walk_forward_metrics_json JSON",
+    "forward_test_metrics_json": "ALTER TABLE strategy_memory ADD COLUMN forward_test_metrics_json JSON",
+    "score": "ALTER TABLE strategy_memory ADD COLUMN score DOUBLE",
+    "verdict": "ALTER TABLE strategy_memory ADD COLUMN verdict VARCHAR",
+    "reason_codes": "ALTER TABLE strategy_memory ADD COLUMN reason_codes JSON",
+    "promoted": "ALTER TABLE strategy_memory ADD COLUMN promoted BOOLEAN",
+    "notes": "ALTER TABLE strategy_memory ADD COLUMN notes VARCHAR",
+    "created_at": "ALTER TABLE strategy_memory ADD COLUMN created_at TIMESTAMP",
+}
 
 
 def record_strategy_result(
@@ -47,6 +96,7 @@ def record_strategy_result(
     score: float,
     verdict: str,
     reason_codes: list[str],
+    walk_forward_metrics: dict[str, Any] | None = None,
 ) -> None:
     record_strategy_memory(
         base_strategy=strategy,
@@ -59,7 +109,7 @@ def record_strategy_result(
         broker_profile={},
         parameters=parameters,
         backtest_metrics=metrics,
-        walk_forward_metrics={},
+        walk_forward_metrics=walk_forward_metrics or {},
         forward_test_metrics={},
         score=score,
         verdict=verdict,
@@ -131,12 +181,11 @@ def record_strategy_memory(
 
 
 def _ensure_memory_table(connection: duckdb.DuckDBPyConnection) -> None:
-    column_defs = ",\n                ".join(f"{name} {column_type}" for name, column_type in MEMORY_COLUMNS.items())
-    connection.execute(f"CREATE TABLE IF NOT EXISTS strategy_memory ({column_defs})")
+    connection.execute(MEMORY_CREATE_TABLE_SQL)
     existing = {row[1] for row in connection.execute("PRAGMA table_info('strategy_memory')").fetchall()}
-    for name, column_type in MEMORY_COLUMNS.items():
+    for name in MEMORY_COLUMNS:
         if name not in existing:
-            connection.execute(f"ALTER TABLE strategy_memory ADD COLUMN {name} {column_type}")
+            connection.execute(MEMORY_ALTER_SQL[_memory_column(name)])
 
 
 def update_latest_verdict(strategy: str, symbol: str, timeframe: str, verdict: str, notes: str = "") -> bool:
@@ -195,3 +244,10 @@ def latest_memory_record(strategy: str, symbol: str, timeframe: str) -> dict[str
             "notes": row[6],
             "created_at": row[7],
         }
+
+
+def _memory_column(column: str) -> str:
+    if column not in MEMORY_COLUMN_SET:
+        raise ValueError(f"Unknown memory column: {column}")
+    return column
+

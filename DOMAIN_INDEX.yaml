@@ -1,0 +1,89 @@
+workspace: V2trading_system
+read_first:
+  - MANIFEST.md
+  - LIBRARIAN.md
+  - README.md
+
+domains:
+  trading:
+    status: active
+    description: Local-first trading research, validation, backtesting, scoring, paper signals, and UI runtime data.
+    docs:
+      - docs/project
+      - docs/ui-for-trading
+    code:
+      - src/tar_system
+    data:
+      - data
+      - runtime
+      - reports
+      - exports
+      - logs/audit
+    tests:
+      - tests
+
+  project_workspaces:
+    status: active
+    description: Reusable planning folders for new ideas and separate systems.
+    docs:
+      - docs/projects
+      - docs/templates/source
+    setup_command: bash scripts/create_project_workspace.sh my-new-project
+
+  ideas:
+    status: active
+    description: Idea intake and triage pipeline.
+    folders:
+      - ideas/inbox
+      - ideas/staging
+      - ideas/approved
+      - ideas/implemented
+      - ideas/rejected
+
+  collaboration:
+    status: active
+    description: Shared agent notes, memory, and handoff material.
+    folders:
+      - collab
+      - second_brain
+      - obsidian
+
+  future_business:
+    status: placeholder
+    description: Business operations ideas should start as docs/projects/business-*. Do not create root folders until code is needed.
+    recommended_slug_examples:
+      - business-ops-system
+      - client-workflow-helper
+
+  future_hr_legal:
+    status: placeholder
+    description: HR/legal advice helpers should start as docs/projects/hr-law-*. Keep disclaimers, source tracking, and jurisdiction notes visible.
+    recommended_slug_examples:
+      - hr-law-advice-helper
+      - policy-review-assistant
+
+  future_creative:
+    status: placeholder
+    description: Graphics, artwork, and design helpers should start as docs/projects/* and keep assets/screenshots inside the project folder.
+    recommended_slug_examples:
+      - graphics-helper
+      - artwork-designer
+      - brand-asset-lab
+
+root_policy:
+  keep_root_for:
+    - README.md
+    - MANIFEST.md
+    - LIBRARIAN.md
+    - DOMAIN_INDEX.yaml
+    - pyproject.toml
+    - requirements.txt
+    - requirements-dev.txt
+    - pytest.ini
+    - package/setup/config files
+  avoid_root_for:
+    - one-off reports
+    - project-specific plans
+    - screenshots
+    - generated outputs
+    - idea drafts

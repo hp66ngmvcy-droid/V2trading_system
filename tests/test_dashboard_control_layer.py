@@ -63,6 +63,13 @@ def test_dashboard_imports() -> None:
     assert callable(environment.render)
 
 
+def test_asset_data_live_reference_url_points_to_tradingview() -> None:
+    from tar_system.dashboard.pages.asset_data import live_reference_url
+
+    assert live_reference_url("XAUUSD", "M15") == "https://www.tradingview.com/chart/?symbol=OANDA%3AXAUUSD&interval=15"
+    assert live_reference_url("BTCUSD", "H1") == "https://www.tradingview.com/chart/?symbol=BITSTAMP%3ABTCUSD&interval=60"
+
+
 def test_leaderboard_loads_empty_state_safely(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     assert load_leaderboard_rows() == []

@@ -44,7 +44,15 @@ def load_review_results(path: str | Path | None = None) -> list[dict[str, Any]]:
     source = Path(path) if path else Path(LOG_DIR) / "review_log.jsonl"
     if not source.exists():
         return []
-    return [json.loads(line) for line in source.read_text(encoding="utf-8").splitlines() if line.strip()]
+    rows: list[dict[str, Any]] = []
+    for line in source.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            rows.append({"strategy": "unknown", "symbol": "", "timeframe": "", "verdict": "REVIEW", "score": 0, "next_action": "REPAIR_REVIEW_LOG"})
+    return rows
 
 
 def write_review_summary(results: list[dict[str, Any]] | None = None) -> Path:
@@ -56,8 +64,8 @@ def write_review_summary(results: list[dict[str, Any]] | None = None) -> Path:
         lines.append("No review results yet.")
     for row in rows[-25:]:
         lines.append(
-            f"- {row['strategy']} {row['symbol']} {row['timeframe']}: "
-            f"{row['verdict']} score={row['score']} next={row['next_action']}"
+            f"- {row.get('strategy', 'unknown')} {row.get('symbol', '')} {row.get('timeframe', '')}: "
+            f"{row.get('verdict', 'REVIEW')} score={row.get('score', 0)} next={row.get('next_action', 'REVIEW')}"
         )
     output.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return output

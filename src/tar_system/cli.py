@@ -4,9 +4,26 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import tempfile
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
+
+
+def _atomic_write_json(path: Path, data: object) -> None:
+    """Write JSON atomically — prevents concurrent-worker corruption."""
+    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(json.dumps(data, indent=2, default=str))
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def import_csv(args: argparse.Namespace) -> None:
@@ -129,7 +146,7 @@ def run_backtest_cmd(args: argparse.Namespace) -> None:
     output = Path("data/results")
     output.mkdir(parents=True, exist_ok=True)
     path = output / f"{args.strategy}_{args.symbol}_{args.timeframe}_metrics.json"
-    path.write_text(json.dumps(result.metrics, indent=2), encoding="utf-8")
+    _atomic_write_json(path, result.metrics)
     payload = {"trades": result.trades, "final_equity": result.final_equity, "metrics": result.metrics}
     save_cached_result(cache_key, payload)
     append_review_result(args.strategy, strategy.version, args.symbol, args.timeframe, result.metrics, 0.0, "UNSCORED", "BACKTEST", "SCORE_STRATEGY")
@@ -139,12 +156,23 @@ def run_backtest_cmd(args: argparse.Namespace) -> None:
 def score_strategy_cmd(args: argparse.Namespace) -> None:
     from tar_system.memory.strategy_memory import record_strategy_result
     from tar_system.reporting.review_log import append_review_result, write_review_summary
+    from tar_system.scoring.gates import run_gates
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
     from tar_system.scoring.scorer import score_strategy
     from tar_system.strategies.resolver import resolve_strategy
 
     path = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_metrics.json"
+    walk_forward_path = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_walk_forward.json"
     metrics = json.loads(path.read_text(encoding="utf-8"))
-    score = score_strategy(metrics)
+    walk_forward_metrics = json.loads(walk_forward_path.read_text(encoding="utf-8")) if walk_forward_path.exists() else None
+    score = score_strategy(metrics, walk_forward_metrics, args.timeframe, require_walk_forward=True)
+    gate_metrics = _metrics_with_walk_forward(metrics, walk_forward_metrics)
+    gate = run_gates(gate_metrics, args.timeframe, require_oos=True)
+    ma_result = score_multi_agent(gate_metrics)
+    ma_codes = ["MULTI_AGENT_KILL"] if ma_result.verdict == "KILL" else []
+    reason_codes = _merge_reason_codes(score.reason_codes, gate.reason_codes, ma_codes)
+    final_verdict = "KILL" if "KILL" in (score.verdict, gate.verdict, ma_result.verdict) else gate.verdict
+    metrics = {**gate_metrics, "gate_failed": gate.failed_gate or "", "gate_reason": gate.reason}
     resolved = resolve_strategy(args.strategy, args.symbol, args.timeframe, getattr(args, "broker", "current_broker_demo"), audit=True)
     strategy = resolved.strategy
     record_strategy_result(
@@ -155,8 +183,9 @@ def score_strategy_cmd(args: argparse.Namespace) -> None:
         {},
         metrics,
         score.score,
-        score.verdict,
-        score.reason_codes,
+        final_verdict,
+        reason_codes,
+        walk_forward_metrics,
     )
     append_review_result(
         args.strategy,
@@ -165,12 +194,23 @@ def score_strategy_cmd(args: argparse.Namespace) -> None:
         args.timeframe,
         metrics,
         score.score,
-        score.verdict,
-        ",".join(score.reason_codes),
-        "EXPORT_OBSIDIAN" if score.verdict in {"KEEP", "REVIEW"} else "ARCHIVE",
+        final_verdict,
+        ",".join(reason_codes),
+        "EXPORT_OBSIDIAN" if final_verdict in {"KEEP", "REVIEW"} else "ARCHIVE",
     )
     write_review_summary()
-    print(json.dumps(score.__dict__, indent=2))
+    print(json.dumps({
+        "score": score.score,
+        "verdict": final_verdict,
+        "reason_codes": reason_codes,
+        "gate": gate.__dict__,
+        "multi_agent": {
+            "verdict": ma_result.verdict,
+            "confidence": ma_result.confidence,
+            "dissent": ma_result.dissent,
+            "agents": [{"agent": v.agent, "verdict": v.verdict, "confidence": v.confidence} for v in ma_result.agent_verdicts],
+        },
+    }, indent=2))
 
 
 def export_mt5_cmd(args: argparse.Namespace) -> None:
@@ -236,6 +276,15 @@ def run_walk_forward_cmd(args: argparse.Namespace) -> None:
     features = load_feature_data(args.symbol, args.timeframe)
     strategy = get_strategy(args.strategy)
     result = run_walk_forward(features, strategy, args.train_window, args.test_window)
+    
+    # Save to data/results/
+    output = Path("data/results")
+    output.mkdir(parents=True, exist_ok=True)
+    path = output / f"{args.strategy}_{args.symbol}_{args.timeframe}_walk_forward.json"
+    with open(path, "w") as f:
+        json.dump(asdict(result), f, indent=2, default=str)
+    
+    print(f"Walk-forward results saved to: {path}")
     print(json.dumps(asdict(result), indent=2, default=str))
 
 
@@ -293,6 +342,12 @@ def run_dashboard_cmd(args: argparse.Namespace) -> None:
     print("streamlit run src/tar_system/dashboard/app.py")
 
 
+def run_web_ui_cmd(args: argparse.Namespace) -> None:
+    from tar_system.web_ui.server import run
+
+    run(host=args.host, port=args.port)
+
+
 def promote_candidate_cmd(args: argparse.Namespace) -> None:
     from dataclasses import asdict
 
@@ -328,6 +383,60 @@ def generate_report_cmd(args: argparse.Namespace) -> None:
         args.format,
     )
     print(f"Generated report: {path}")
+
+
+def run_paper_signal_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.controller.paper_signal_runner import run_paper_signal
+
+    result = run_paper_signal(
+        args.strategy,
+        args.symbol,
+        args.timeframe,
+        args.broker,
+        args.sizing_model,
+        force_health_check=not args.skip_health_check,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def monitor_strategy_health_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.controller.strategy_health_monitor import evaluate_strategy_health
+
+    result = evaluate_strategy_health(
+        args.strategy,
+        args.symbol,
+        args.timeframe,
+        min_trades=args.min_trades,
+        min_profit_factor=args.min_profit_factor,
+        min_sharpe=args.min_sharpe,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def generate_quant_report_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.controller.strategy_health_monitor import read_strategy_health
+    from tar_system.reporting.reporter import generate_quant_report
+
+    metrics_path = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_metrics.json"
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8")) if metrics_path.exists() else {}
+    signal_path = Path("runtime") / "latest_paper_signal.json"
+    signal = json.loads(signal_path.read_text(encoding="utf-8")) if signal_path.exists() else {}
+    health = read_strategy_health(args.strategy, args.symbol, args.timeframe)
+    path = generate_quant_report(
+        args.strategy,
+        args.symbol,
+        args.timeframe,
+        metrics,
+        signal=signal,
+        health=asdict(health) if health else {},
+    )
+    print(json.dumps({"report_path": str(path), "pdf_path": str(path.with_suffix(".pdf")), "paper_only": True}, indent=2))
 
 
 def security_check_cmd(args: argparse.Namespace) -> None:
@@ -447,6 +556,41 @@ def compare_assets_cmd(args: argparse.Namespace) -> None:
     print(json.dumps([asdict(row) for row in rows], indent=2, default=str))
 
 
+def tune_strategy_cmd(args: argparse.Namespace) -> None:
+    from tar_system.strategies.registry import get_strategy
+    from tar_system.tuner.pipeline import StrategyTuner
+
+    raw_params = getattr(args, "params", None) or []
+    parsed: dict = {}
+    for pair in raw_params:
+        k, _, v = pair.partition("=")
+        try:
+            parsed[k.strip()] = float(v) if "." in v else int(v)
+        except ValueError:
+            parsed[k.strip()] = v
+    strategy = get_strategy(args.strategy, **parsed)
+    tuner = StrategyTuner(args.symbol, args.timeframe, strategy, args.broker)
+    print(f"Tuning {args.strategy} on {args.symbol} {args.timeframe}...")
+    result = tuner.run()
+    out = tuner.save(result)
+
+    print(f"\n{'='*60}")
+    print(f"TUNE-STRATEGY RESULT: {result.symbol} {result.timeframe} {result.strategy_name}")
+    print(f"{'='*60}")
+    for stage in result.stages:
+        status = "PASS" if stage.passed else "FAIL"
+        print(f"  {stage.stage:<22} [{status}]  {stage.note}")
+    print(f"\n  Optimal config:")
+    for k, v in result.optimal_config.items():
+        print(f"    {k}: {v}")
+    print(f"\n  Final metrics:")
+    for k, v in result.summary.items():
+        print(f"    {k}: {v}")
+    mt5 = "✅ MT5 READY" if result.mt5_ready else f"❌ NOT MT5 READY — {result.mt5_block_reason}"
+    print(f"\n  {mt5}")
+    print(f"  Config saved: {out}")
+
+
 def compare_variants_cmd(args: argparse.Namespace) -> None:
     from tar_system.reporting.reporter import generate_variant_comparison_report
 
@@ -460,6 +604,7 @@ def run_scheduled_cmd(args: argparse.Namespace) -> None:
     from tar_system.audit.writer import append_audit_event
     from tar_system.dashboard.runtime_control import read_schedule, write_schedule_jobs
     from tar_system.controller.research_loop import run_research_loop
+    from tar_system.controller.paper_signal_runner import run_paper_signal
 
     now = datetime.fromisoformat(args.now) if args.now else datetime.now()
     jobs = list(read_schedule().get("jobs", []))
@@ -474,7 +619,16 @@ def run_scheduled_cmd(args: argparse.Namespace) -> None:
         write_schedule_jobs(jobs)
         append_audit_event("scheduled_worker", str(job.get("strategy", "")), str(job.get("symbol", "")), str(job.get("timeframe", "")), "STARTED", "SCHEDULED_JOB_STARTED", job)
         try:
-            if job.get("job_type") == "all_tests":
+            if job.get("job_type") == "paper_signal":
+                result = run_paper_signal(
+                    str(job["strategy"]),
+                    str(job["symbol"]),
+                    str(job["timeframe"]),
+                    str(job.get("broker", "current_broker_demo")),
+                    str(job.get("sizing_model", "ATR_BASED")),
+                )
+                metadata = {"latest_signal_path": "runtime/latest_paper_signal.json", "alert_ready": result.alert_ready}
+            elif job.get("job_type") == "all_tests":
                 result = run_research_loop(
                     raw_dir=job.get("raw_dir", "data/raw"),
                     broker=job.get("broker", "current_broker_demo"),
@@ -482,7 +636,7 @@ def run_scheduled_cmd(args: argparse.Namespace) -> None:
                     process_limit=0,
                     run_worker_now=False,
                     research_stage=job.get("research_stage", "dashboard_daily"),
-                    skip_walk_forward=bool(job.get("skip_walk_forward", True)),
+                    skip_walk_forward=bool(job.get("skip_walk_forward", False)),
                     skip_forward_test=bool(job.get("skip_forward_test", True)),
                     max_walk_forward_splits=int(job.get("max_walk_forward_splits", 10)),
                     from_date=job.get("from_date"),
@@ -508,7 +662,11 @@ def run_scheduled_cmd(args: argparse.Namespace) -> None:
                 )
                 metadata = {}
             completed = {**jobs[index], "status": "completed", "completed_at": datetime.now().isoformat(), **metadata}
-            if completed.get("repeat_daily"):
+            if completed.get("repeat_interval_minutes"):
+                completed["status"] = "scheduled"
+                completed["last_completed_at"] = completed.pop("completed_at")
+                completed["run_at"] = (run_at + timedelta(minutes=int(completed["repeat_interval_minutes"]))).isoformat()
+            elif completed.get("repeat_daily"):
                 completed["status"] = "scheduled"
                 completed["last_completed_at"] = completed.pop("completed_at")
                 completed["run_at"] = (run_at + timedelta(days=1)).isoformat()
@@ -518,6 +676,27 @@ def run_scheduled_cmd(args: argparse.Namespace) -> None:
             jobs[index] = {**jobs[index], "status": "stopped", "stopped_at": datetime.now().isoformat(), "latest_message": str(exc)}
         write_schedule_jobs(jobs)
     print(json.dumps({"checked_at": now.isoformat(), "jobs_run": ran}, indent=2))
+
+
+def install_paper_signal_schedule_cmd(args: argparse.Namespace) -> None:
+    from datetime import datetime, timedelta
+
+    from tar_system.dashboard.runtime_control import schedule_research_run
+
+    run_at = datetime.now() + timedelta(minutes=max(1, args.interval_minutes))
+    path = schedule_research_run(
+        {
+            "job_type": "paper_signal",
+            "strategy": args.strategy,
+            "symbol": args.symbol,
+            "timeframe": args.timeframe,
+            "broker": args.broker,
+            "sizing_model": args.sizing_model,
+            "run_at": run_at.isoformat(timespec="seconds"),
+            "repeat_interval_minutes": args.interval_minutes,
+        }
+    )
+    print(json.dumps({"schedule_path": str(path), "interval_minutes": args.interval_minutes, "paper_only": True}, indent=2))
 
 
 def queue_job_cmd(args: argparse.Namespace) -> None:
@@ -544,6 +723,17 @@ def show_queue_cmd(args: argparse.Namespace) -> None:
     from tar_system.controller.job_queue import read_jobs
 
     print(json.dumps(read_jobs(), indent=2, default=str))
+
+
+def queue_health_cmd(args: argparse.Namespace) -> None:
+    from tar_system.controller.job_queue import queue_health
+
+    result = queue_health(limit=args.limit)
+    if args.output:
+        output = Path(args.output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
+    print(json.dumps(result, indent=2, default=str))
 
 
 def run_controller_cmd(args: argparse.Namespace) -> None:
@@ -599,6 +789,158 @@ def research_summary_cmd(args: argparse.Namespace) -> None:
 
     path = write_research_loop_summary([], None, queue_stats(), recommend_next_actions(args.limit))
     print(json.dumps({"summary_path": str(path), "next_actions": recommend_next_actions(args.limit)}, indent=2))
+
+
+def export_ai_review_packet_cmd(args: argparse.Namespace) -> None:
+    from tar_system.reporting.ai_review_packet import export_ai_review_packet
+
+    path = export_ai_review_packet(args.output, args.limit)
+    print(json.dumps({"packet_path": str(path), "json_path": str(path.with_suffix(".json"))}, indent=2))
+
+
+def run_static_analysis_scan_cmd(args: argparse.Namespace) -> None:
+    from tar_system.reporting.static_analysis import run_static_analysis_scan
+
+    try:
+        result = run_static_analysis_scan(args.tool, args.target, args.output, args.config)
+    except FileNotFoundError as exc:
+        print(
+            json.dumps(
+                {
+                    "tool": args.tool,
+                    "target": args.target,
+                    "output_path": args.output,
+                    "return_code": 127,
+                    "scan_only": True,
+                    "status": "UNAVAILABLE",
+                    "error": str(exc),
+                },
+                indent=2,
+            )
+        )
+        return
+    print(
+        json.dumps(
+            {
+                "tool": result.tool,
+                "output_path": str(result.output_path),
+                "command": result.command,
+                "return_code": result.return_code,
+                "scan_only": True,
+                "status": "COMPLETED" if result.return_code == 0 else "FAILED",
+            },
+            indent=2,
+        )
+    )
+
+
+def run_local_construction_audit_cmd(args: argparse.Namespace) -> None:
+    from tar_system.reporting.static_analysis import run_local_construction_audit
+
+    try:
+        result = run_local_construction_audit(
+            tool=args.tool,
+            target=args.target,
+            scan_output=args.scan_output,
+            packet_output=args.packet_output,
+            config=args.config,
+            limit=args.limit,
+        )
+    except FileNotFoundError as exc:
+        payload = {
+            "tool": args.tool,
+            "target": args.target,
+            "scan_output_path": args.scan_output,
+            "packet_path": args.packet_output,
+            "scan_return_code": 127,
+            "scan_status": "UNAVAILABLE",
+            "passed": False,
+            "error": str(exc),
+        }
+        print(json.dumps(payload, indent=2))
+        if args.fail_on_findings:
+            raise SystemExit(127)
+        return
+
+    payload = {
+        "tool": result.tool,
+        "target": result.target,
+        "scan_status": result.scan_status,
+        "scan_return_code": result.scan_return_code,
+        "scan_output_path": result.scan_output_path,
+        "packet_path": result.packet_path,
+        "packet_json_path": result.packet_json_path,
+        "total_findings": result.total_findings,
+        "severity_counts": result.severity_counts,
+        "passed": result.passed,
+        "scan_only": True,
+    }
+    print(json.dumps(payload, indent=2))
+    if args.fail_on_findings and not result.passed:
+        raise SystemExit(1)
+
+
+def run_research_committee_cmd(args: argparse.Namespace) -> None:
+    from tar_system.research.committee import run_research_committee
+
+    manual_notes = ""
+    if getattr(args, "notes_file", None):
+        manual_notes = Path(args.notes_file).read_text(encoding="utf-8")
+    result = run_research_committee(
+        args.strategy,
+        args.symbol,
+        args.timeframe,
+        manual_notes=manual_notes,
+        output_dir=args.output_dir,
+    )
+    print(
+        json.dumps(
+            {
+                "paper_only": result.paper_only,
+                "recommendation": result.recommendation,
+                "confidence": result.confidence,
+                "markdown": result.output_markdown,
+                "json": result.output_json,
+            },
+            indent=2,
+        )
+    )
+
+
+def fit_strategy_filters_cmd(args: argparse.Namespace) -> None:
+    from tar_system.research.strategy_fitter import build_strategy_filter_plan
+
+    plan = build_strategy_filter_plan(
+        limit=args.limit,
+        output_dir=args.output_dir,
+        run_committee=not args.skip_committee,
+    )
+    print(
+        json.dumps(
+            {
+                "paper_only": plan.paper_only,
+                "candidates_reviewed": plan.candidates_reviewed,
+                "markdown": plan.output_markdown,
+                "json": plan.output_json,
+            },
+            indent=2,
+        )
+    )
+
+
+def export_private_memory_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.memory.private_memory_export import export_private_strategy_memory
+
+    result = export_private_strategy_memory(
+        strategy=args.strategy,
+        symbol=args.symbol,
+        timeframe=args.timeframe,
+        obsidian_root=args.obsidian_root,
+        second_brain_root=args.second_brain_root,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
 
 
 def import_cot_cmd(args: argparse.Namespace) -> None:
@@ -660,6 +1002,8 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
     )
     from tar_system.reporting.review_log import append_review_result
     from tar_system.reporting.reporter import generate_report
+    from tar_system.scoring.gates import run_gates
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
     from tar_system.scoring.scorer import score_strategy
     from tar_system.strategies.registry import get_strategy
     from tar_system.validation.walk_forward import run_walk_forward
@@ -724,7 +1068,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
         output = Path("data/results")
         output.mkdir(parents=True, exist_ok=True)
         path = output / f"{args.strategy}_{args.symbol}_{args.timeframe}_metrics.json"
-        path.write_text(json.dumps(result.metrics, indent=2), encoding="utf-8")
+        _atomic_write_json(path, result.metrics)
         append_review_result(args.strategy, strategy.version, args.symbol, args.timeframe, result.metrics, 0.0, "UNSCORED", "BACKTEST", "SCORE_STRATEGY")
         print(json.dumps({"trades": result.trades, "final_equity": result.final_equity, "metrics": result.metrics}, indent=2))
         return {"path": str(path), "trades": result.trades, "final_equity": result.final_equity}
@@ -733,6 +1077,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
 
     if args.skip_walk_forward:
         print("[5/9] Walk-forward skipped")
+        _write_walk_forward_review_artifact(args.strategy, args.symbol, args.timeframe, "Walk-forward skipped for this run.", "skipped")
         append_audit_event("pipeline_step", args.strategy, args.symbol, args.timeframe, "SKIPPED", "WALK_FORWARD_SKIPPED", context)
         checkpoint = mark_stage_completed(checkpoint, "run-walk-forward", {"latest_message": "walk-forward skipped"})
     else:
@@ -747,11 +1092,16 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
                     raise SystemExit("Walk-forward stopped before completion; partial result was not scored")
                 payload = {
                     "split_count": len(result.splits),
+                    "ran": result.ran,
+                    "window_count": result.window_count,
+                    "wf_verdict": result.wf_verdict,
+                    "wf_reason": result.wf_reason,
                     "stitched_metrics": result.stitched_metrics,
                     "parameter_stability": result.parameter_stability,
                     "stable_parameter_ranges": result.stable_parameter_ranges,
                     "parameter_stability_score": result.parameter_stability_score,
                     "recommended_search_range": result.recommended_search_range,
+                    "bootstrap_ci": result.bootstrap_ci,
                 }
                 output = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_walk_forward.json"
                 output.parent.mkdir(parents=True, exist_ok=True)
@@ -762,6 +1112,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
             checkpoint = _pipeline_step("run-walk-forward", args, _run_pipeline_walk_forward, context, checkpoint)
         else:
             print("[5/9] Walk-forward skipped: not enough rows")
+            _write_walk_forward_review_artifact(args.strategy, args.symbol, args.timeframe, f"Not enough rows for walk-forward: {len(features)} rows available.", "not_enough_data")
             append_audit_event("pipeline_step", args.strategy, args.symbol, args.timeframe, "SKIPPED", "WALK_FORWARD_NOT_ENOUGH_DATA", {"rows": len(features), **context})
             checkpoint = mark_stage_completed(checkpoint, "run-walk-forward", {"latest_message": "walk-forward skipped: not enough rows"})
 
@@ -795,7 +1146,20 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
     def _score_pipeline_strategy() -> dict[str, object]:
         metrics_path = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_metrics.json"
         stage_metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
-        stage_score = score_strategy(stage_metrics)
+        walk_forward_path = Path("data/results") / f"{args.strategy}_{args.symbol}_{args.timeframe}_walk_forward.json"
+        walk_forward = json.loads(walk_forward_path.read_text(encoding="utf-8")) if walk_forward_path.exists() else None
+        stage_score = score_strategy(stage_metrics, walk_forward, args.timeframe, require_walk_forward=True)
+        stage_metrics = _metrics_with_walk_forward(stage_metrics, walk_forward)
+        stage_gate = run_gates(stage_metrics, args.timeframe, require_oos=True)
+        ma_result = score_multi_agent(stage_metrics)
+        ma_codes = ["MULTI_AGENT_KILL"] if ma_result.verdict == "KILL" else []
+        reason_codes = _merge_reason_codes(stage_score.reason_codes, stage_gate.reason_codes, ma_codes)
+        final_verdict = "KILL" if "KILL" in (stage_score.verdict, stage_gate.verdict, ma_result.verdict) else stage_gate.verdict
+        stage_metrics = {
+            **stage_metrics,
+            "gate_failed": stage_gate.failed_gate or "",
+            "gate_reason": stage_gate.reason,
+        }
         append_review_result(
             args.strategy,
             strategy.version,
@@ -803,12 +1167,32 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
             args.timeframe,
             stage_metrics,
             stage_score.score,
-            stage_score.verdict,
-            ",".join(stage_score.reason_codes),
+            final_verdict,
+            ",".join(reason_codes),
             "WRITE_MEMORY",
         )
-        score_payload.update({"metrics": stage_metrics, "score": stage_score})
-        print(json.dumps(stage_score.__dict__, indent=2))
+        score_payload.update(
+            {
+                "metrics": stage_metrics,
+                "score": stage_score,
+                "verdict": final_verdict,
+                "reason_codes": reason_codes,
+                "gate": stage_gate,
+                "walk_forward_metrics": walk_forward or {},
+                "multi_agent": ma_result,
+            }
+        )
+        print(json.dumps({
+            "score": stage_score.score,
+            "verdict": final_verdict,
+            "reason_codes": reason_codes,
+            "gate": stage_gate.__dict__,
+            "multi_agent": {
+                "verdict": ma_result.verdict,
+                "confidence": ma_result.confidence,
+                "dissent": ma_result.dissent,
+            },
+        }, indent=2))
         return score_payload
 
     checkpoint = _pipeline_step("score-strategy", args, _score_pipeline_strategy, context, checkpoint)
@@ -826,9 +1210,9 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
             args.timeframe,
             metrics,
             score.score,  # type: ignore[union-attr]
-            score.verdict,  # type: ignore[union-attr]
+            str(score_payload.get("verdict") or score.verdict),  # type: ignore[union-attr]
             "REVIEW_ONLY",
-            score.reason_codes,  # type: ignore[union-attr]
+            list(score_payload.get("reason_codes") or score.reason_codes),  # type: ignore[union-attr]
             "REVIEW",
             "md",
         ),
@@ -842,7 +1226,18 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
     checkpoint = _pipeline_step(
         "write-memory",
         args,
-        lambda: record_strategy_result(args.strategy, strategy.version, args.symbol, args.timeframe, {}, metrics, score.score, score.verdict, score.reason_codes),  # type: ignore[union-attr]
+        lambda: record_strategy_result(
+            args.strategy,
+            strategy.version,
+            args.symbol,
+            args.timeframe,
+            {},
+            metrics,
+            score.score,  # type: ignore[union-attr]
+            str(score_payload.get("verdict") or score.verdict),  # type: ignore[union-attr]
+            list(score_payload.get("reason_codes") or score.reason_codes),  # type: ignore[union-attr]
+            dict(score_payload.get("walk_forward_metrics") or {}),
+        ),
         context,
         checkpoint,
     )
@@ -947,6 +1342,347 @@ def _pipeline_step(step: str, args: argparse.Namespace, func: object, metadata: 
     return checkpoint
 
 
+def _merge_reason_codes(*groups: list[str]) -> list[str]:
+    merged: list[str] = []
+    for group in groups:
+        for code in group:
+            if code not in merged:
+                merged.append(code)
+    return merged
+
+
+def _metrics_with_walk_forward(metrics: dict[str, float], walk_forward: dict[str, object] | None) -> dict[str, float]:
+    enriched = dict(metrics)
+    if not walk_forward:
+        return enriched
+    stitched = walk_forward.get("stitched_metrics", {}) or {}
+    if isinstance(stitched, dict):
+        enriched["sharpe_oos"] = float(stitched.get("sharpe_ratio", stitched.get("sharpe", 0.0)) or 0.0)
+    raw_stability = float(walk_forward.get("parameter_stability_score", 0.0) or 0.0)
+    enriched["param_stability"] = raw_stability / 100.0 if raw_stability > 1.0 else raw_stability
+    enriched["walk_forward_splits"] = float(walk_forward.get("split_count", walk_forward.get("window_count", 0)) or 0)
+    bootstrap_ci = walk_forward.get("bootstrap_ci", {}) or {}
+    if isinstance(bootstrap_ci, dict):
+        enriched["bootstrap_ci_lower"] = float(bootstrap_ci.get("ci_lower", 0.0) or 0.0)
+        enriched["bootstrap_ci_upper"] = float(bootstrap_ci.get("ci_upper", 0.0) or 0.0)
+        enriched["bootstrap_ci_spans_zero"] = bool(bootstrap_ci.get("spans_zero", True))
+    return enriched
+
+
+def _write_walk_forward_review_artifact(strategy: str, symbol: str, timeframe: str, reason: str, status: str) -> Path:
+    output = Path("data/results") / f"{strategy}_{symbol}_{timeframe}_walk_forward.json"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(
+            {
+                "split_count": 0,
+                "ran": False,
+                "window_count": 0,
+                "wf_verdict": "REVIEW",
+                "wf_reason": reason,
+                "stitched_metrics": {},
+                "parameter_stability": {"status": status, "stability_score": 0.0},
+                "stable_parameter_ranges": {},
+                "parameter_stability_score": 0.0,
+                "recommended_search_range": {},
+                "bootstrap_ci": {
+                    "mean": 0.0,
+                    "ci_lower": 0.0,
+                    "ci_upper": 0.0,
+                    "spans_zero": True,
+                    "sample_size": 0,
+                    "confidence": 0.95,
+                    "n_iterations": 0,
+                },
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    return output
+
+
+def scout_cmd(args: argparse.Namespace) -> None:
+    from tar_system.controller.online_strategy_finder import find_and_queue_strategies
+
+    topics = [topic.strip() for topic in args.topics.split(",") if topic.strip()] if args.topics else None
+    result = find_and_queue_strategies(
+        raw_dir=args.raw_dir,
+        force=args.force,
+        web_topics=topics,
+        multi_agent_query=args.multi_agent_query,
+        web_num_results=args.num_results,
+        web_max_workers=args.max_workers,
+        source_quality=args.source_quality,
+        web_use_cache=not args.no_cache,
+    )
+    if args.hypothesis_dir:
+        from tar_system.research.hypothesis_notes import write_hypothesis_notes
+        result["hypothesis_notes"] = write_hypothesis_notes(
+            result,
+            output_dir=args.hypothesis_dir,
+            min_score=args.min_source_score,
+            limit=args.hypothesis_limit,
+        )
+    if args.output:
+        output = Path(args.output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
+    print(json.dumps(result, indent=2, default=str))
+
+
+def scout_to_hypotheses_cmd(args: argparse.Namespace) -> None:
+    from tar_system.research.hypothesis_notes import write_hypothesis_notes
+
+    payload = json.loads(Path(args.input).read_text(encoding="utf-8"))
+    written = write_hypothesis_notes(
+        payload,
+        output_dir=args.output_dir,
+        min_score=args.min_source_score,
+        limit=args.limit,
+    )
+    print(json.dumps({"written": written, "count": len(written)}, indent=2, default=str))
+
+
+def review_hypotheses_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.hypothesis_review import review_hypotheses
+
+    result = review_hypotheses(
+        input_dir=args.input_dir,
+        output_dir=args.output_dir,
+        min_ready_score=args.min_ready_score,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def select_next_candidates_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.candidate_selection import select_next_candidates
+
+    result = select_next_candidates(
+        research_dir=args.research_dir,
+        candidate_dir=args.candidate_dir,
+        rejected_dir=args.rejected_dir,
+        output_dir=args.output_dir,
+        translation_blocked_dir=args.translation_blocked_dir,
+        proxy_decisions_dir=args.proxy_decisions_dir,
+        limit=args.limit,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def review_translation_blockers_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.translation_blockers import review_translation_blockers
+
+    result = review_translation_blockers(input_dir=args.input_dir, output_dir=args.output_dir)
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def review_data_requirements_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.data_requirements_review import review_data_requirements
+
+    result = review_data_requirements(
+        requirements_dir=args.requirements_dir,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def draft_proxy_decisions_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.proxy_decisions import draft_proxy_decisions
+
+    result = draft_proxy_decisions(
+        requirements_dir=args.requirements_dir,
+        raw_dir=args.raw_dir,
+        proxy_dir=args.proxy_dir,
+        output_dir=args.output_dir,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def run_phase_gate_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.controller.phase_gate import run_phase_gate
+
+    result = run_phase_gate(
+        phase_name=args.phase_name,
+        tests=args.tests,
+        output_dir=args.output_dir,
+        run_construction_audit=not args.skip_construction_audit,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+    if not result.passed:
+        raise SystemExit(1)
+
+
+def check_data_readiness_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.data_readiness import check_data_readiness
+
+    symbols = [item.strip().upper() for item in args.symbols.split(",") if item.strip()]
+    timeframes = [item.strip().upper() for item in args.timeframes.split(",") if item.strip()]
+    result = check_data_readiness(
+        symbols=symbols,
+        timeframes=timeframes,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        min_months=args.min_months,
+        min_rows=args.min_rows,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def audit_raw_data_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.raw_data_inventory import audit_raw_data
+
+    result = audit_raw_data(raw_dir=args.raw_dir, output_dir=args.output_dir)
+    print(json.dumps(asdict(result), indent=2, default=str))
+    if args.fail_on_issues and result.issue_count:
+        raise SystemExit(1)
+
+
+def plan_raw_data_cleanup_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.raw_data_inventory import plan_raw_data_cleanup
+
+    result = plan_raw_data_cleanup(raw_dir=args.raw_dir, output_dir=args.output_dir)
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def apply_raw_data_cleanup_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.raw_data_inventory import apply_raw_data_cleanup
+
+    if not args.confirm_reviewed_plan:
+        raise SystemExit("Refusing to move files without --confirm-reviewed-plan")
+    result = apply_raw_data_cleanup(
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        confirm=True,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def run_currency_momentum_proxy_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.currency_momentum_proxy import run_currency_momentum_proxy
+
+    symbols = [item.strip().upper() for item in args.symbols.split(",") if item.strip()]
+    result = run_currency_momentum_proxy(
+        symbols=symbols,
+        timeframe=args.timeframe,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        lookback_months=args.lookback_months,
+        exclude_recent_months=args.exclude_recent_months,
+        cost_bps=args.cost_bps,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def run_bounded_trend_proxy_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.bounded_trend_proxy import run_bounded_trend_proxy
+
+    symbols = [item.strip().upper() for item in args.symbols.split(",") if item.strip()]
+    fast_values = [int(item.strip()) for item in args.fast_values.split(",") if item.strip()]
+    slow_values = [int(item.strip()) for item in args.slow_values.split(",") if item.strip()]
+    result = run_bounded_trend_proxy(
+        symbols=symbols,
+        timeframe=args.timeframe,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        fast_values=fast_values,
+        slow_values=slow_values,
+        cost_bps=args.cost_bps,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def run_walk_forward_trend_proxy_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.walk_forward_trend_proxy import run_walk_forward_trend_proxy
+
+    symbols = [item.strip().upper() for item in args.symbols.split(",") if item.strip()]
+    ema_values = [int(item.strip()) for item in args.ema_values.split(",") if item.strip()]
+    result = run_walk_forward_trend_proxy(
+        symbols=symbols,
+        timeframe=args.timeframe,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        ema_values=ema_values,
+        train_months=args.train_months,
+        validation_months=args.validation_months,
+        test_months=args.test_months,
+        step_months=args.step_months,
+        cost_bps=args.cost_bps,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def run_vol_scaled_ema_mixture_proxy_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.research.vol_scaled_ema_mixture_proxy import run_vol_scaled_ema_mixture_proxy
+
+    symbols = [item.strip().upper() for item in args.symbols.split(",") if item.strip()]
+    pairs: list[tuple[int, int]] = []
+    for item in args.ema_pairs.split(","):
+        if not item.strip():
+            continue
+        fast, slow = item.strip().split("/", 1)
+        pairs.append((int(fast), int(slow)))
+    result = run_vol_scaled_ema_mixture_proxy(
+        symbols=symbols,
+        timeframe=args.timeframe,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+        ema_pairs=pairs,
+        vol_window=args.vol_window,
+        threshold=args.threshold,
+        cost_bps=args.cost_bps,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
+def run_daily_idea_loop_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from dotenv import load_dotenv
+
+    from tar_system.controller.daily_idea_loop import run_daily_idea_loop
+
+    load_dotenv()
+    result = run_daily_idea_loop(
+        online_query=args.online_query,
+        run_online=args.run_online,
+        output_dir=args.output_dir,
+        hypothesis_dir=args.hypothesis_dir,
+        min_source_score=args.min_source_score,
+        hypothesis_limit=args.hypothesis_limit,
+    )
+    print(json.dumps(asdict(result), indent=2, default=str))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="TAR V2 local trading research CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1034,6 +1770,11 @@ def build_parser() -> argparse.ArgumentParser:
     dashboard_parser = subparsers.add_parser("run-dashboard")
     dashboard_parser.set_defaults(func=run_dashboard_cmd)
 
+    web_ui_parser = subparsers.add_parser("run-web-ui")
+    web_ui_parser.add_argument("--host", default="127.0.0.1")
+    web_ui_parser.add_argument("--port", type=int, default=8601)
+    web_ui_parser.set_defaults(func=run_web_ui_cmd)
+
     forward_parser = subparsers.add_parser("forward-test")
     forward_parser.add_argument("--strategy", required=True)
     forward_parser.add_argument("--symbol", required=True)
@@ -1056,6 +1797,30 @@ def build_parser() -> argparse.ArgumentParser:
     report_parser.add_argument("--timeframe", required=True)
     report_parser.add_argument("--format", default="md", choices=["md", "json"])
     report_parser.set_defaults(func=generate_report_cmd)
+
+    paper_signal_parser = subparsers.add_parser("run-paper-signal")
+    paper_signal_parser.add_argument("--strategy", required=True)
+    paper_signal_parser.add_argument("--symbol", required=True)
+    paper_signal_parser.add_argument("--timeframe", required=True)
+    paper_signal_parser.add_argument("--broker", default="current_broker_demo")
+    paper_signal_parser.add_argument("--sizing-model", default="ATR_BASED", choices=["FIXED_LOT", "FIXED_RISK_PCT", "ATR_BASED", "HALF_KELLY"])
+    paper_signal_parser.add_argument("--skip-health-check", action="store_true")
+    paper_signal_parser.set_defaults(func=run_paper_signal_cmd)
+
+    health_parser = subparsers.add_parser("monitor-strategy-health")
+    health_parser.add_argument("--strategy", required=True)
+    health_parser.add_argument("--symbol", required=True)
+    health_parser.add_argument("--timeframe", required=True)
+    health_parser.add_argument("--min-trades", type=int, default=30)
+    health_parser.add_argument("--min-profit-factor", type=float, default=1.05)
+    health_parser.add_argument("--min-sharpe", type=float, default=0.0)
+    health_parser.set_defaults(func=monitor_strategy_health_cmd)
+
+    quant_report_parser = subparsers.add_parser("generate-quant-report")
+    quant_report_parser.add_argument("--strategy", required=True)
+    quant_report_parser.add_argument("--symbol", required=True)
+    quant_report_parser.add_argument("--timeframe", required=True)
+    quant_report_parser.set_defaults(func=generate_quant_report_cmd)
 
     security_parser = subparsers.add_parser("security-check")
     security_parser.set_defaults(func=security_check_cmd)
@@ -1120,6 +1885,15 @@ def build_parser() -> argparse.ArgumentParser:
     scheduled_parser.add_argument("--now", default=None)
     scheduled_parser.set_defaults(func=run_scheduled_cmd)
 
+    install_signal_schedule_parser = subparsers.add_parser("install-paper-signal-schedule")
+    install_signal_schedule_parser.add_argument("--strategy", default="liquidity_sweep_v1")
+    install_signal_schedule_parser.add_argument("--symbol", default="XAUUSD")
+    install_signal_schedule_parser.add_argument("--timeframe", default="M15")
+    install_signal_schedule_parser.add_argument("--broker", default="current_broker_demo")
+    install_signal_schedule_parser.add_argument("--sizing-model", default="ATR_BASED", choices=["FIXED_LOT", "FIXED_RISK_PCT", "ATR_BASED", "HALF_KELLY"])
+    install_signal_schedule_parser.add_argument("--interval-minutes", type=int, default=15)
+    install_signal_schedule_parser.set_defaults(func=install_paper_signal_schedule_cmd)
+
     controller_parser = subparsers.add_parser("run-controller")
     controller_parser.add_argument("--once", action="store_true")
     controller_parser.add_argument("--watch", action="store_true")
@@ -1153,6 +1927,50 @@ def build_parser() -> argparse.ArgumentParser:
     research_summary_parser = subparsers.add_parser("research-summary")
     research_summary_parser.add_argument("--limit", type=int, default=5)
     research_summary_parser.set_defaults(func=research_summary_cmd)
+
+    ai_packet_parser = subparsers.add_parser("export-ai-review-packet")
+    ai_packet_parser.add_argument("--output", default="runtime/ai_review_packet.md")
+    ai_packet_parser.add_argument("--limit", type=int, default=10)
+    ai_packet_parser.set_defaults(func=export_ai_review_packet_cmd)
+
+    static_scan_parser = subparsers.add_parser("run-static-analysis-scan")
+    static_scan_parser.add_argument("--tool", choices=["opengrep", "semgrep"], default="opengrep")
+    static_scan_parser.add_argument("--target", default="src")
+    static_scan_parser.add_argument("--output", default=None)
+    static_scan_parser.add_argument("--config", default="auto")
+    static_scan_parser.set_defaults(func=run_static_analysis_scan_cmd)
+
+    local_audit_parser = subparsers.add_parser("run-local-construction-audit")
+    local_audit_parser.add_argument("--tool", choices=["opengrep", "semgrep"], default="opengrep")
+    local_audit_parser.add_argument("--target", default="src")
+    local_audit_parser.add_argument("--scan-output", default="runtime/static_analysis/opengrep.json")
+    local_audit_parser.add_argument("--packet-output", default="runtime/ai_review_packet.md")
+    local_audit_parser.add_argument("--config", default="auto")
+    local_audit_parser.add_argument("--limit", type=int, default=10)
+    local_audit_parser.add_argument("--fail-on-findings", action="store_true")
+    local_audit_parser.set_defaults(func=run_local_construction_audit_cmd)
+
+    committee_parser = subparsers.add_parser("run-research-committee")
+    committee_parser.add_argument("--strategy", required=True)
+    committee_parser.add_argument("--symbol", required=True)
+    committee_parser.add_argument("--timeframe", required=True)
+    committee_parser.add_argument("--notes-file", default=None)
+    committee_parser.add_argument("--output-dir", default="runtime")
+    committee_parser.set_defaults(func=run_research_committee_cmd)
+
+    fitter_parser = subparsers.add_parser("fit-strategy-filters")
+    fitter_parser.add_argument("--limit", type=int, default=12)
+    fitter_parser.add_argument("--output-dir", default="runtime")
+    fitter_parser.add_argument("--skip-committee", action="store_true")
+    fitter_parser.set_defaults(func=fit_strategy_filters_cmd)
+
+    private_memory_parser = subparsers.add_parser("export-private-memory")
+    private_memory_parser.add_argument("--strategy", default=None)
+    private_memory_parser.add_argument("--symbol", default=None)
+    private_memory_parser.add_argument("--timeframe", default=None)
+    private_memory_parser.add_argument("--obsidian-root", default="obsidian/private_trading_memory")
+    private_memory_parser.add_argument("--second-brain-root", default="second_brain/vault/01_hubs/private_trading_memory")
+    private_memory_parser.set_defaults(func=export_private_memory_cmd)
 
     cot_parser = subparsers.add_parser("import-cot")
     cot_parser.add_argument("--file", required=True)
@@ -1193,6 +2011,21 @@ def build_parser() -> argparse.ArgumentParser:
     show_queue_parser = subparsers.add_parser("show-queue")
     show_queue_parser.set_defaults(func=show_queue_cmd)
 
+    queue_health_parser = subparsers.add_parser("queue-health")
+    queue_health_parser.add_argument("--limit", type=int, default=10)
+    queue_health_parser.add_argument("--output", default=None)
+    queue_health_parser.set_defaults(func=queue_health_cmd)
+
+    tune_parser = subparsers.add_parser("tune-strategy",
+        help="Run Stage 1-3 tuning pipeline for a strategy on a symbol. Outputs validated MT5 config.")
+    tune_parser.add_argument("--strategy", required=True)
+    tune_parser.add_argument("--symbol", required=True)
+    tune_parser.add_argument("--timeframe", required=True)
+    tune_parser.add_argument("--broker", default="current_broker_demo")
+    tune_parser.add_argument("--params", nargs="*", metavar="KEY=VALUE",
+        help="Strategy params as key=value pairs, e.g. rsi_buy_level=38 reward_risk=3.5")
+    tune_parser.set_defaults(func=tune_strategy_cmd)
+
     pipeline_parser = subparsers.add_parser("run-full-pipeline")
     pipeline_parser.add_argument("--strategy", required=True)
     pipeline_parser.add_argument("--symbol", required=True)
@@ -1208,6 +2041,149 @@ def build_parser() -> argparse.ArgumentParser:
     pipeline_parser.add_argument("--to-date", default=None)
     pipeline_parser.add_argument("--forward-from-date", default=None)
     pipeline_parser.set_defaults(func=run_full_pipeline_cmd)
+
+    scout_parser = subparsers.add_parser("scout", help="Local queue scan + optional Exa web sweep")
+    scout_parser.add_argument("--raw-dir", default="data/raw")
+    scout_parser.add_argument("--force", action="store_true")
+    scout_parser.add_argument("--topics", default=None, help="Comma-separated web search topics (requires EXA_API_KEY)")
+    scout_parser.add_argument("--multi-agent-query", default=None, help="Run one Exa query through risk/performance/robustness search lenses")
+    scout_parser.add_argument("--num-results", type=int, default=3)
+    scout_parser.add_argument("--max-workers", type=int, default=None)
+    scout_parser.add_argument("--source-quality", choices=["balanced", "strict", "off"], default="strict")
+    scout_parser.add_argument("--no-cache", action="store_true", help="Disable local scout result cache")
+    scout_parser.add_argument("--output", default=None, help="Optional JSON file path for saved scout output")
+    scout_parser.add_argument("--hypothesis-dir", default=None, help="Optional directory for generated hypothesis notes")
+    scout_parser.add_argument("--min-source-score", type=int, default=70)
+    scout_parser.add_argument("--hypothesis-limit", type=int, default=10)
+    scout_parser.set_defaults(func=scout_cmd)
+
+    scout_hypothesis_parser = subparsers.add_parser("scout-to-hypotheses", help="Convert saved scout JSON into hypothesis notes")
+    scout_hypothesis_parser.add_argument("--input", required=True)
+    scout_hypothesis_parser.add_argument("--output-dir", default="ideas/research_queue")
+    scout_hypothesis_parser.add_argument("--min-source-score", type=int, default=70)
+    scout_hypothesis_parser.add_argument("--limit", type=int, default=10)
+    scout_hypothesis_parser.set_defaults(func=scout_to_hypotheses_cmd)
+
+    review_hypotheses_parser = subparsers.add_parser("review-hypotheses", help="Review extracted hypothesis notes without promoting them")
+    review_hypotheses_parser.add_argument("--input-dir", default="ideas/research_queue")
+    review_hypotheses_parser.add_argument("--output-dir", default="idea_reviews")
+    review_hypotheses_parser.add_argument("--min-ready-score", type=int, default=75)
+    review_hypotheses_parser.set_defaults(func=review_hypotheses_cmd)
+
+    select_candidates_parser = subparsers.add_parser("select-next-candidates", help="Rank research notes and flag duplicate or already-tested candidates")
+    select_candidates_parser.add_argument("--research-dir", default="ideas/research_queue")
+    select_candidates_parser.add_argument("--candidate-dir", default="ideas/backtest_candidates")
+    select_candidates_parser.add_argument("--rejected-dir", default="ideas/rejected")
+    select_candidates_parser.add_argument("--translation-blocked-dir", default="ideas/translation_blocked")
+    select_candidates_parser.add_argument("--proxy-decisions-dir", default="ideas/proxy_decisions")
+    select_candidates_parser.add_argument("--output-dir", default="idea_reviews")
+    select_candidates_parser.add_argument("--limit", type=int, default=20)
+    select_candidates_parser.set_defaults(func=select_next_candidates_cmd)
+
+    translation_blockers_parser = subparsers.add_parser("review-translation-blockers", help="Review sources blocked by missing exact trading rules")
+    translation_blockers_parser.add_argument("--input-dir", default="ideas/translation_blocked")
+    translation_blockers_parser.add_argument("--output-dir", default="idea_reviews")
+    translation_blockers_parser.set_defaults(func=review_translation_blockers_cmd)
+
+    data_requirements_parser = subparsers.add_parser("review-data-requirements", help="Review data requirement notes against local raw files")
+    data_requirements_parser.add_argument("--requirements-dir", default="ideas/data_requirements")
+    data_requirements_parser.add_argument("--raw-dir", default="data/raw")
+    data_requirements_parser.add_argument("--output-dir", default="idea_reviews")
+    data_requirements_parser.set_defaults(func=review_data_requirements_cmd)
+
+    proxy_decisions_parser = subparsers.add_parser("draft-proxy-decisions", help="Draft guarded reduced-proxy decision notes for data-blocked sources")
+    proxy_decisions_parser.add_argument("--requirements-dir", default="ideas/data_requirements")
+    proxy_decisions_parser.add_argument("--raw-dir", default="data/raw")
+    proxy_decisions_parser.add_argument("--proxy-dir", default="ideas/proxy_decisions")
+    proxy_decisions_parser.add_argument("--output-dir", default="idea_reviews")
+    proxy_decisions_parser.set_defaults(func=draft_proxy_decisions_cmd)
+
+    phase_gate_parser = subparsers.add_parser("run-phase-gate", help="Run the standard tests/security/construction audit loop for a phase")
+    phase_gate_parser.add_argument("--phase-name", required=True)
+    phase_gate_parser.add_argument("--tests", nargs="*", default=[])
+    phase_gate_parser.add_argument("--output-dir", default="idea_reviews/phase_gates")
+    phase_gate_parser.add_argument("--skip-construction-audit", action="store_true")
+    phase_gate_parser.set_defaults(func=run_phase_gate_cmd)
+
+    data_ready_parser = subparsers.add_parser("check-data-readiness", help="Check raw CSV coverage before hypothesis backtesting")
+    data_ready_parser.add_argument("--symbols", required=True, help="Comma-separated symbols")
+    data_ready_parser.add_argument("--timeframes", required=True, help="Comma-separated timeframes")
+    data_ready_parser.add_argument("--raw-dir", default="data/raw")
+    data_ready_parser.add_argument("--output-dir", default="reports/data_readiness")
+    data_ready_parser.add_argument("--min-months", type=int, default=36)
+    data_ready_parser.add_argument("--min-rows", type=int, default=1000)
+    data_ready_parser.set_defaults(func=check_data_readiness_cmd)
+
+    raw_data_parser = subparsers.add_parser("audit-raw-data", help="Inventory data/raw CSV files and flag naming issues")
+    raw_data_parser.add_argument("--raw-dir", default="data/raw")
+    raw_data_parser.add_argument("--output-dir", default="reports/raw_data_inventory")
+    raw_data_parser.add_argument("--fail-on-issues", action="store_true")
+    raw_data_parser.set_defaults(func=audit_raw_data_cmd)
+
+    raw_cleanup_parser = subparsers.add_parser("plan-raw-data-cleanup", help="Write a dry-run plan for moving noncanonical raw CSVs to source_exports")
+    raw_cleanup_parser.add_argument("--raw-dir", default="data/raw")
+    raw_cleanup_parser.add_argument("--output-dir", default="reports/raw_data_inventory")
+    raw_cleanup_parser.set_defaults(func=plan_raw_data_cleanup_cmd)
+
+    raw_cleanup_apply_parser = subparsers.add_parser("apply-raw-data-cleanup", help="Move noncanonical raw CSVs to source_exports after reviewing the dry-run plan")
+    raw_cleanup_apply_parser.add_argument("--raw-dir", default="data/raw")
+    raw_cleanup_apply_parser.add_argument("--output-dir", default="reports/raw_data_inventory")
+    raw_cleanup_apply_parser.add_argument("--confirm-reviewed-plan", action="store_true")
+    raw_cleanup_apply_parser.set_defaults(func=apply_raw_data_cleanup_cmd)
+
+    currency_momentum_parser = subparsers.add_parser("run-currency-momentum-proxy", help="Run paper-only cross-sectional currency momentum proxy backtest")
+    currency_momentum_parser.add_argument("--symbols", required=True, help="Comma-separated symbols")
+    currency_momentum_parser.add_argument("--timeframe", default="H1")
+    currency_momentum_parser.add_argument("--raw-dir", default="data/raw")
+    currency_momentum_parser.add_argument("--output-dir", default="reports/currency_momentum_proxy")
+    currency_momentum_parser.add_argument("--lookback-months", type=int, default=12)
+    currency_momentum_parser.add_argument("--exclude-recent-months", type=int, default=1)
+    currency_momentum_parser.add_argument("--cost-bps", type=float, default=2.0)
+    currency_momentum_parser.set_defaults(func=run_currency_momentum_proxy_cmd)
+
+    trend_proxy_parser = subparsers.add_parser("run-bounded-trend-proxy", help="Run paper-only bounded EMA trend proxy")
+    trend_proxy_parser.add_argument("--symbols", required=True, help="Comma-separated symbols")
+    trend_proxy_parser.add_argument("--timeframe", default="H1")
+    trend_proxy_parser.add_argument("--raw-dir", default="data/raw")
+    trend_proxy_parser.add_argument("--output-dir", default="reports/bounded_trend_proxy")
+    trend_proxy_parser.add_argument("--fast-values", default="10,20,50")
+    trend_proxy_parser.add_argument("--slow-values", default="50,100,200")
+    trend_proxy_parser.add_argument("--cost-bps", type=float, default=2.0)
+    trend_proxy_parser.set_defaults(func=run_bounded_trend_proxy_cmd)
+
+    walk_forward_trend_parser = subparsers.add_parser("run-walk-forward-trend-proxy", help="Run paper-only rolling walk-forward EMA trend proxy")
+    walk_forward_trend_parser.add_argument("--symbols", required=True, help="Comma-separated symbols")
+    walk_forward_trend_parser.add_argument("--timeframe", default="H1")
+    walk_forward_trend_parser.add_argument("--raw-dir", default="data/raw")
+    walk_forward_trend_parser.add_argument("--output-dir", default="reports/walk_forward_trend_proxy")
+    walk_forward_trend_parser.add_argument("--ema-values", default="10,20,50,100,200")
+    walk_forward_trend_parser.add_argument("--train-months", type=int, default=24)
+    walk_forward_trend_parser.add_argument("--validation-months", type=int, default=6)
+    walk_forward_trend_parser.add_argument("--test-months", type=int, default=6)
+    walk_forward_trend_parser.add_argument("--step-months", type=int, default=6)
+    walk_forward_trend_parser.add_argument("--cost-bps", type=float, default=2.0)
+    walk_forward_trend_parser.set_defaults(func=run_walk_forward_trend_proxy_cmd)
+
+    vol_scaled_parser = subparsers.add_parser("run-vol-scaled-ema-mixture-proxy", help="Run paper-only vol-scaled multi-horizon EMA mixture proxy")
+    vol_scaled_parser.add_argument("--symbols", required=True, help="Comma-separated symbols")
+    vol_scaled_parser.add_argument("--timeframe", default="H1")
+    vol_scaled_parser.add_argument("--raw-dir", default="data/raw")
+    vol_scaled_parser.add_argument("--output-dir", default="reports/vol_scaled_ema_mixture_proxy")
+    vol_scaled_parser.add_argument("--ema-pairs", default="8/24,16/48,32/96,64/192")
+    vol_scaled_parser.add_argument("--vol-window", type=int, default=200)
+    vol_scaled_parser.add_argument("--threshold", type=float, default=0.05)
+    vol_scaled_parser.add_argument("--cost-bps", type=float, default=2.0)
+    vol_scaled_parser.set_defaults(func=run_vol_scaled_ema_mixture_proxy_cmd)
+
+    daily_idea_parser = subparsers.add_parser("run-daily-idea-loop", help="Write a paper-only daily idea review and optional online scout intake")
+    daily_idea_parser.add_argument("--run-online", action="store_true")
+    daily_idea_parser.add_argument("--online-query", default=None)
+    daily_idea_parser.add_argument("--output-dir", default="idea_reviews")
+    daily_idea_parser.add_argument("--hypothesis-dir", default="ideas/research_queue")
+    daily_idea_parser.add_argument("--min-source-score", type=int, default=70)
+    daily_idea_parser.add_argument("--hypothesis-limit", type=int, default=10)
+    daily_idea_parser.set_defaults(func=run_daily_idea_loop_cmd)
+
     return parser
 
 

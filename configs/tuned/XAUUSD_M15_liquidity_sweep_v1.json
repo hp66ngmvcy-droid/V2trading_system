@@ -1,0 +1,35 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "M15",
+  "strategy_name": "liquidity_sweep_v1",
+  "tuned_at": "2026-06-03T22:18:40Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.9037
+      },
+      "metrics": {
+        "total_trades": 3925.0,
+        "win_rate": 37.63,
+        "profit_factor": 0.9037,
+        "net_profit": -530.2898,
+        "max_drawdown_pct": 7.02,
+        "sharpe_ratio": -0.6736,
+        "expectancy": -0.1351
+      },
+      "note": "raw_pf=0.8788 costed_pf=0.9037"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.9037,
+    "sharpe_ratio": -0.6736,
+    "max_drawdown_pct": 7.02,
+    "total_trades": 3925.0,
+    "win_rate": 37.63
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "paper_only": true,
+  "interval_minutes": 15,
+  "command": "PYTHONPATH=src venv/bin/python -m tar_system.cli run-paper-signal --strategy liquidity_sweep_v1 --symbol XAUUSD --timeframe M15",
+  "notes": [
+    "Run from the repository root.",
+    "This generates paper signals only and writes runtime/latest_paper_signal.json plus runtime/paper_signal_alerts.jsonl.",
+    "Use cron, launchd, or the dashboard scheduler to call this every 15 minutes."
+  ]
+}

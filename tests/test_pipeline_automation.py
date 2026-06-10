@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -95,6 +96,9 @@ def test_run_full_pipeline_creates_outputs(tmp_path, monkeypatch) -> None:
     assert Path("data/validated/BTCUSD_M5.parquet").exists()
     assert Path("data/features/BTCUSD_M5.parquet").exists()
     assert Path("data/results/gold_v2_BTCUSD_M5_metrics.json").exists()
+    walk_forward = json.loads(Path("data/results/gold_v2_BTCUSD_M5_walk_forward.json").read_text(encoding="utf-8"))
+    assert walk_forward["ran"] is False
+    assert walk_forward["wf_verdict"] == "REVIEW"
     assert Path("reports/BTCUSD_M5_gold_v2_report.md").exists()
     assert Path("data/tar_system.duckdb").exists()
     assert Path("logs/audit/audit.jsonl").exists()

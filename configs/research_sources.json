@@ -1,0 +1,108 @@
+{
+  "sources": [
+    {
+      "label": "SSRN quantitative finance",
+      "url": "https://papers.ssrn.com/sol3/topten/topTenResults.cfm?groupingId=618851&netorjrnl=jrnl",
+      "tags": ["strategy", "indicator"],
+      "enabled": true
+    },
+    {
+      "label": "arXiv quant-fin recent",
+      "url": "https://arxiv.org/list/q-fin.TR/recent",
+      "tags": ["strategy", "indicator"],
+      "enabled": true
+    },
+    {
+      "label": "Quantpedia blog",
+      "url": "https://quantpedia.com/blog/",
+      "tags": ["strategy", "idea"],
+      "enabled": true
+    },
+    {
+      "label": "Risk.net news",
+      "url": "https://www.risk.net/latest-news",
+      "tags": ["risk_update"],
+      "enabled": true
+    },
+    {
+      "label": "Investopedia technical analysis",
+      "url": "https://www.investopedia.com/technical-analysis-4689657",
+      "tags": ["indicator"],
+      "enabled": true
+    },
+    {
+      "label": "Alpha Architect research",
+      "url": "https://alphaarchitect.com/blog/",
+      "tags": ["strategy", "idea"],
+      "enabled": true
+    },
+    {
+      "label": "Bank for International Settlements working papers",
+      "url": "https://www.bis.org/list/wppdf/index.htm",
+      "tags": ["risk_update", "strategy"],
+      "enabled": false
+    },
+    {
+      "label": "Ernie Chan blog",
+      "url": "https://epchan.blogspot.com/",
+      "tags": ["strategy", "idea"],
+      "enabled": true
+    }
+  ],
+  "api_sources": [
+    {
+      "label": "Finnhub forex news",
+      "api_type": "finnhub_news",
+      "category": "forex",
+      "tags": ["risk_update", "strategy"],
+      "enabled": true,
+      "note": "Requires FINNHUB_API_KEY in .env — free at finnhub.io"
+    },
+    {
+      "label": "Finnhub general market news",
+      "api_type": "finnhub_news",
+      "category": "general",
+      "tags": ["risk_update"],
+      "enabled": true,
+      "note": "Requires FINNHUB_API_KEY in .env"
+    },
+    {
+      "label": "Twelve Data XAUUSD quote",
+      "api_type": "twelve_data_quote",
+      "symbol": "XAU/USD",
+      "tags": ["risk_update"],
+      "enabled": true,
+      "note": "Requires TWELVE_DATA_KEY in .env — free at twelvedata.com"
+    },
+    {
+      "label": "Twelve Data EURUSD quote",
+      "api_type": "twelve_data_quote",
+      "symbol": "EUR/USD",
+      "tags": ["risk_update"],
+      "enabled": false,
+      "note": "Disabled by default — enable if trading EURUSD"
+    }
+  ],
+  "nvidia_nim": {
+    "base_url": "https://integrate.api.nvidia.com/v1",
+    "model": "meta/llama-3.1-8b-instruct",
+    "max_tokens": 300,
+    "temperature": 0.1,
+    "api_key_env": "NVIDIA_API_KEY",
+    "note": "Fallback when LM Studio is offline. Requires NVIDIA_API_KEY in .env — free at build.nvidia.com"
+  },
+  "lm_studio": {
+    "base_url": "http://localhost:1234/v1",
+    "model": "local-model",
+    "max_tokens": 300,
+    "temperature": 0.1
+  },
+  "webclaw": {
+    "timeout_seconds": 30,
+    "max_chars": 6000
+  },
+  "output": {
+    "research_queue_dir": "ideas/research_queue",
+    "min_confidence": 0.5
+  }
+}

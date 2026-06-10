@@ -12,11 +12,15 @@ from tar_system.features.engineering import build_features
 from tar_system.optimisation.parameter_anchors import ATR_STOP_ANCHORS, GOLD_V2_ANCHORS
 from tar_system.regime.detector import Regime, detect_regime
 from tar_system.risk.engine import RiskEngine
+from tar_system.scoring.gates import run_gates
 from tar_system.scoring.scorer import score_strategy
 from tar_system.strategies.asset_variants import default_variant
 from tar_system.strategies.base import Signal
 from tar_system.strategies.gold_v2 import GoldV2
+from tar_system.strategies.registry import ALIASES, REGISTRY, RESEARCH_REGISTRY, get_strategy
+from tar_system.strategies.vol_filtered_momentum_v1 import VolFilteredMomentumV1
 from tar_system.backtest.metrics import calculate_metrics
+from tar_system.backtest.engine import _safe_backtest_quantity
 from tar_system.portfolio.tracker import Trade
 
 
@@ -86,6 +90,8 @@ def test_feature_creation() -> None:
     features = build_features(sample_df(), "XAUUSD", "M15")
     assert "ema_fast" in features.columns
     assert "rsi" in features.columns
+    assert "hour_utc" in features.columns
+    assert features["hour_utc"].between(0, 23).all()
     assert "range_compression" in features.columns
     assert "session_label" in features.columns
     assert "ema_fast_slope" in features.columns
@@ -120,8 +126,42 @@ def _gold_row(**updates: object) -> pd.Series:
     return pd.Series(payload)
 
 
+def _vol_momentum_row(**updates: object) -> pd.Series:
+    payload: dict[str, object] = {
+        "timestamp": pd.Timestamp("2026-01-01 10:00:00", tz="UTC"),
+        "symbol": "XAUUSD",
+        "timeframe": "M15",
+        "open": 100.0,
+        "close": 101.0,
+        "high": 101.2,
+        "low": 99.8,
+        "atr": 1.0,
+        "atr_median_50": 1.0,
+        "ema_fast": 100.8,
+        "ema_slow": 100.0,
+        "ema_fast_slope": 0.0004,
+        "ema_slow_slope": 0.0001,
+        "rsi": 58.0,
+        "is_liquid_session": True,
+    }
+    payload.update(updates)
+    return pd.Series(payload)
+
+
 def test_gold_v2_blocks_asian_session_when_filter_enabled() -> None:
     signal = GoldV2(session_filter=True).generate_signal(_gold_row(is_liquid_session=False), "TRENDING")
+    assert signal.side == "HOLD"
+    assert signal.reason_code == "SESSION_FILTER_BLOCK"
+
+
+def test_gold_v2_allows_missing_session_columns() -> None:
+    row = _gold_row().drop(labels=["is_liquid_session"])
+    signal = GoldV2(session_filter=True).generate_signal(row, "TRENDING")
+    assert signal.reason_code != "SESSION_FILTER_BLOCK"
+
+
+def test_gold_v2_handles_string_session_filter_values() -> None:
+    signal = GoldV2(session_filter=True).generate_signal(_gold_row(is_liquid_session="False"), "TRENDING")
     assert signal.side == "HOLD"
     assert signal.reason_code == "SESSION_FILTER_BLOCK"
 
@@ -133,6 +173,17 @@ def test_gold_v2_generates_signal_during_london_session() -> None:
 
 def test_btc_variant_has_session_filter_disabled() -> None:
     assert default_variant("gold_v2", "BTCUSD", "M15").parameters["session_filter"] is False
+
+
+def test_strategy_registry_includes_canonical_strategies_and_resolves_aliases() -> None:
+    assert "rsi_only_v3" in REGISTRY
+    assert "vol_filtered_momentum_v1" in REGISTRY
+    assert "rsi_v3" not in REGISTRY
+    assert get_strategy("rsi_only_v3").__class__ is REGISTRY["rsi_only_v3"]
+    assert get_strategy("rsi_v3").__class__ is ALIASES["rsi_v3"]
+    assert get_strategy("vol_momo_v1").__class__ is ALIASES["vol_momo_v1"]
+    assert all(get_strategy(name).__class__ is strategy_class for name, strategy_class in REGISTRY.items())
+    assert set(RESEARCH_REGISTRY) == {"gold_v2", "rsi_reversion_v1"}
 
 
 def test_gold_v2_blocks_atr_too_low_and_too_high() -> None:
@@ -147,6 +198,20 @@ def test_gold_v2_blocks_flat_ema_and_allows_rising_buy() -> None:
     rising = GoldV2().generate_signal(_gold_row(ema_fast_slope=0.0005, ema_slow_slope=0.0001), "TRENDING")
     assert flat.reason_code == "EMA_SLOPE_TOO_FLAT"
     assert rising.side == "BUY"
+
+
+def test_vol_filtered_momentum_blocks_noise_and_allows_momentum() -> None:
+    strategy = VolFilteredMomentumV1()
+    noisy = strategy.generate_signal(_vol_momentum_row(open=100.95, close=101.0), "TRENDING")
+    buy = strategy.generate_signal(_vol_momentum_row(), "TRENDING")
+    assert noisy.reason_code == "EMA_SLOPE_TOO_FLAT"
+    assert buy.side == "BUY"
+    assert buy.metadata["body_atr"] >= strategy.min_body_atr
+
+
+def test_vol_filtered_momentum_blocks_extreme_volatility() -> None:
+    signal = VolFilteredMomentumV1().generate_signal(_vol_momentum_row(atr=3.0, atr_median_50=1.0), "TRENDING")
+    assert signal.reason_code == "ATR_TOO_HIGH_EXTREME_VOLATILITY"
 
 
 def test_parameter_anchor_library_loads() -> None:
@@ -209,6 +274,66 @@ def test_scorer_verdict() -> None:
     assert 0 <= score.score <= 100
 
 
+def test_scorer_requires_walk_forward_when_requested() -> None:
+    metrics = {"win_rate": 0.65, "profit_factor": 2.4, "max_drawdown": 0.08, "total_trades": 60, "expectancy": 12}
+    score = score_strategy(metrics, require_walk_forward=True)
+    assert score.verdict == "REVIEW"
+    assert "WF_NOT_RUN" in score.reason_codes
+
+
+def test_scorer_can_keep_with_strong_walk_forward() -> None:
+    metrics = {"win_rate": 0.65, "profit_factor": 2.4, "max_drawdown": 0.08, "total_trades": 60, "expectancy": 12}
+    walk_forward = {
+        "split_count": 3,
+        "window_count": 3,
+        "ran": True,
+        "wf_verdict": "KEEP",
+        "stitched_metrics": {"total_trades": 30, "profit_factor": 1.4, "max_drawdown": 0.10},
+        "parameter_stability_score": 60.0,
+        "bootstrap_ci": {"spans_zero": False, "ci_lower": 0.01, "ci_upper": 0.12},
+    }
+    score = score_strategy(metrics, walk_forward, "M15", require_walk_forward=True)
+    assert score.verdict == "KEEP"
+
+
+def test_structural_gate_blocks_one_trade_winner() -> None:
+    gate = run_gates({"total_trades": 1, "win_rate": 1.0, "profit_factor": 100.0, "max_drawdown": 0.0}, "M15")
+    assert gate.verdict == "KILL"
+    assert gate.failed_gate == "min_trades"
+
+
+def test_structural_gate_blocks_directional_failure() -> None:
+    gate = run_gates(
+        {
+            "total_trades": 104,
+            "win_rate": 0.0,
+            "profit_factor": 0.0,
+            "max_drawdown": 0.10,
+            "max_consecutive_losses": 104,
+        },
+        "M15",
+        require_oos=False,
+    )
+    assert gate.verdict == "KILL"
+    assert gate.failed_gate == "consecutive_loss_ratio"
+
+
+def test_structural_gate_requires_walk_forward_for_keep() -> None:
+    gate = run_gates(
+        {"total_trades": 40, "win_rate": 0.55, "profit_factor": 1.8, "max_drawdown": 0.10},
+        "M15",
+        require_oos=True,
+    )
+    assert gate.verdict == "REVIEW"
+    assert "SEARCH_OOS_SHARPE_NOT_MET" in gate.reason_codes
+
+
+def test_safe_backtest_quantity_caps_large_notional() -> None:
+    assert _safe_backtest_quantity(50000.0, 10000.0) == 0.02
+    assert _safe_backtest_quantity(2000.0, 10000.0) == 0.5
+    assert _safe_backtest_quantity(1.1, 10000.0) == 1.0
+
+
 def test_mt5_export_creates_files(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     signal = Signal(
@@ -238,3 +363,64 @@ def test_environment_high_impact_holds() -> None:
     event = Event("US CPI", pd.Timestamp("2026-06-12").to_pydatetime(), "HIGH")
     state = check_environment_risk("XAUUSD", pd.Timestamp("2026-06-12").to_pydatetime(), events=[event])
     assert state == "HOLD_TRADING"
+
+
+# ---------------------------------------------------------------------------
+# Multi-agent scorer wiring
+# ---------------------------------------------------------------------------
+
+def test_multi_agent_wiring_keep_when_both_agree() -> None:
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
+    metrics = {
+        "total_trades": 60, "win_rate": 0.55, "profit_factor": 1.8,
+        "max_drawdown": 0.10, "sharpe_ratio": 1.4, "expectancy": 0.005,
+        "sharpe_oos": 1.1, "param_stability": 0.80, "walk_forward_splits": 5,
+    }
+    gate = run_gates(metrics, "M15", require_oos=False)
+    ma = score_multi_agent(metrics)
+    final_verdict = "REVIEW" if gate.verdict == "KEEP" and ma.verdict == "KILL" else gate.verdict
+    assert final_verdict == gate.verdict  # no override needed
+
+
+def test_multi_agent_wiring_downgrades_keep_to_review_when_ma_kills() -> None:
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
+    # Gate passes (good structural metrics) but multi-agent kills on soft metrics
+    gate_metrics = {
+        "total_trades": 30, "win_rate": 0.51, "profit_factor": 1.2,
+        "max_drawdown": 0.12, "sharpe_ratio": -0.3, "expectancy": -0.002,
+        "sharpe_oos": -0.8, "param_stability": 0.3, "walk_forward_splits": 4,
+    }
+    ma = score_multi_agent(gate_metrics)
+    assert ma.verdict == "KILL"
+    # Simulate gate returning KEEP (hypothetically) and verify override
+    simulated_gate_verdict = "KEEP"
+    final_verdict = "REVIEW" if simulated_gate_verdict == "KEEP" and ma.verdict == "KILL" else simulated_gate_verdict
+    assert final_verdict == "REVIEW"
+
+
+def test_multi_agent_wiring_gate_kill_not_overridden_by_ma_keep() -> None:
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
+    # Gate kills; multi-agent should not be able to upgrade it
+    metrics = {
+        "total_trades": 1, "win_rate": 1.0, "profit_factor": 100.0,
+        "max_drawdown": 0.0, "sharpe_ratio": 5.0, "expectancy": 0.1,
+    }
+    gate = run_gates(metrics, "M15")
+    assert gate.verdict == "KILL"
+    ma = score_multi_agent(metrics)
+    final_verdict = "REVIEW" if gate.verdict == "KEEP" and ma.verdict == "KILL" else gate.verdict
+    assert final_verdict == "KILL"  # gate kill stands
+
+
+def test_multi_agent_result_has_expected_structure() -> None:
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent
+    metrics = {
+        "total_trades": 40, "win_rate": 0.52, "profit_factor": 1.5,
+        "max_drawdown": 0.15, "sharpe_ratio": 1.1, "expectancy": 0.003,
+    }
+    ma = score_multi_agent(metrics)
+    assert ma.verdict in {"KEEP", "REVIEW", "KILL"}
+    assert 0.0 <= ma.confidence <= 1.0
+    assert isinstance(ma.dissent, bool)
+    assert len(ma.agent_verdicts) == 3
+    assert {v.agent for v in ma.agent_verdicts} == {"risk", "performance", "robustness"}

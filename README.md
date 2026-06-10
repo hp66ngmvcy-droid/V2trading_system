@@ -51,8 +51,30 @@ python -m tar_system.cli score-strategy --strategy gold_v2 --symbol XAUUSD --tim
 python -m tar_system.cli export-mt5 --strategy gold_v2 --symbol XAUUSD --timeframe M15
 ```
 
-## Dashboard Placeholder
+## Live Market Reference
+
+The dashboard Asset Data page includes a TradingView chart link for the selected symbol/timeframe. This is a human reference/export path only: strategy training and tests still read local OHLCV files such as `data/raw/XAUUSD_M15.csv`, then validated/feature data produced by the CLI.
+
+## Integrated V2 Web UI
 
 ```bash
-streamlit run src/tar_system/reporting/reporter.py
+PYTHONPATH=src python -m tar_system.cli run-web-ui --host 127.0.0.1 --port 8601
+```
+
+Open `http://127.0.0.1:8601`. This serves the v2 research UI with a read-only runtime data bridge from local queue, results, audit, signal and raw-data files.
+
+## New Project Workspaces
+
+```bash
+bash scripts/create_project_workspace.sh my-new-project
+```
+
+This creates `docs/projects/my-new-project/` with PRD, TRD, app flow, UI/UX
+brief, backend schema, implementation plan, QA checklist, ADR, source notes,
+assets, and screenshots folders.
+
+## Legacy Streamlit Dashboard
+
+```bash
+streamlit run src/tar_system/dashboard/app.py
 ```

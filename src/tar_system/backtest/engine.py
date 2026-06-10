@@ -44,6 +44,8 @@ def run_backtest(
     work = features.sort_values("timestamp").reset_index(drop=True)
     stopped = False
     reason_code: str | None = None
+    last_row = None
+    last_row_by_symbol: dict[str, object] = {}
     for index, row in work.iterrows():
         status = read_backtest_status()
         if status.get("stop_requested"):
@@ -60,11 +62,45 @@ def run_backtest(
             )
             write_status("backtest", {**status, "running": False, "latest_message": "stopped safely with partial result"})
             break
+        last_row = row
+        row_symbol = str(row.get("symbol", ""))
+        if row_symbol:
+            last_row_by_symbol[row_symbol] = row
+        # Check TP/SL for open positions before processing this bar's signal.
+        bar_high = float(row.get("high", 0) or 0)
+        bar_low = float(row.get("low", 0) or 0)
+        for pos in list(portfolio.open_positions):
+            if row_symbol and pos.symbol != row_symbol:
+                continue
+            if pos.take_profit is not None or pos.stop_loss is not None:
+                exit_price = None
+                if pos.side == "BUY":
+                    if pos.stop_loss and bar_low <= pos.stop_loss:
+                        exit_price = pos.stop_loss
+                    elif pos.take_profit and bar_high >= pos.take_profit:
+                        exit_price = pos.take_profit
+                else:
+                    if pos.stop_loss and bar_high >= pos.stop_loss:
+                        exit_price = pos.stop_loss
+                    elif pos.take_profit and bar_low <= pos.take_profit:
+                        exit_price = pos.take_profit
+                if exit_price is not None:
+                    tp_sl_profile = broker_profile.symbol_profile(pos.symbol) if broker_profile else None
+                    close_fill = broker.close_position(
+                        pos,
+                        pd.Timestamp(row["timestamp"]),
+                        exit_price,
+                        broker_profile=broker_profile,
+                        contract_size=tp_sl_profile.contract_size if tp_sl_profile else None,
+                        cost_multiplier=cost_multiplier,
+                        timeframe=str(row.get("timeframe", "H1")),
+                    )
+                    portfolio.on_fill(close_fill)
         regime = detect_regime(row).value
         signal = strategy.generate_signal(row, regime)
         decision = risk.evaluate(
             signal,
-            current_drawdown=portfolio.drawdown(),
+            current_drawdown=portfolio.drawdown_marked(float(row.get("close", 0) or 0)),
             current_exposure=portfolio.exposure(),
             current_volatility=float(row.get("rolling_volatility", 0) or 0),
         )
@@ -80,34 +116,63 @@ def run_backtest(
             )
         if decision.approved:
             symbol_profile = broker_profile.symbol_profile(signal.symbol) if broker_profile else None
-            existing = next((pos for pos in portfolio.open_positions if pos.symbol == signal.symbol and pos.side == ("SELL" if signal.side == "BUY" else "BUY")), None)
+            # Close opposite-side positions for this symbol before opening new one
+            opposite_side = "SELL" if signal.side == "BUY" else "BUY"
+            for pos in list(portfolio.open_positions):
+                if pos.symbol == signal.symbol and pos.side == opposite_side:
+                    close_fill = broker.close_position(
+                        pos,
+                        pd.Timestamp(row["timestamp"]),
+                        float(row.get("close", 0) or 0),
+                        broker_profile=broker_profile,
+                        contract_size=symbol_profile.contract_size if symbol_profile else None,
+                        cost_multiplier=cost_multiplier,
+                        timeframe=str(row.get("timeframe", "H1")),
+                    )
+                    portfolio.on_fill(close_fill)
+
+            # Skip if same-direction position already open for this symbol.
+            if any(p.symbol == signal.symbol and p.side == signal.side for p in portfolio.open_positions):
+                continue
+
+            # Then open new position
+            contract_size = symbol_profile.contract_size if symbol_profile else None
+            quantity = _safe_backtest_quantity(
+                float(signal.entry),
+                portfolio.current_equity,
+                contract_size=contract_size,
+            )
+            if quantity <= 0:
+                continue
             fill = broker.execute(
                 signal,
-                quantity=1.0,
+                quantity=quantity,
                 spread=None if broker_profile else float(row.get("spread", 0) or 0),
                 broker_profile=broker_profile,
-                contract_size=symbol_profile.contract_size if symbol_profile else None,
+                contract_size=contract_size,
                 cost_multiplier=cost_multiplier,
             )
-            if existing and symbol_profile:
-                bars_held = _bars_held(existing.timestamp, pd.Timestamp(row["timestamp"]), str(row.get("timeframe", "")))
-                notional = abs(existing.entry_price * symbol_profile.contract_size * existing.quantity)
-                swap_cost, days_held = broker.calculate_swap_cost(symbol_profile, existing.side, existing.quantity, notional, str(row.get("timeframe", "")), bars_held)
-                fill.swap_cost = swap_cost * cost_multiplier
-                fill.days_held = days_held
-                fill.total_cost += abs(fill.swap_cost)
-                fill.net_pnl -= abs(fill.swap_cost)
-                if audit_decisions and fill.swap_cost:
-                    append_audit_event(
-                        "trade_cost",
-                        signal.strategy,
-                        signal.symbol,
-                        signal.timeframe,
-                        "COST_APPLIED",
-                        "SWAP_COST",
-                        {"swap_cost": fill.swap_cost, "days_held": days_held, "bars_held": bars_held},
-                    )
+            fill.metadata["take_profit"] = signal.take_profit
+            fill.metadata["stop_loss"] = signal.stop_loss
+            fill.metadata["contract_size"] = contract_size if contract_size is not None else 1.0
             portfolio.on_fill(fill)
+
+    # Close any remaining open positions at the last processed bar (not future data).
+    if last_row is not None and portfolio.open_positions:
+        for pos in list(portfolio.open_positions):
+            final_row = last_row_by_symbol.get(pos.symbol, last_row)
+            final_symbol_profile = broker_profile.symbol_profile(pos.symbol) if broker_profile else None
+            close_fill = broker.close_position(
+                pos,
+                pd.Timestamp(final_row["timestamp"]),
+                float(final_row.get("close", 0) or 0),
+                broker_profile=broker_profile,
+                contract_size=final_symbol_profile.contract_size if final_symbol_profile else None,
+                cost_multiplier=cost_multiplier,
+                timeframe=str(final_row.get("timeframe", "H1")),
+            )
+            portfolio.on_fill(close_fill)
+
     metrics = calculate_metrics(portfolio.closed_trades, portfolio.equity_curve)
     if len(work):
         portfolio.export_equity_curve(str(work["symbol"].iloc[0]), str(work["timeframe"].iloc[0]), getattr(strategy, "name", "strategy"))
@@ -120,3 +185,14 @@ def _bars_held(opened_at: pd.Timestamp, closed_at: pd.Timestamp, timeframe: str)
         return 1
     days = max((closed_at - opened_at).total_seconds() / 86400, 0)
     return max(1, int(round(days / fraction)))
+
+
+def _safe_backtest_quantity(entry_price: float, equity: float, contract_size: float | None = None) -> float:
+    """Clamp paper backtest notional so one trade cannot exceed account scale."""
+
+    if entry_price <= 0 or equity <= 0:
+        return 0.0
+    resolved_contract_size = contract_size if contract_size is not None else 1.0
+    max_notional = equity * 0.10
+    max_quantity = max_notional / max(entry_price * resolved_contract_size, 1e-9)
+    return round(max(0.0, min(1.0, max_quantity)), 8)

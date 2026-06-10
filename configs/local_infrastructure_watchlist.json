@@ -1,0 +1,108 @@
+{
+  "updated_at": "2026-05-23",
+  "principles": [
+    "Prefer local deterministic checks before AI review.",
+    "Keep trading gates authoritative and paper-only unless explicitly reviewed.",
+    "Adopt lightweight tools before heavy frameworks.",
+    "Sandbox trading engines and agent frameworks before production integration."
+  ],
+  "adopt_now": [
+    {
+      "name": "OpenGrep",
+      "category": "static_analysis",
+      "local_role": "Scan-only construction-time security and correctness findings.",
+      "integration": "run-local-construction-audit",
+      "status": "active_trial",
+      "review_due": "2026-05-28"
+    },
+    {
+      "name": "pytest",
+      "category": "test_runner",
+      "local_role": "Regression proof for queue, scoring, dashboard, pipeline, and validation behavior.",
+      "integration": "PYTHONPATH=src venv/bin/python -m pytest",
+      "status": "active"
+    },
+    {
+      "name": "pytest-xdist",
+      "category": "speed_checking",
+      "local_role": "Parallel test execution for full-suite speedups.",
+      "integration": "PYTHONPATH=src venv/bin/python -m pytest -n auto",
+      "status": "active_trial_passed"
+    },
+    {
+      "name": "Ruff",
+      "category": "fast_lint",
+      "local_role": "Narrow undefined-name construction check before tests.",
+      "integration": "venv/bin/ruff check src tests",
+      "status": "active_narrow_rules"
+    },
+    {
+      "name": "compileall",
+      "category": "syntax_check",
+      "local_role": "Fast import/syntax construction check before slower tests.",
+      "integration": "PYTHONPATH=src venv/bin/python -m compileall src",
+      "status": "active"
+    }
+  ],
+  "candidate_next": [
+    {
+      "name": "Pandera",
+      "category": "data_quality",
+      "local_role": "Schema checks for OHLCV, feature, metric, and walk-forward dataframes.",
+      "integration_candidate": "data validation layer before backtest/optimisation",
+      "adoption_gate": "Add to one data boundary first: raw/validated OHLCV."
+    }
+  ],
+  "sandbox_later": [
+    {
+      "name": "vectorbt",
+      "category": "fast_research_backtesting",
+      "local_role": "Vectorized exploratory research comparator, not authoritative event engine.",
+      "reason": "Useful for speed sweeps, but needs parity checks against current backtest engine."
+    },
+    {
+      "name": "NautilusTrader",
+      "category": "event_driven_trading_engine",
+      "local_role": "Reference architecture for event-driven execution, fills, clocks, and portfolio accounting.",
+      "reason": "Powerful but heavy. Sandbox as a comparator, not a replacement."
+    },
+    {
+      "name": "Qlib",
+      "category": "quant_research_platform",
+      "local_role": "Research reference for ML factor pipelines and point-in-time data handling.",
+      "reason": "Large platform; useful ideas may be imported without adopting the stack."
+    },
+    {
+      "name": "MLflow",
+      "category": "experiment_tracking",
+      "local_role": "Candidate for strategy experiment lineage if JSONL/reports become hard to query.",
+      "reason": "Adopt only if current review logs become insufficient."
+    },
+    {
+      "name": "LangGraph",
+      "category": "agent_orchestration",
+      "local_role": "Possible future explicit state graph for AI-assisted review workflows.",
+      "reason": "AI-dependent. Keep outside core deterministic checks."
+    },
+    {
+      "name": "CrewAI",
+      "category": "agent_orchestration",
+      "local_role": "Possible future parallel reviewer/critic roles.",
+      "reason": "AI-dependent. Current local rule-based multi-agent scorer is safer for core gates."
+    }
+  ],
+  "avoid_for_now": [
+    {
+      "name": "AutoGen",
+      "reason": "Maintenance mode; do not build new local infrastructure on it."
+    },
+    {
+      "name": "Great Expectations",
+      "reason": "Strong but heavier than needed for dataframe-boundary checks; prefer Pandera first."
+    },
+    {
+      "name": "OpenHands/Aider as core automation",
+      "reason": "Useful for human-driven coding, but not appropriate as automatic local healing in a trading safety path."
+    }
+  ]
+}

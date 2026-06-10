@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-05-26T10:42:01+00:00",
+  "requirements_dir": "ideas/data_requirements",
+  "raw_dir": "data/raw",
+  "output_path": "idea_reviews/data_requirements_2026-05-26.md",
+  "output_json_path": "idea_reviews/data_requirements_2026-05-26.json",
+  "item_count": 1,
+  "ready_count": 0,
+  "blocked_count": 1,
+  "items": [
+    {
+      "path": "ideas/data_requirements/multi-strategy-fx-futures-20260526.md",
+      "idea_id": "multi-strategy-fx-futures-20260525",
+      "title": "Multi-Strategy FX Futures - Data Requirements",
+      "status": "data_required",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3322717",
+      "rows": [
+        {
+          "requirement": "FX futures or documented spot-FX proxy",
+          "status": "PARTIAL",
+          "local_evidence": "spot symbols present: AUDUSD, EURUSD, GBPUSD, USDCAD, USDJPY; missing core spot symbols: none",
+          "action": "Document spot-FX proxy limits and missing MXN/NZD/CHF futures coverage."
+        },
+        {
+          "requirement": "1-year and 10-year yield history",
+          "status": "MISSING",
+          "local_evidence": "no yield symbols found in data/raw",
+          "action": "Add approved yield datasets or remove carry from any reduced proxy."
+        },
+        {
+          "requirement": "Linked equity index history",
+          "status": "MISSING",
+          "local_evidence": "no linked equity index symbols found in data/raw",
+          "action": "Add index datasets before testing equity-momentum components."
+        },
+        {
+          "requirement": "Commodity index/assets history",
+          "status": "PARTIAL",
+          "local_evidence": "XAUUSD can proxy gold; USOUSD can proxy oil, not Brent",
+          "action": "Add GSCI, Brent, and agriculture data or explicitly omit commodity momentum."
+        },
+        {
+          "requirement": "Futures cost model or spot-FX approximation",
+          "status": "DECISION_REQUIRED",
+          "local_evidence": "strategy-specific cost model not documented for this source",
+          "action": "Document futures costs or spot-FX approximation before candidate conversion."
+        }
+      ]
+    }
+  ]
+}

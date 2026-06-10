@@ -1,0 +1,35 @@
+{
+  "symbol": "EURUSD",
+  "timeframe": "M15",
+  "strategy_name": "vol_filtered_momentum_v1",
+  "tuned_at": "2026-06-03T22:15:09Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.9311
+      },
+      "metrics": {
+        "total_trades": 178.0,
+        "win_rate": 28.65,
+        "profit_factor": 0.9311,
+        "net_profit": -27.5524,
+        "max_drawdown_pct": 0.71,
+        "sharpe_ratio": -0.492,
+        "expectancy": -0.1548
+      },
+      "note": "raw_pf=0.689 costed_pf=0.9311"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.9311,
+    "sharpe_ratio": -0.492,
+    "max_drawdown_pct": 0.71,
+    "total_trades": 178.0,
+    "win_rate": 28.65
+  }
+}

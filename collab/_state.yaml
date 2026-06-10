@@ -1,0 +1,54 @@
+# Collab control state — machine-readable source of truth
+# Agents read this before starting work. Update status and ready flags on completion.
+
+version: 1
+updated: 2026-05-16
+
+agents:
+  claude:
+    status: idle
+    last_task_id: task-20260516-statistical-edge-validation
+    last_activity: 2026-05-16
+  codex:
+    status: idle
+    current_task_id: null
+    last_activity: 2026-05-17
+
+pending_tasks: []
+
+completed_tasks:
+  - id: task-20260516-session-filter-london-ny
+    completed: 2026-05-17
+    note: claude_notes/2026-05-16_session-filter-london-ny.md
+    done_note: codex_notes/2026-05-16_session-filter-london-ny_done.md
+    result: "Closed as already implemented by the search/session-filter fix. hour_utc, session guard and tests are present; order_block_v1 is absent and was skipped."
+
+  - id: task-20260516-archive-stale-repo
+    completed: 2026-05-17
+    note: claude_notes/2026-05-16_archive-stale-repo.md
+    done_note: codex_notes/2026-05-16_archive-stale-repo_done.md
+    result: "Safely skipped because /Users/whs1/Documents/To DEl/V2trading_system no longer exists."
+
+  - id: task-20260516-fix-search-queue-session-filter
+    completed: 2026-05-16
+    note: claude_notes/2026-05-16_fix-search-queue-and-session-filter-bug.md
+    done_note: codex_notes/2026-05-16_fix-search-queue-and-session-filter-bug_done.md
+    result: "208 tests passed. Fresh queue reset, hour_utc features, session guard, and pre-flight skip added."
+
+  - id: task-20260516-statistical-edge-validation
+    completed: 2026-05-16
+    note: claude_notes/2026-05-16_statistical-edge-validation-layer.md
+    done_note: codex_notes/2026-05-16_statistical-edge-validation-layer_done.md
+    result: "203 tests passed. Bootstrap CI now gates KEEP; null model is advisory."
+
+  - id: task-20260516-fix-queue-wf-defaults
+    completed: 2026-05-16
+    note: claude_notes/2026-05-16_fix-queue-walkforward-defaults.md
+    done_note: codex_notes/2026-05-16_fix-queue-walkforward-defaults_done.md
+    result: "198 tests passed. Queue and dashboard defaults now run walk-forward unless explicitly skipped."
+
+  - id: task-20260516-wire-wf-gate
+    completed: 2026-05-16
+    note: claude_notes/2026-05-16_wire-wf-gate-into-scoring.md
+    done_note: codex_notes/2026-05-16_wire-wf-gate-into-scoring_done.md
+    result: "198 tests passed. WF evidence now gates KEEP."

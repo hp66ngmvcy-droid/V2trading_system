@@ -316,3 +316,34 @@ def test_batch_script_skips_already_imported_unless_force(tmp_path) -> None:
     (path / "XAUUSD_M15.parquet").write_text("stub", encoding="utf-8")
     assert _script_eval("import_status_for_file XAUUSD_M15.csv", tmp_path) == "ALREADY_IMPORTED"
     assert _script_eval("FORCE=1 import_status_for_file XAUUSD_M15.csv", tmp_path) == "IMPORT"
+
+
+def test_asset_seed_overrides_fx_relaxes_atr_breakout() -> None:
+    from tar_system.strategies.asset_variants import asset_seed_overrides
+    overrides = asset_seed_overrides("atr_breakout_v3", "EURUSD")
+    assert overrides.get("atr_multiplier") == 1.5
+
+
+def test_asset_seed_overrides_gold_unchanged() -> None:
+    from tar_system.strategies.asset_variants import asset_seed_overrides
+    overrides = asset_seed_overrides("atr_breakout_v3", "XAUUSD")
+    assert overrides == {}
+
+
+def test_asset_seed_overrides_btc_widens_rsi_only() -> None:
+    from tar_system.strategies.asset_variants import asset_seed_overrides
+    overrides = asset_seed_overrides("rsi_only_v3", "BTCUSD")
+    assert overrides.get("rsi_buy_level") == 35.0
+    assert overrides.get("rsi_sell_level") == 65.0
+
+
+def test_asset_seed_overrides_fx_liquidity_sweep_loosened() -> None:
+    from tar_system.strategies.asset_variants import asset_seed_overrides
+    overrides = asset_seed_overrides("liquidity_sweep_v1", "GBPUSD")
+    assert overrides.get("wick_ratio") == 0.35
+    assert overrides.get("min_confidence") == 0.5
+
+
+def test_asset_seed_overrides_unknown_strategy_returns_empty() -> None:
+    from tar_system.strategies.asset_variants import asset_seed_overrides
+    assert asset_seed_overrides("unknown_strategy_xyz", "EURUSD") == {}

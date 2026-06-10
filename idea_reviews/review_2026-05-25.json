@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-05-25T00:29:14+00:00",
+  "review_path": "idea_reviews/review_2026-05-25.md",
+  "review_json_path": "idea_reviews/review_2026-05-25.json",
+  "paper_only": true,
+  "online_ready": true,
+  "online_scout_ran": true,
+  "online_scout_saved_to": "data/research/online_scout/20260525T002918Z_forex-momentum-ema-strategy-edge-paper-backtest.json",
+  "hypothesis_notes_written": 5,
+  "research_queue_count": 5,
+  "backtest_candidate_count": 0,
+  "code_candidate_count": 0,
+  "ui_candidate_count": 0,
+  "security_review_count": 0,
+  "next_actions": [
+    "Run daily online scout with a focused query if new sources are needed",
+    "Review 5 research queue notes and move approved items to backtest/code/UI candidate folders"
+  ]
+}

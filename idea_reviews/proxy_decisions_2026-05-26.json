@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-05-26T10:40:27+00:00",
+  "requirements_dir": "ideas/data_requirements",
+  "raw_dir": "data/raw",
+  "proxy_dir": "ideas/proxy_decisions",
+  "output_path": "idea_reviews/proxy_decisions_2026-05-26.md",
+  "output_json_path": "idea_reviews/proxy_decisions_2026-05-26.json",
+  "drafted_count": 1,
+  "items": [
+    {
+      "idea_id": "multi-strategy-fx-futures-20260525",
+      "title": "Multi-Strategy FX Futures - Data Requirements",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3322717",
+      "note_path": "ideas/proxy_decisions/multi-strategy-fx-futures-20260525-20260526.md",
+      "decision": "DO_NOT_CONVERT_FULL_SOURCE",
+      "proxy_scope": "incomplete_local_spot_price_proxy_only",
+      "blocked_components": [
+        "FX futures or documented spot-FX proxy: PARTIAL",
+        "1-year and 10-year yield history: MISSING",
+        "Linked equity index history: MISSING",
+        "Commodity index/assets history: PARTIAL",
+        "Futures cost model or spot-FX approximation: DECISION_REQUIRED"
+      ]
+    }
+  ]
+}

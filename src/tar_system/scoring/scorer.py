@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import math
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from tar_system.scoring.multi_agent_scorer import ConsensusResult
 
 
 @dataclass
@@ -10,14 +15,20 @@ class ScoreResult:
     score: float
     verdict: str
     reason_codes: list[str]
+    multi_agent: "ConsensusResult | None" = field(default=None, repr=False)
 
 
-def score_strategy(metrics: dict[str, float]) -> ScoreResult:
-    win_rate = metrics.get("win_rate", 0.0)
-    profit_factor = metrics.get("profit_factor", 0.0)
-    drawdown = metrics.get("max_drawdown", 1.0)
-    trade_count = metrics.get("total_trades", 0.0)
-    expectancy = metrics.get("expectancy", 0.0)
+def score_strategy(
+    metrics: dict[str, float],
+    walk_forward_metrics: dict[str, Any] | None = None,
+    timeframe: str = "M15",
+    require_walk_forward: bool = False,
+) -> ScoreResult:
+    win_rate = _safe(metrics.get("win_rate", 0.0), 0.0)
+    profit_factor = _safe(metrics.get("profit_factor", 0.0), 0.0)
+    drawdown = _safe(metrics.get("max_drawdown", 1.0), 1.0)
+    trade_count = _safe(metrics.get("total_trades", 0.0), 0.0)
+    expectancy = _safe(metrics.get("expectancy", 0.0), 0.0)
     reasons: list[str] = []
     score = 0.0
     score += min(win_rate, 0.75) / 0.75 * 20
@@ -33,6 +44,53 @@ def score_strategy(metrics: dict[str, float]) -> ScoreResult:
         reasons.append("HIGH_DRAWDOWN")
     if profit_factor < 1.0:
         reasons.append("WEAK_PROFIT_FACTOR")
+    if require_walk_forward:
+        reasons.extend(_walk_forward_reason_codes(walk_forward_metrics))
     score = max(0.0, min(100.0, score))
-    verdict = "KEEP" if score >= 70 else "REVIEW" if score >= 45 else "KILL"
-    return ScoreResult(score=round(score, 2), verdict=verdict, reason_codes=reasons)
+    verdict = "KEEP" if score >= 70 and not reasons else "REVIEW" if score >= 45 else "KILL"
+    from tar_system.scoring.multi_agent_scorer import score_multi_agent  # noqa: PLC0415
+    return ScoreResult(score=round(score, 2), verdict=verdict, reason_codes=reasons, multi_agent=score_multi_agent(metrics))
+
+
+def _safe(value: object, default: float) -> float:
+    try:
+        f = float(value)  # type: ignore[arg-type]
+        return f if math.isfinite(f) else default
+    except (TypeError, ValueError):
+        return default
+
+
+def _walk_forward_reason_codes(walk_forward_metrics: dict[str, Any] | None) -> list[str]:
+    if not walk_forward_metrics:
+        return ["WF_NOT_RUN"]
+    split_count = int(walk_forward_metrics.get("split_count", walk_forward_metrics.get("window_count", 0)) or 0)
+    if split_count <= 0 or walk_forward_metrics.get("ran") is False:
+        return ["WF_NOT_RUN"]
+    reasons: list[str] = []
+    # Require at least 3 splits and an explicit KEEP verdict.
+    if split_count < 3:
+        reasons.append("WF_TOO_FEW_SPLITS")
+    wf_verdict = str(walk_forward_metrics.get("wf_verdict", "REVIEW") or "REVIEW")
+    if wf_verdict != "KEEP":
+        reasons.append("WF_VERDICT_REVIEW")
+    stitched = walk_forward_metrics.get("stitched_metrics", walk_forward_metrics)
+    if float(stitched.get("total_trades", 0.0) or 0.0) <= 0:
+        reasons.append("WF_NO_TRADES")
+    if float(stitched.get("max_drawdown", 0.0) or 0.0) > 0.20:
+        reasons.append("WF_HIGH_DRAWDOWN")
+    if float(stitched.get("profit_factor", 0.0) or 0.0) < 1.10:
+        reasons.append("WF_WEAK_PROFIT_FACTOR")
+    stability = float(walk_forward_metrics.get("parameter_stability_score", 0.0) or 0.0)
+    if stability <= 0.0:
+        stability_payload = walk_forward_metrics.get("parameter_stability", {})
+        if isinstance(stability_payload, dict):
+            stability = float(stability_payload.get("stability_score", 0.0) or 0.0)
+    if stability < 50.0:
+        reasons.append("WF_UNSTABLE_PARAMETERS")
+    # Missing or invalid CI is treated as failing — omitting CI must not be a bypass.
+    bootstrap_ci = walk_forward_metrics.get("bootstrap_ci")
+    if not isinstance(bootstrap_ci, dict) or "spans_zero" not in bootstrap_ci:
+        reasons.append("WF_BOOTSTRAP_CI_MISSING")
+    elif bool(bootstrap_ci.get("spans_zero", True)):
+        reasons.append("WF_BOOTSTRAP_CI_SPANS_ZERO")
+    return reasons

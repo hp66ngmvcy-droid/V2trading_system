@@ -1,0 +1,35 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "M15",
+  "strategy_name": "rsi_reversion_v1",
+  "tuned_at": "2026-05-30T19:36:56Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.9658
+      },
+      "metrics": {
+        "total_trades": 3006.0,
+        "win_rate": 45.14,
+        "profit_factor": 0.9658,
+        "net_profit": -82.8135,
+        "max_drawdown_pct": 1.97,
+        "sharpe_ratio": -0.2505,
+        "expectancy": -0.0275
+      },
+      "note": "raw_pf=0.8746 costed_pf=0.9658"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.9658,
+    "sharpe_ratio": -0.2505,
+    "max_drawdown_pct": 1.97,
+    "total_trades": 3006.0,
+    "win_rate": 45.14
+  }
+}
