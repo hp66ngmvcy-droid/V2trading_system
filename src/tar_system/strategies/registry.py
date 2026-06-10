@@ -17,6 +17,7 @@ from .atr_breakout_fixed import ATRBreakoutFixed
 from .liquidity_sweep_v1 import LiquiditySweepV1
 from .rsi_trend_v4 import RSITrendV4
 from .vol_filtered_momentum_v1 import VolFilteredMomentumV1
+from .cross_asset_correlation_v1 import CrossAssetCorrelationV1
 
 REGISTRY = {
     "gold_v2": GoldV2,
@@ -32,6 +33,7 @@ REGISTRY = {
     "liquidity_sweep_v1": LiquiditySweepV1,
     "rsi_trend_v4": RSITrendV4,
     "vol_filtered_momentum_v1": VolFilteredMomentumV1,
+    "cross_asset_correlation_v1": CrossAssetCorrelationV1,
 }
 
 
