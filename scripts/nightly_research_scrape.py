@@ -66,7 +66,9 @@ def scrape(url: str, timeout: int, max_chars: int) -> str | None:
     try:
         result = subprocess.run(
             ["webclaw", url, "--format", "text"],
-            capture_output=True, text=True, timeout=timeout
+            capture_output=True,
+            text=True,
+            timeout=timeout,
         )
         if result.returncode != 0:
             log.warning("webclaw failed for %s: %s", url, result.stderr[:200])
@@ -86,7 +88,7 @@ def fetch_api(source: dict, max_chars: int) -> str | None:
     try:
         if api_type == "finnhub_news":
             if not FINNHUB_KEY:
-                log.warning("FINNHUB_API_KEY not set — skipping %s", source["label"])
+                log.warning("Finnhub key not configured — skipping %s", source["label"])
                 return None
             category = source.get("category", "general")
             r = httpx.get(
@@ -96,7 +98,11 @@ def fetch_api(source: dict, max_chars: int) -> str | None:
             )
             r.raise_for_status()
             items = r.json()[:10]  # top 10 headlines
-            lines = [f"{i['headline']}\n{i.get('summary','')}" for i in items if i.get("headline")]
+            lines = [
+                f"{i['headline']}\n{i.get('summary', '')}"
+                for i in items
+                if i.get("headline")
+            ]
             return "\n\n".join(lines)[:max_chars] or None
 
         if api_type == "twelve_data_quote":
@@ -114,8 +120,8 @@ def fetch_api(source: dict, max_chars: int) -> str | None:
             text = (
                 f"Symbol: {d.get('symbol')} | Name: {d.get('name')}\n"
                 f"Price: {d.get('close')} | Change: {d.get('percent_change')}%\n"
-                f"52w high: {d.get('fifty_two_week',{}).get('high')} | "
-                f"52w low: {d.get('fifty_two_week',{}).get('low')}\n"
+                f"52w high: {d.get('fifty_two_week', {}).get('high')} | "
+                f"52w low: {d.get('fifty_two_week', {}).get('low')}\n"
                 f"Volume: {d.get('volume')} | Exchange: {d.get('exchange')}\n"
                 f"Timestamp: {d.get('datetime')}"
             )
@@ -142,7 +148,12 @@ def _call_llm(cfg: dict, payload: dict, headers: dict | None) -> dict | None:
     return json.loads(content)
 
 
-def classify(text: str, cfg: dict, fallback_cfg: dict | None = None, fallback_headers: dict | None = None) -> dict | None:
+def classify(
+    text: str,
+    cfg: dict,
+    fallback_cfg: dict | None = None,
+    fallback_headers: dict | None = None,
+) -> dict | None:
     payload = {
         "model": cfg["model"],
         "messages": [{"role": "user", "content": CLASSIFY_PROMPT.format(text=text)}],
@@ -179,7 +190,7 @@ def write_result(
     confidence = float(classification.get("confidence", 0.0))
     summary = classification.get("one_line_summary", "")
     url = source["url"]
-    uid = hashlib.md5(url.encode()).hexdigest()[:10]
+    uid = hashlib.sha256(url.encode()).hexdigest()[:10]
     slug = summary.lower()[:50].replace(" ", "-").replace("/", "-")
     slug = "".join(c for c in slug if c.isalnum() or c == "-")
     filename = f"nightly-{date_str}-{uid}-{slug}.md"
@@ -189,10 +200,10 @@ idea_id: nightly-{date_str}-{uid}
 title: {summary}
 status: hypothesis_extracted
 source_url: {url}
-source_label: {source['label']}
+source_label: {source["label"]}
 category: {category}
 confidence: {confidence}
-tags: {json.dumps(source.get('tags', []))}
+tags: {json.dumps(source.get("tags", []))}
 created_from: nightly_research_scrape
 created_at: {datetime.now(timezone.utc).isoformat()}
 ---
@@ -202,7 +213,7 @@ created_at: {datetime.now(timezone.utc).isoformat()}
 ## Classification
 - Category: `{category}`
 - Confidence: {confidence}
-- Source: [{source['label']}]({url})
+- Source: [{source["label"]}]({url})
 
 ## Extracted Text (truncated)
 
@@ -228,9 +239,13 @@ def main() -> None:
     lm_cfg = cfg["lm_studio"]
     wc_cfg = cfg["webclaw"]
     nim_cfg = cfg.get("nvidia_nim")
-    nim_headers = {"Authorization": f"Bearer {NVIDIA_KEY}"} if (nim_cfg and NVIDIA_KEY) else None
+    nim_headers = (
+        {"Authorization": f"Bearer {NVIDIA_KEY}"} if (nim_cfg and NVIDIA_KEY) else None
+    )
     if nim_cfg and not NVIDIA_KEY:
-        log.warning("nvidia_nim configured but NVIDIA_API_KEY not set — fallback disabled")
+        log.warning(
+            "nvidia_nim configured but NVIDIA_API_KEY not set — fallback disabled"
+        )
     out_cfg = cfg["output"]
     min_conf = float(out_cfg.get("min_confidence", 0.5))
     output_dir = REPO_ROOT / out_cfg["research_queue_dir"]
@@ -256,8 +271,11 @@ def main() -> None:
 
         if args.dry_run:
             log.info("[DRY RUN] scraped %d chars from %s", len(text), url)
-            classification = {"category": "strategy_idea", "confidence": 0.9,
-                              "one_line_summary": "dry-run placeholder"}
+            classification = {
+                "category": "strategy_idea",
+                "confidence": 0.9,
+                "one_line_summary": "dry-run placeholder",
+            }
         else:
             classification = classify(text, lm_cfg, nim_cfg, nim_headers)
             if not classification:
@@ -283,12 +301,20 @@ def main() -> None:
             failed += 1
             continue
 
-        source.setdefault("url", f"api://{source.get('api_type','unknown')}/{source.get('label','')}")
+        source.setdefault(
+            "url",
+            f"api://{source.get('api_type', 'unknown')}/{source.get('label', '')}",
+        )
 
         if args.dry_run:
-            log.info("[DRY RUN] api fetched %d chars from %s", len(text), source["label"])
-            classification = {"category": "risk_update", "confidence": 0.9,
-                              "one_line_summary": "dry-run api placeholder"}
+            log.info(
+                "[DRY RUN] api fetched %d chars from %s", len(text), source["label"]
+            )
+            classification = {
+                "category": "risk_update",
+                "confidence": 0.9,
+                "one_line_summary": "dry-run api placeholder",
+            }
         else:
             classification = classify(text, lm_cfg, nim_cfg, nim_headers)
             if not classification:
@@ -299,7 +325,9 @@ def main() -> None:
         confidence = float(classification.get("confidence", 0.0))
 
         if category == "reject" or confidence < min_conf:
-            log.info("rejected (%s conf=%.2f): %s", category, confidence, source["label"])
+            log.info(
+                "rejected (%s conf=%.2f): %s", category, confidence, source["label"]
+            )
             rejected += 1
             continue
 
