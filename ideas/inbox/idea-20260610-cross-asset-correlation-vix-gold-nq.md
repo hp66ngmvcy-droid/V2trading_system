@@ -67,15 +67,30 @@ The correlation breakdown between NQ and Gold during high-VIX regimes is the tra
 - Walk-forward KEEP verdict
 - Must survive 2022 OOS period (inflation regime test)
 
+## Backtest Results (2026-06-08)
+
+**Default params** (corr_threshold=-0.3, vix_threshold=25): 2 trades, 0 wins, PF 0.0
+**Loose params** (corr_threshold=-0.2, vix_threshold=20): 12 trades, 42% win rate, raw PF 1.51 → costed PF 0.70
+
+Both trigger sets activated on documented failure modes:
+- Feb 2020 COVID crash: Gold sold off with equities (margin calls, liquidity crisis)
+- Apr 2022 inflation shock: VIX elevated + Gold sold off on real rate spike
+
+**Verdict:** BACK TO RESEARCH — below 30-trade minimum, 2022 confirmed failure.
+
 ## Next Steps
 
 1. ~~Check data availability~~ ✅ All data fetched and validated
-2. Build strategy module: `src/tar_system/strategies/cross_asset_correlation_v1.py`
-3. Backtest on daily bars: `./bt tune GOLD D1 cross_asset_correlation_v1`
-4. Validate 2022 OOS period specifically
+2. ~~Build strategy module~~ ✅ `src/tar_system/strategies/cross_asset_correlation_v1.py`
+3. ~~Backtest on daily bars~~ ✅ — insufficient trades, failure modes confirmed
+4. ~~Validate 2022 OOS period~~ ✅ — FAILS (inflation regime overwhelms safe-haven)
+5. **Add inflation/real-yield regime gate** — suppress entry when 10Y real yield rising sharply (TIPS spread)
+6. **Fetch TIPS/10Y data** — need `data/validated/TIPS_D1.parquet` as suppression input
+7. Re-backtest with real-yield gate active
 
 ## Notes
 
 - Low trade frequency expected — do not promote on <30 trades
 - Phase 2 single-asset (Gold long only) before Phase 3 multi-asset (Gold long + NQ short)
-- 2022 is the critical OOS stress test — if it fails there, rethink inflation gate
+- 2022 is the critical OOS stress test — confirmed failing; real-yield gate is required fix
+- Strategy module exists and is in registry — ready to retest once gate is added

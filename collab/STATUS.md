@@ -8,12 +8,12 @@ Rule: if a note is marked `DONE` and `Review State` is `REVIEWED`, do not reopen
 
 | Priority | State | Owner | Note | Summary | Next Action |
 | --- | --- | --- | --- | --- | --- |
-| 1 | IN_PROGRESS | Claude | [2026-06-04_momentum-crossover-v3-param-sweep.md](claude_notes/2026-06-04_momentum-crossover-v3-param-sweep.md) | `momentum_crossover_v3` — 12k trades overtrading, sweeping min_hold_bars to reduce frequency | Await min_hold_bars=5 result |
 
 ## Completed And Reviewed
 
 | State | Review State | Note | Completion | Summary |
 | --- | --- | --- | --- | --- |
+| DONE | REVIEWED | [2026-06-04_momentum-crossover-v3-param-sweep.md](claude_notes/2026-06-04_momentum-crossover-v3-param-sweep.md) | [done note](codex_notes/2026-06-04_momentum-crossover-v3-param-sweep_done.md) | KILL — min_hold_bars=5 cuts to 8k trades but PF 0.99 < 1.2, Sharpe -0.04. No session window helps. Low win rate (33%) unfixable. |
 | DONE | REVIEWED | [2026-06-04_gold-v2-param-sweep-m15-m30.md](claude_notes/2026-06-04_gold-v2-param-sweep-m15-m30.md) | [done note](codex_notes/2026-06-04_gold-v2-param-sweep-m15-m30_done.md) | KILL M15+M30 — no param combo clears gates. Tighter RSI kills trades, higher R:R hurts quality. M5 unaffected. |
 | DONE | REVIEWED | [2026-06-04_fix-h1-hour-utc-missing.md](claude_notes/2026-06-04_fix-h1-hour-utc-missing.md) | [done note](codex_notes/2026-06-04_fix-h1-hour-utc-missing_done.md) | H1 hour_utc rebuilt; gold_v2 H1 went from 0→PF 1.12; vol_filtered_momentum_v1 H1 retuned. Neither MT5-ready yet but bug fixed. |
 | DONE | REVIEWED | [2026-05-17_fix-search-terminates-early.md](claude_notes/2026-05-17_fix-search-terminates-early.md) | [done note](codex_notes/2026-05-17_fix-search-terminates-early_done.md) | next_generation fallback added; search no longer dies at gen 0 when all seeds score <35. 236 tests pass. |
