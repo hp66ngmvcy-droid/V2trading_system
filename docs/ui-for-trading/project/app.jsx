@@ -279,7 +279,7 @@ function useTweaks(defaults) {
 
   function setTweak(key, value) {
     setState(s => ({ ...s, [key]: value }));
-    window.parent.postMessage({ type: "__edit_mode_set_keys", edits: { [key]: value } }, "*");
+    window.parent.postMessage({ type: "__edit_mode_set_keys", edits: { [key]: value } }, window.location.origin);
   }
 
   return { ...state, setTweak };
@@ -295,13 +295,13 @@ function TweaksPanel({ title = "Tweaks", children }) {
       if (e.data?.type === "__deactivate_edit_mode") setOpen(false);
     }
     window.addEventListener("message", onMsg);
-    window.parent.postMessage({ type: "__edit_mode_available" }, "*");
+    window.parent.postMessage({ type: "__edit_mode_available" }, window.location.origin);
     return () => window.removeEventListener("message", onMsg);
   }, []);
 
   function close() {
     setOpen(false);
-    window.parent.postMessage({ type: "__edit_mode_dismissed" }, "*");
+    window.parent.postMessage({ type: "__edit_mode_dismissed" }, window.location.origin);
   }
 
   if (!open) return null;
