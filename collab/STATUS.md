@@ -8,11 +8,21 @@ Rule: if a note is marked `DONE` and `Review State` is `REVIEWED`, do not reopen
 
 | Priority | State | Owner | Note | Summary | Next Action |
 | --- | --- | --- | --- | --- | --- |
+| 1 | TODO | Codex | [2026-07-05_arsb-v1-bug-fixed.md](claude_notes/2026-07-05_arsb-v1-bug-fixed.md) | Tuned `compression_atr_mult=12.5`, `buffer_mult=0.15`; retest 41 trades, PF 2.10, score 82.45 REVIEW. Still blocked by OOS/CI gates. | **START HERE:** `source venv/bin/activate && PYTHONPATH=src python -m tar_system.cli run-walk-forward --strategy arsb_v1 --symbol XAUUSD --timeframe M15 && python -m tar_system.cli score-strategy --strategy arsb_v1 --symbol XAUUSD --timeframe M15` |
+
+## Linear / Orchestrator Drafts
+
+- [linear_ticket_plan_2026-07-05.md](linear_ticket_plan_2026-07-05.md) — Linear-ready ticket plan for PER-48 to PER-54.
+- [linear_tickets_2026-07-05.csv](linear_tickets_2026-07-05.csv) — compact ticket import/paste sheet.
+- [orchestrator_fable_handoff_2026-07-05.md](orchestrator_fable_handoff_2026-07-05.md) — Fable/Codex handoff and review order.
 
 ## Completed And Reviewed
 
 | State | Review State | Note | Completion | Summary |
 | --- | --- | --- | --- | --- |
+| DONE | REVIEWED | [2026-07-05_gold-v2-overlap-session-filter.md](claude_notes/2026-07-05_gold-v2-overlap-session-filter.md) | [done note](codex_notes/2026-07-05_ordered-work-queue_done.md) | OVERLAP gate added; XAUUSD M15 retest 52 trades, PF 1.49, Sharpe 2.74, score 79.09 REVIEW. |
+| DONE | REVIEWED | [2026-07-05_rsi-reversion-ny-session-threshold.md](claude_notes/2026-07-05_rsi-reversion-ny-session-threshold.md) | [done note](codex_notes/2026-07-05_ordered-work-queue_done.md) | RSI thresholds tightened to 25/75 and NEW_YORK gate added; 548 trades, PF 1.06, score 76.88 REVIEW. |
+| DONE | REVIEWED | ordered work queue extras | [done note](codex_notes/2026-07-05_ordered-work-queue_done.md) | Added bounded mutate-retest loop, event-study pattern scanner, retested cross_asset_correlation_v2 on XAUUSD M15, and tuned ARSB compression/buffer. |
 | DONE | REVIEWED | [2026-06-04_momentum-crossover-v3-param-sweep.md](claude_notes/2026-06-04_momentum-crossover-v3-param-sweep.md) | [done note](codex_notes/2026-06-04_momentum-crossover-v3-param-sweep_done.md) | KILL — min_hold_bars=5 cuts to 8k trades but PF 0.99 < 1.2, Sharpe -0.04. No session window helps. Low win rate (33%) unfixable. |
 | DONE | REVIEWED | [2026-06-04_gold-v2-param-sweep-m15-m30.md](claude_notes/2026-06-04_gold-v2-param-sweep-m15-m30.md) | [done note](codex_notes/2026-06-04_gold-v2-param-sweep-m15-m30_done.md) | KILL M15+M30 — no param combo clears gates. Tighter RSI kills trades, higher R:R hurts quality. M5 unaffected. |
 | DONE | REVIEWED | [2026-06-04_fix-h1-hour-utc-missing.md](claude_notes/2026-06-04_fix-h1-hour-utc-missing.md) | [done note](codex_notes/2026-06-04_fix-h1-hour-utc-missing_done.md) | H1 hour_utc rebuilt; gold_v2 H1 went from 0→PF 1.12; vol_filtered_momentum_v1 H1 retuned. Neither MT5-ready yet but bug fixed. |

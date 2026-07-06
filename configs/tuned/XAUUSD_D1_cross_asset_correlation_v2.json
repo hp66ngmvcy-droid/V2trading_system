@@ -1,0 +1,82 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "D1",
+  "strategy_name": "cross_asset_correlation_v2",
+  "tuned_at": "2026-07-05T10:54:11Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "PF 0.00 < 1.2; Sharpe 0.00 < 1.5; DD 100.00% > 5.0%; trades 0 < 30",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": true,
+      "best_config": {
+        "with_costs_pf": 1.2365
+      },
+      "metrics": {
+        "total_trades": 5.0,
+        "win_rate": 20.0,
+        "profit_factor": 1.2365,
+        "net_profit": 23.0045,
+        "max_drawdown_pct": 0.97,
+        "sharpe_ratio": 1.1342,
+        "expectancy": 4.6009
+      },
+      "note": "raw_pf=2.9207 costed_pf=1.2365"
+    },
+    {
+      "stage": "stage2_atr",
+      "passed": true,
+      "best_config": {
+        "percentile": 0.95,
+        "cap": 80.7911,
+        "total_trades": 5.0,
+        "win_rate": 20.0,
+        "profit_factor": 0.9528,
+        "net_profit": -4.5966,
+        "max_drawdown_pct": 0.97,
+        "sharpe_ratio": -0.2321,
+        "expectancy": -0.9193
+      },
+      "metrics": {
+        "percentile": 0.95,
+        "cap": 80.7911,
+        "total_trades": 5.0,
+        "win_rate": 20.0,
+        "profit_factor": 0.9528,
+        "net_profit": -4.5966,
+        "max_drawdown_pct": 0.97,
+        "sharpe_ratio": -0.2321,
+        "expectancy": -0.9193
+      },
+      "note": "best percentile=0.95 cap=None"
+    },
+    {
+      "stage": "stage3_sessions",
+      "passed": false,
+      "best_config": {
+        "label": "7-20 (baseline)",
+        "start_utc": 7,
+        "end_utc": 20
+      },
+      "metrics": {
+        "start_utc": 7,
+        "end_utc": 20
+      },
+      "note": "best session=7-20 (baseline)"
+    }
+  ],
+  "optimal_config": {
+    "atr_cap": 0.0,
+    "atr_percentile": 0.95,
+    "session_start_utc": 7,
+    "session_end_utc": 20,
+    "session_label": "7-20 (baseline)"
+  },
+  "summary": {
+    "profit_factor": 0.0,
+    "sharpe_ratio": 0.0,
+    "max_drawdown_pct": 0.0,
+    "total_trades": 0.0,
+    "win_rate": 0.0
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "M15",
+  "strategy_name": "tpbr_v1",
+  "tuned_at": "2026-06-21T09:59:59Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.8951
+      },
+      "metrics": {
+        "total_trades": 167.0,
+        "win_rate": 36.53,
+        "profit_factor": 0.8951,
+        "net_profit": -29.0413,
+        "max_drawdown_pct": 0.36,
+        "sharpe_ratio": -0.8162,
+        "expectancy": -0.1739
+      },
+      "note": "raw_pf=0.868 costed_pf=0.8951"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.8951,
+    "sharpe_ratio": -0.8162,
+    "max_drawdown_pct": 0.36,
+    "total_trades": 167.0,
+    "win_rate": 36.53
+  }
+}

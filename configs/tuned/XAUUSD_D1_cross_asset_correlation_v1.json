@@ -1,0 +1,35 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "D1",
+  "strategy_name": "cross_asset_correlation_v1",
+  "tuned_at": "2026-07-05T10:38:47Z",
+  "mt5_ready": false,
+  "mt5_block_reason": "STAGE1_COST_KILL",
+  "stages": [
+    {
+      "stage": "stage1_costs",
+      "passed": false,
+      "best_config": {
+        "with_costs_pf": 0.489
+      },
+      "metrics": {
+        "total_trades": 22.0,
+        "win_rate": 27.27,
+        "profit_factor": 0.489,
+        "net_profit": -224.6618,
+        "max_drawdown_pct": 3.3,
+        "sharpe_ratio": -4.9528,
+        "expectancy": -10.2119
+      },
+      "note": "raw_pf=1.1206 costed_pf=0.489"
+    }
+  ],
+  "optimal_config": {},
+  "summary": {
+    "profit_factor": 0.489,
+    "sharpe_ratio": -4.9528,
+    "max_drawdown_pct": 3.3,
+    "total_trades": 22.0,
+    "win_rate": 27.27
+  }
+}
