@@ -42,8 +42,8 @@ def _rsi_reversion_params(symbol: str, timeframe: str) -> dict[str, object]:
     session_filter = symbol not in {"BTCUSD", "ETHUSD", "XRPUSD"}
     params: dict[str, object] = {
         "rsi_period": 14,
-        "oversold": 30,
-        "overbought": 70,
+        "oversold": 25,
+        "overbought": 75,
         "bb_period": 20,
         "session_filter": session_filter,
     }

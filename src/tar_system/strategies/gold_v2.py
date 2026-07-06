@@ -43,12 +43,14 @@ class GoldV2:
             return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None, reason_code=rc.SESSION_FILTER_BLOCK, **base)
         if regime not in {Regime.TRENDING.value, "TRENDING"}:
             return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None, reason_code=rc.SIGNAL_HOLD, **base)
-        ema_fast = float(row.get("ema_fast", 0) or 0)
-        ema_slow = float(row.get("ema_slow", 0) or 0)
-        ema_fast_slope = float(row.get("ema_fast_slope", 0) or 0)
-        ema_slow_slope = float(row.get("ema_slow_slope", 0) or 0)
-        rsi = float(row.get("rsi", 50) or 50)
-        atr_median = float(row.get("atr_median_50", atr) or 0)
+        def _f(val, default=0.0):
+            return float(val) if val is not None and not pd.isna(val) else float(default)
+        ema_fast = _f(row.get("ema_fast"), 0)
+        ema_slow = _f(row.get("ema_slow"), 0)
+        ema_fast_slope = _f(row.get("ema_fast_slope"), 0)
+        ema_slow_slope = _f(row.get("ema_slow_slope"), 0)
+        rsi = _f(row.get("rsi"), 50)
+        atr_median = _f(row.get("atr_median_50", atr), 0)
         if atr_median > 0 and atr < self.atr_floor_multiplier * atr_median:
             return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None, reason_code=rc.ATR_TOO_LOW_COMPRESSION, **base)
         if atr_median > 0 and atr > self.atr_ceil_multiplier * atr_median:
@@ -81,12 +83,11 @@ class GoldV2:
 
 
 def _session_blocked(row: pd.Series) -> bool:
-    if "is_liquid_session" in row.index:
-        value = row.get("is_liquid_session", True)
-        if isinstance(value, str):
-            return value.strip().lower() in {"false", "0", "no", "off"}
-        return not bool(value)
+    if "session_label" in row.index:
+        label = row.get("session_label")
+        if label is not None and not pd.isna(label):
+            return str(label).strip().upper() != "OVERLAP"
     if "hour_utc" in row.index:
         hour = int(float(row.get("hour_utc", 0) or 0))
-        return not (7 <= hour < 20)
+        return not (12 <= hour < 16)
     return False

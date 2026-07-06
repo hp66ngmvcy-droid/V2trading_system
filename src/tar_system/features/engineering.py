@@ -63,6 +63,23 @@ def build_features(
     work["hour_utc"] = timestamps.dt.hour
     work["session_label"] = work["hour_utc"].map(_session_label)
     work["is_liquid_session"] = work["session_label"].isin({"LONDON", "OVERLAP", "NEW_YORK"})
+
+    # Asian session range (01:00–06:45 UTC) — used by ARSB_v1
+    # For each bar, look up the completed Asian box from the same calendar day.
+    ts = pd.to_datetime(work["timestamp"], utc=True)
+    work["_date_utc"] = ts.dt.date
+    asian_mask = (ts.dt.hour >= 1) & (ts.dt.hour < 7)
+    asian_bars = work[asian_mask].copy()
+    asian_bars["_date_utc"] = pd.to_datetime(asian_bars["timestamp"], utc=True).dt.date
+    asian_daily = asian_bars.groupby("_date_utc").agg(
+        asian_high=("high", "max"),
+        asian_low=("low", "min"),
+    ).reset_index()
+    asian_daily["asian_range"] = asian_daily["asian_high"] - asian_daily["asian_low"]
+    asian_daily["asian_mid"] = (asian_daily["asian_high"] + asian_daily["asian_low"]) / 2
+    work = work.merge(asian_daily, on="_date_utc", how="left")
+    work = work.drop(columns=["_date_utc"])
+
     return work
 
 

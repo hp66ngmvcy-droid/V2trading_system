@@ -101,15 +101,16 @@ def test_session_features_liquid_and_asian() -> None:
     df = sample_df(2)
     df["timestamp"] = pd.to_datetime(["2026-01-01 08:00:00", "2026-01-01 02:00:00"], utc=True)
     features = build_features(df, "XAUUSD", "M15")
-    assert features.loc[0, "session_label"] == "LONDON"
-    assert bool(features.loc[0, "is_liquid_session"]) is True
-    assert features.loc[1, "session_label"] == "ASIAN"
-    assert bool(features.loc[1, "is_liquid_session"]) is False
+    by_hour = features.set_index("hour_utc")
+    assert by_hour.loc[8, "session_label"] == "LONDON"
+    assert bool(by_hour.loc[8, "is_liquid_session"]) is True
+    assert by_hour.loc[2, "session_label"] == "ASIAN"
+    assert bool(by_hour.loc[2, "is_liquid_session"]) is False
 
 
 def _gold_row(**updates: object) -> pd.Series:
     payload: dict[str, object] = {
-        "timestamp": pd.Timestamp("2026-01-01 08:00:00", tz="UTC"),
+        "timestamp": pd.Timestamp("2026-01-01 12:00:00", tz="UTC"),
         "symbol": "XAUUSD",
         "timeframe": "M15",
         "close": 100.0,
@@ -148,8 +149,8 @@ def _vol_momentum_row(**updates: object) -> pd.Series:
     return pd.Series(payload)
 
 
-def test_gold_v2_blocks_asian_session_when_filter_enabled() -> None:
-    signal = GoldV2(session_filter=True).generate_signal(_gold_row(is_liquid_session=False), "TRENDING")
+def test_gold_v2_blocks_non_overlap_session_when_filter_enabled() -> None:
+    signal = GoldV2(session_filter=True).generate_signal(_gold_row(session_label="LONDON"), "TRENDING")
     assert signal.side == "HOLD"
     assert signal.reason_code == "SESSION_FILTER_BLOCK"
 
@@ -160,14 +161,16 @@ def test_gold_v2_allows_missing_session_columns() -> None:
     assert signal.reason_code != "SESSION_FILTER_BLOCK"
 
 
-def test_gold_v2_handles_string_session_filter_values() -> None:
-    signal = GoldV2(session_filter=True).generate_signal(_gold_row(is_liquid_session="False"), "TRENDING")
+def test_gold_v2_uses_hour_fallback_for_overlap_filter() -> None:
+    signal = GoldV2(session_filter=True).generate_signal(_gold_row(hour_utc=13), "TRENDING")
+    assert signal.reason_code != "SESSION_FILTER_BLOCK"
+    signal = GoldV2(session_filter=True).generate_signal(_gold_row(hour_utc=16), "TRENDING")
     assert signal.side == "HOLD"
     assert signal.reason_code == "SESSION_FILTER_BLOCK"
 
 
-def test_gold_v2_generates_signal_during_london_session() -> None:
-    signal = GoldV2(session_filter=True).generate_signal(_gold_row(), "TRENDING")
+def test_gold_v2_generates_signal_during_overlap_session() -> None:
+    signal = GoldV2(session_filter=True).generate_signal(_gold_row(session_label="OVERLAP"), "TRENDING")
     assert signal.side == "BUY"
 
 

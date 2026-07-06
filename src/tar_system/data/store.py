@@ -7,7 +7,10 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 
+from tar_system.cache.tiered_cache import MemoryTTLCache
 from tar_system.settings import DATA_DIR
+
+_DATAFRAME_CACHE = MemoryTTLCache(max_entries=32)
 
 
 def _path(kind: str, symbol: str, timeframe: str) -> Path:
@@ -20,22 +23,38 @@ def save_validated_data(df: pd.DataFrame, symbol: str, timeframe: str, data_hash
     saved = df.copy()
     saved["data_hash"] = data_hash
     saved.to_parquet(output, index=False)
+    _DATAFRAME_CACHE.set(str(output), saved.copy())
     return output
 
 
 def load_validated_data(symbol: str, timeframe: str) -> pd.DataFrame:
-    return pd.read_parquet(_path("validated", symbol, timeframe))
+    return _load_parquet_cached(_path("validated", symbol, timeframe))
 
 
 def save_feature_data(df: pd.DataFrame, symbol: str, timeframe: str) -> Path:
     output = _path("features", symbol, timeframe)
     output.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(output, index=False)
+    _DATAFRAME_CACHE.set(str(output), df.copy())
     return output
 
 
 def load_feature_data(symbol: str, timeframe: str) -> pd.DataFrame:
-    return pd.read_parquet(_path("features", symbol, timeframe))
+    return _load_parquet_cached(_path("features", symbol, timeframe))
+
+
+def clear_dataframe_cache() -> None:
+    _DATAFRAME_CACHE.clear()
+
+
+def _load_parquet_cached(path: Path) -> pd.DataFrame:
+    key = str(path)
+    cached = _DATAFRAME_CACHE.get(key)
+    if isinstance(cached, pd.DataFrame):
+        return cached.copy()
+    df = pd.read_parquet(path)
+    _DATAFRAME_CACHE.set(key, df.copy())
+    return df.copy()
 
 
 def filter_by_date_range(df: pd.DataFrame, from_date: str | None = None, to_date: str | None = None) -> pd.DataFrame:

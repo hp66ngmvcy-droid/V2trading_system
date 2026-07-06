@@ -10,6 +10,7 @@ from tar_system.cli import build_parser
 from tar_system.data.store import save_feature_data
 from tar_system.features.engineering import build_features
 from tar_system.memory.strategy_memory import record_strategy_memory
+from tar_system.optimisation.mutate_loop import mutate_retest_loop
 from tar_system.optimisation.optimiser import optimise_asset
 from tar_system.optimisation.parameter_space import one_parameter_mutations
 
@@ -72,6 +73,22 @@ def test_optimise_asset_uses_walk_forward_ranges_when_available(tmp_path, monkey
     assert result.search_ranges == {"fast_ema": (8.0, 13.0)}
 
 
+def test_mutate_retest_loop_caps_iterations_and_writes_artifact(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    Path("configs/brokers").mkdir(parents=True)
+    source = Path("/Users/whs1/Dev/V2trading_system/configs/brokers/current_broker_demo.yaml")
+    Path("configs/brokers/current_broker_demo.yaml").write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    save_feature_data(_features(), "BTCUSD", "M5")
+
+    result = mutate_retest_loop("gold_v2", "BTCUSD", "M5", "current_broker_demo", max_iterations=99, max_rows=80)
+
+    assert result.max_iterations == 5
+    assert len(result.iterations) <= 5
+    assert result.best is not None
+    assert all(item.score >= 0 for item in result.iterations)
+    assert Path("data/results/gold_v2_BTCUSD_M5_mutate_retest_loop.json").exists()
+
+
 def test_compare_assets_uses_available_metrics_and_missing_data(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     Path("data/results").mkdir(parents=True)
@@ -110,4 +127,5 @@ def test_expanded_memory_write_accepts_new_schema(tmp_path, monkeypatch) -> None
 def test_upgrade_b_cli_commands_exist() -> None:
     commands = build_parser()._subparsers._group_actions[0].choices.keys()  # type: ignore[attr-defined]
     assert "optimise-asset" in commands
+    assert "mutate-retest-loop" in commands
     assert "compare-assets" in commands

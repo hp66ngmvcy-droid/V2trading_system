@@ -107,7 +107,7 @@ def fetch_api(source: dict, max_chars: int) -> str | None:
 
         if api_type == "twelve_data_quote":
             if not TWELVE_KEY:
-                log.warning("TWELVE_DATA_KEY not set — skipping %s", source["label"])
+                log.warning("Twelve Data key not configured — skipping %s", source["label"])
                 return None
             symbol = source.get("symbol", "XAU/USD")
             r = httpx.get(
@@ -156,7 +156,7 @@ def classify(
 ) -> dict | None:
     payload = {
         "model": cfg["model"],
-        "messages": [{"role": "user", "content": CLASSIFY_PROMPT.format(text=text)}],
+        "messages": [{"role": "user", "content": CLASSIFY_PROMPT.format(text=text[:8000].replace('{', '{{').replace('}', '}}'))}],
         "max_tokens": cfg["max_tokens"],
         "temperature": cfg["temperature"],
     }

@@ -19,10 +19,13 @@ from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
+from tar_system.cache.tiered_cache import MemoryTTLCache
+
 load_dotenv()
 
 _HIGHLIGHTS = {"highlights": True}
 _CACHE_DIR = Path("data/research/online_scout/cache")
+_SEARCH_MEMORY_CACHE = MemoryTTLCache(max_entries=128)
 _MAX_HIGHLIGHTS = 3
 _MAX_HIGHLIGHT_CHARS = 280
 _MULTI_AGENT_LENSES = {
@@ -146,6 +149,9 @@ def _cache_path(query: str, num_results: int, source_quality: str, cache_dir: st
 
 
 def _read_cache(path: Path) -> list[dict[str, Any]] | None:
+    rows = _SEARCH_MEMORY_CACHE.get(str(path))
+    if isinstance(rows, list):
+        return rows
     if not path.exists():
         return None
     try:
@@ -153,10 +159,14 @@ def _read_cache(path: Path) -> list[dict[str, Any]] | None:
     except (OSError, json.JSONDecodeError):
         return None
     rows = payload.get("results") if isinstance(payload, dict) else None
-    return rows if isinstance(rows, list) else None
+    if isinstance(rows, list):
+        _SEARCH_MEMORY_CACHE.set(str(path), rows)
+        return rows
+    return None
 
 
 def _write_cache(path: Path, query: str, rows: list[dict[str, Any]]) -> None:
+    _SEARCH_MEMORY_CACHE.set(str(path), rows)
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({"query": query, "results": rows}, indent=2, default=str), encoding="utf-8")

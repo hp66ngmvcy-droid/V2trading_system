@@ -14,8 +14,8 @@ from tar_system.strategies.base import Signal
 @dataclass
 class RsiReversionV1:
     rsi_period: int = 14
-    oversold: float = 30
-    overbought: float = 70
+    oversold: float = 25
+    overbought: float = 75
     bb_period: int = 20
     session_filter: bool = True
     atr_multiplier: float = 1.2
@@ -68,12 +68,11 @@ class RsiReversionV1:
 
 
 def _session_blocked(row: pd.Series) -> bool:
-    if "is_liquid_session" in row.index:
-        value = row.get("is_liquid_session", True)
-        if isinstance(value, str):
-            return value.strip().lower() in {"false", "0", "no", "off"}
-        return not bool(value)
+    if "session_label" in row.index:
+        label = row.get("session_label")
+        if label is not None and not pd.isna(label):
+            return str(label).strip().upper() != "NEW_YORK"
     if "hour_utc" in row.index:
         hour = int(float(row.get("hour_utc", 0) or 0))
-        return not (7 <= hour < 20)
+        return not (16 <= hour < 20)
     return False

@@ -84,9 +84,9 @@ Both trigger sets activated on documented failure modes:
 2. ~~Build strategy module~~ ✅ `src/tar_system/strategies/cross_asset_correlation_v1.py`
 3. ~~Backtest on daily bars~~ ✅ — insufficient trades, failure modes confirmed
 4. ~~Validate 2022 OOS period~~ ✅ — FAILS (inflation regime overwhelms safe-haven)
-5. **Add inflation/real-yield regime gate** — suppress entry when 10Y real yield rising sharply (TIPS spread)
-6. **Fetch TIPS/10Y data** — need `data/validated/TIPS_D1.parquet` as suppression input
-7. Re-backtest with real-yield gate active
+5. ~~**Add inflation/real-yield regime gate**~~ ✅ — DXY 5-day slope adopted as TIPS proxy (TIPS_D1 data unavailable). Rising DXY suppresses entry, approximating 2022 inflation regime. `dxy_slope_window` set to 5. See PER-26.
+6. ~~**Fetch TIPS/10Y data**~~ ✅ — superseded by DXY slope gate
+7. **Re-backtest with DXY gate active** — run once July 2026 XAUUSD data is imported (PER-22/PER-46)
 
 ## Notes
 

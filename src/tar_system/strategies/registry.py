@@ -18,6 +18,12 @@ from .liquidity_sweep_v1 import LiquiditySweepV1
 from .rsi_trend_v4 import RSITrendV4
 from .vol_filtered_momentum_v1 import VolFilteredMomentumV1
 from .cross_asset_correlation_v1 import CrossAssetCorrelationV1
+from .cross_asset_correlation_v2 import CrossAssetCorrelationV2
+from .baf_v1 import BafV1
+from .vwmr_v1 import VwmrV1
+from .lsmr_v1 import LsmrV1
+from .arsb_v1 import ArsbV1
+from .tpbr_v1 import TpbrV1
 
 REGISTRY = {
     "gold_v2": GoldV2,
@@ -34,6 +40,12 @@ REGISTRY = {
     "rsi_trend_v4": RSITrendV4,
     "vol_filtered_momentum_v1": VolFilteredMomentumV1,
     "cross_asset_correlation_v1": CrossAssetCorrelationV1,
+    "cross_asset_correlation_v2": CrossAssetCorrelationV2,
+    "baf_v1": BafV1,
+    "vwmr_v1": VwmrV1,
+    "lsmr_v1": LsmrV1,
+    "arsb_v1": ArsbV1,
+    "tpbr_v1": TpbrV1,
 }
 
 

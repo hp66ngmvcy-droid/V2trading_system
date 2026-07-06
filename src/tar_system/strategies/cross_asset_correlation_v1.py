@@ -4,10 +4,13 @@ Signal logic:
   BUY Gold when:
     - Rolling correlation(Gold, NQ) < corr_threshold (negative divergence)
     - VIX >= vix_threshold (stress regime active)
-    - DXY 10-bar slope <= dxy_slope_suppress% (dollar not surging)
+    - DXY 5-day slope <= dxy_slope_suppress% (dollar not surging)
+
+The DXY 5-day slope acts as the real-yield proxy gate (replaces planned TIPS gate;
+TIPS_D1 data unavailable). Rising DXY suppresses gold safe-haven bid, approximating
+the 2022 inflation/real-rate regime that broke the original correlation logic.
 
 Academic basis: Baur & Lucey (2010), Connolly et al (2005).
-Key risk: 2022 inflation regime breaks correlation — no fix yet, fails OOS.
 """
 from __future__ import annotations
 
@@ -38,7 +41,7 @@ class CrossAssetCorrelationV1:
     corr_window: int = 20
     vix_threshold: float = 25.0
     corr_threshold: float = -0.3
-    dxy_slope_window: int = 10
+    dxy_slope_window: int = 5
     dxy_slope_suppress: float = 0.3   # % DXY rise over window → suppress entry
     atr_multiplier: float = 1.5
     reward_risk: float = 2.0

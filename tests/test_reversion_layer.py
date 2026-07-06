@@ -32,7 +32,7 @@ def _raw(rows: int = 40) -> pd.DataFrame:
 
 def _row(**updates: object) -> pd.Series:
     payload: dict[str, object] = {
-        "timestamp": pd.Timestamp("2026-01-01 08:00:00", tz="UTC"),
+        "timestamp": pd.Timestamp("2026-01-01 16:00:00", tz="UTC"),
         "symbol": "XAUUSD",
         "timeframe": "M15",
         "close": 100.0,
@@ -63,15 +63,17 @@ def test_price_in_band_formula_edges() -> None:
 
 def test_rsi_reversion_buy_sell_and_regime_blocks() -> None:
     strategy = RsiReversionV1()
-    assert strategy.generate_signal(_row(rsi=25.0, price_in_band=0.1), "RANGING").side == "BUY"
-    assert strategy.generate_signal(_row(rsi=75.0, price_in_band=0.9), "RANGING").side == "SELL"
+    assert strategy.generate_signal(_row(rsi=24.9, price_in_band=0.1), "RANGING").side == "BUY"
+    assert strategy.generate_signal(_row(rsi=75.1, price_in_band=0.9), "RANGING").side == "SELL"
     assert strategy.generate_signal(_row(), "TRENDING").reason_code == "REGIME_FILTER_BLOCK"
     assert strategy.generate_signal(_row(), "VOLATILE").reason_code == "REGIME_FILTER_BLOCK"
 
 
 def test_rsi_reversion_session_filter_and_btc_variant() -> None:
-    signal = RsiReversionV1(session_filter=True).generate_signal(_row(is_liquid_session=False), "RANGING")
+    signal = RsiReversionV1(session_filter=True).generate_signal(_row(session_label="LONDON"), "RANGING")
     assert signal.reason_code == "SESSION_FILTER_BLOCK"
+    allowed = RsiReversionV1(session_filter=True).generate_signal(_row(session_label="NEW_YORK", rsi=24.9), "RANGING")
+    assert allowed.side == "BUY"
     assert default_variant("rsi_reversion_v1", "BTCUSD", "M15").parameters["session_filter"] is False
 
 

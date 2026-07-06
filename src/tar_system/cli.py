@@ -547,6 +547,26 @@ def optimise_asset_cmd(args: argparse.Namespace) -> None:
     print(json.dumps(asdict(result), indent=2, default=str))
 
 
+def mutate_retest_loop_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.optimisation.mutate_loop import mutate_retest_loop
+
+    result = mutate_retest_loop(
+        args.strategy,
+        args.symbol,
+        args.timeframe,
+        args.broker,
+        args.max_iterations,
+        args.max_rows,
+        args.require_walk_forward,
+    )
+    payload = asdict(result)
+    best = result.best
+    payload["best"] = asdict(best) if best else None
+    print(json.dumps(payload, indent=2, default=str))
+
+
 def compare_assets_cmd(args: argparse.Namespace) -> None:
     from dataclasses import asdict
 
@@ -554,6 +574,16 @@ def compare_assets_cmd(args: argparse.Namespace) -> None:
 
     rows = compare_assets(args.strategy, args.timeframe, args.broker)
     print(json.dumps([asdict(row) for row in rows], indent=2, default=str))
+
+
+def analyze_buckets_cmd(args: argparse.Namespace) -> None:
+    from dataclasses import asdict
+
+    from tar_system.analysis.bucket_analyzer import analyze_buckets
+
+    dimensions = [d.strip() for d in args.by.split(",") if d.strip()]
+    rows = analyze_buckets(args.strategy, args.symbol, args.timeframe, dimensions, getattr(args, "broker", "current_broker_demo"))
+    print(json.dumps([asdict(r) for r in rows], indent=2, default=str))
 
 
 def tune_strategy_cmd(args: argparse.Namespace) -> None:
@@ -1870,11 +1900,29 @@ def build_parser() -> argparse.ArgumentParser:
     optimise_asset_parser.add_argument("--max-rows", type=int, default=20000)
     optimise_asset_parser.set_defaults(func=optimise_asset_cmd)
 
+    mutate_loop_parser = subparsers.add_parser("mutate-retest-loop")
+    mutate_loop_parser.add_argument("--strategy", required=True)
+    mutate_loop_parser.add_argument("--symbol", required=True)
+    mutate_loop_parser.add_argument("--timeframe", required=True)
+    mutate_loop_parser.add_argument("--broker", default="current_broker_demo")
+    mutate_loop_parser.add_argument("--max-iterations", type=int, default=5)
+    mutate_loop_parser.add_argument("--max-rows", type=int, default=0)
+    mutate_loop_parser.add_argument("--require-walk-forward", action="store_true")
+    mutate_loop_parser.set_defaults(func=mutate_retest_loop_cmd)
+
     compare_assets_parser = subparsers.add_parser("compare-assets")
     compare_assets_parser.add_argument("--strategy", required=True)
     compare_assets_parser.add_argument("--timeframe", required=True)
     compare_assets_parser.add_argument("--broker", default="current_broker_demo")
     compare_assets_parser.set_defaults(func=compare_assets_cmd)
+
+    analyze_buckets_parser = subparsers.add_parser("analyze-buckets")
+    analyze_buckets_parser.add_argument("--strategy", required=True)
+    analyze_buckets_parser.add_argument("--symbol", required=True)
+    analyze_buckets_parser.add_argument("--timeframe", required=True)
+    analyze_buckets_parser.add_argument("--by", default="regime,session", help="Comma-separated dimensions: regime,session,atr_pct")
+    analyze_buckets_parser.add_argument("--broker", default="current_broker_demo")
+    analyze_buckets_parser.set_defaults(func=analyze_buckets_cmd)
 
     compare_variants_parser = subparsers.add_parser("compare-variants")
     compare_variants_parser.add_argument("--symbol", required=True)

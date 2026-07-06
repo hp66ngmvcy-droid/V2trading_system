@@ -8,6 +8,7 @@ import pandas as pd
 from tar_system.analysis.strategy_ranker import balanced_score, rank_strategies
 from tar_system.cache.result_cache import make_cache_key
 from tar_system.discovery.mutation_engine import mutate_blueprint
+from tar_system.discovery.pattern_scanner import run_event_study, scan_builtin_patterns
 from tar_system.discovery.strategy_blueprint import StrategyBlueprint
 from tar_system.discovery.strategy_idea_parser import parse_strategy_idea
 from tar_system.obsidian.exporter import export_result
@@ -107,6 +108,29 @@ def test_mutation_engine_controlled_mutation() -> None:
     mutations = mutate_blueprint(blueprint)
     assert mutations
     assert all(item.strategy_name != blueprint.strategy_name for item in mutations)
+
+
+def test_pattern_scanner_event_study_and_builtin_masks() -> None:
+    rows = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2026-01-01", periods=30, freq="15min"),
+            "symbol": "XAUUSD",
+            "timeframe": "M15",
+            "close": [100 + i for i in range(30)],
+            "high": [100.5 + i for i in range(30)],
+            "low": [99.5 + i for i in range(30)],
+            "rsi": [25 if i in {5, 10, 15} else 50 for i in range(30)],
+            "atr": [1.0] * 20 + [2.0] * 10,
+        }
+    )
+    study = run_event_study(rows, rows["rsi"] <= 30, "rsi_oversold", horizons=(1, 4))
+    assert study.pattern_name == "rsi_oversold"
+    assert study.total_events == 3
+    assert study.horizon_stats[0].events == 3
+    assert study.horizon_stats[0].hit_rate == 1.0
+
+    builtins = scan_builtin_patterns(rows, horizons=(1,), lookback=5)
+    assert {study.pattern_name for study in builtins}.issuperset({"rsi_oversold", "range_breakout_up", "atr_expansion"})
 
 
 def test_dashboard_import() -> None:

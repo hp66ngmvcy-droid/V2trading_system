@@ -7,7 +7,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from tar_system.cache.tiered_cache import MemoryTTLCache
 from tar_system.settings import DATA_DIR
+
+_RESULT_MEMORY_CACHE = MemoryTTLCache(max_entries=256)
 
 
 def make_cache_key(
@@ -39,20 +42,31 @@ def cache_path(cache_key: str) -> Path:
 def load_cached_result(cache_key: str, force: bool = False) -> dict[str, Any] | None:
     if force:
         return None
+    cached = _RESULT_MEMORY_CACHE.get(cache_key)
+    if isinstance(cached, dict):
+        return cached
     path = cache_path(cache_key)
     if not path.exists():
         return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    result = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(result, dict):
+        _RESULT_MEMORY_CACHE.set(cache_key, result)
+    return result
 
 
-def save_cached_result(cache_key: str, result: dict[str, Any]) -> Path:
+def save_cached_result(cache_key: str, result: dict[str, Any], ttl_seconds: int | None = None) -> Path:
     path = cache_path(cache_key)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
+    _RESULT_MEMORY_CACHE.set(cache_key, result, ttl_seconds=ttl_seconds)
     try:
         from tar_system.cache.artifact_cache import record_artifact
 
-        record_artifact(cache_key, "result_cache", path, metadata={"keys": sorted(result.keys())})
+        record_artifact(cache_key, "result_cache", path, metadata={"keys": sorted(result.keys())}, ttl_seconds=ttl_seconds)
     except Exception:
         pass
     return path
+
+
+def clear_result_memory_cache() -> None:
+    _RESULT_MEMORY_CACHE.clear()

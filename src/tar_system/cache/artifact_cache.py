@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +58,7 @@ def record_artifact(
     date_from: str | None = None,
     date_to: str | None = None,
     metadata: dict[str, Any] | None = None,
+    ttl_seconds: int | None = None,
 ) -> dict[str, Any]:
     _ensure_table()
     payload = {
@@ -74,15 +75,16 @@ def record_artifact(
         "path": str(path),
         "metadata_json": json.dumps(metadata or {}),
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)).isoformat() if ttl_seconds is not None else None,
     }
     with _connect() as connection:
         connection.execute(
             """
             INSERT OR REPLACE INTO artifact_cache (
                 cache_key, artifact_type, strategy, symbol, timeframe, data_hash,
-                params_hash, broker_hash, date_from, date_to, path, metadata_json, created_at
+                params_hash, broker_hash, date_from, date_to, path, metadata_json, created_at, expires_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             list(payload.values()),
         )
@@ -104,7 +106,18 @@ def get_artifact(cache_key: str) -> dict[str, Any] | None:
 
 def has_valid_artifact(cache_key: str) -> bool:
     artifact = get_artifact(cache_key)
-    return bool(artifact and Path(str(artifact.get("path", ""))).exists())
+    if not artifact or not Path(str(artifact.get("path", ""))).exists():
+        return False
+    expires_at = artifact.get("expires_at")
+    if expires_at:
+        try:
+            expiry = datetime.fromisoformat(str(expires_at))
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=timezone.utc)
+            return datetime.now(timezone.utc) <= expiry
+        except ValueError:
+            return False
+    return True
 
 
 def save_json_artifact(cache_key: str, artifact_type: str, path: str | Path, payload: dict[str, Any], **metadata: Any) -> Path:
@@ -140,10 +153,14 @@ def _ensure_table() -> None:
                 date_to VARCHAR,
                 path VARCHAR,
                 metadata_json JSON,
-                created_at TIMESTAMP
+                created_at TIMESTAMP,
+                expires_at TIMESTAMP
             )
             """
         )
+        existing = {row[1] for row in connection.execute("PRAGMA table_info('artifact_cache')").fetchall()}
+        if "expires_at" not in existing:
+            connection.execute("ALTER TABLE artifact_cache ADD COLUMN expires_at TIMESTAMP")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_artifact_target ON artifact_cache(artifact_type, strategy, symbol, timeframe)")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_artifact_hash ON artifact_cache(data_hash, params_hash, broker_hash)")
 
