@@ -1,54 +1,70 @@
 # Collab control state — machine-readable source of truth
 # Agents read this before starting work. Update status and ready flags on completion.
+# Note: STATUS.md is the human-readable index; this file is the machine-readable equivalent.
 
-version: 1
-updated: 2026-05-16
+version: 2
+updated: 2026-08-15
 
 agents:
   claude:
     status: idle
-    last_task_id: task-20260516-statistical-edge-validation
-    last_activity: 2026-05-16
+    last_task_id: arsb_v1-kill-2026-08-15
+    last_activity: 2026-08-15
   codex:
     status: idle
     current_task_id: null
-    last_activity: 2026-05-17
+    last_activity: 2026-08-02
 
 pending_tasks: []
 
 completed_tasks:
-  - id: task-20260516-session-filter-london-ny
-    completed: 2026-05-17
-    note: claude_notes/2026-05-16_session-filter-london-ny.md
-    done_note: codex_notes/2026-05-16_session-filter-london-ny_done.md
-    result: "Closed as already implemented by the search/session-filter fix. hour_utc, session guard and tests are present; order_block_v1 is absent and was skipped."
+  - id: council-review-all-ideas-2026-07-31
+    completed: 2026-08-02
+    note: claude_notes/2026-07-31_council-review-all-ideas.md
+    result: "KILL: LSMR_v1, BAF_v1. PARK: VWMR_v1, arsb_v1. APPROVE: D1 filter, seasonality, plateau sweep. All Codex items 1-5 complete. 405 tests pass."
 
-  - id: task-20260516-archive-stale-repo
-    completed: 2026-05-17
-    note: claude_notes/2026-05-16_archive-stale-repo.md
-    done_note: codex_notes/2026-05-16_archive-stale-repo_done.md
-    result: "Safely skipped because /Users/whs1/Documents/To DEl/V2trading_system no longer exists."
+  - id: per-28-d1-ema-filter
+    completed: 2026-08-02
+    done_note: codex_notes/2026-08-02_per-28-d1-ema-filter_done.md
+    result: "D1 EMA filter implemented. WF PF=0.05 — worse than base. Kill gate triggered."
 
-  - id: task-20260516-fix-search-queue-session-filter
-    completed: 2026-05-16
-    note: claude_notes/2026-05-16_fix-search-queue-and-session-filter-bug.md
-    done_note: codex_notes/2026-05-16_fix-search-queue-and-session-filter-bug_done.md
-    result: "208 tests passed. Fresh queue reset, hour_utc features, session guard, and pre-flight skip added."
+  - id: arsb-v1-kill-2026-08-15
+    completed: 2026-08-15
+    done_note: codex_notes/2026-08-15_arsb_v1_killed.md
+    result: "arsb_v1 KILLED. D1 filter WF PF=0.05. Flat plateau sweep. No recoverable edge."
+
+  - id: task-20260730-agent-research-scout-skill
+    completed: 2026-08-02
+    note: claude_notes/2026-07-30_agent-research-scout-skill.md
+    done_note: codex_notes/2026-07-30_agent-research-scout-skill_done.md
+    result: "skills/agent-research-scout.md reviewed. Read-only, source-cited, paper-only."
+
+  - id: task-20260730-cortex-learning-loop-skill
+    completed: 2026-08-02
+    note: claude_notes/2026-07-30_cortex-learning-loop-skill.md
+    done_note: codex_notes/2026-07-30_cortex-learning-loop-skill_done.md
+    result: "skills/cortex-learning-loop.md reviewed. Candidate rules only, no auto-trading changes."
 
   - id: task-20260516-statistical-edge-validation
     completed: 2026-05-16
-    note: claude_notes/2026-05-16_statistical-edge-validation-layer.md
-    done_note: codex_notes/2026-05-16_statistical-edge-validation-layer_done.md
     result: "203 tests passed. Bootstrap CI now gates KEEP; null model is advisory."
 
   - id: task-20260516-fix-queue-wf-defaults
     completed: 2026-05-16
-    note: claude_notes/2026-05-16_fix-queue-walkforward-defaults.md
-    done_note: codex_notes/2026-05-16_fix-queue-walkforward-defaults_done.md
     result: "198 tests passed. Queue and dashboard defaults now run walk-forward unless explicitly skipped."
 
   - id: task-20260516-wire-wf-gate
     completed: 2026-05-16
-    note: claude_notes/2026-05-16_wire-wf-gate-into-scoring.md
-    done_note: codex_notes/2026-05-16_wire-wf-gate-into-scoring_done.md
     result: "198 tests passed. WF evidence now gates KEEP."
+
+  - id: task-20260516-fix-search-queue-session-filter
+    completed: 2026-05-16
+    result: "208 tests passed. Fresh queue reset, hour_utc features, session guard added."
+
+  - id: task-20260516-session-filter-london-ny
+    completed: 2026-05-17
+    result: "Closed — already implemented. hour_utc and session guard present."
+
+  - id: task-20260516-archive-stale-repo
+    completed: 2026-05-17
+    result: "Safely skipped — stale repo path no longer exists."
