@@ -1,0 +1,217 @@
+{
+  "date": "2026-09-08",
+  "session": "london_open",
+  "source": "claude_ai_scheduled_review",
+  "BTCUSD": {
+    "current_ref": "79333",
+    "bias": "neutral_bearish_relative_weakness",
+    "decision": "WAIT",
+    "key_levels": {
+      "resistance": [
+        80100,
+        80500,
+        81700
+      ],
+      "support": [
+        79500,
+        79200,
+        78800,
+        78000,
+        77200
+      ]
+    },
+    "scenarios": {
+      "buy_reclaim": {
+        "entry": "79100-79500",
+        "invalidation": 78700,
+        "targets": [
+          80200,
+          81000
+        ]
+      },
+      "sell_failed_reclaim": {
+        "entry": "79700-80100",
+        "invalidation": 80500,
+        "targets": [
+          79000,
+          78200
+        ]
+      },
+      "sell_breakdown": {
+        "entry": "<78800",
+        "invalidation": 79400,
+        "targets": [
+          78000,
+          77200
+        ]
+      },
+      "buy_breakout": {
+        "entry": ">80400",
+        "invalidation": 79900,
+        "targets": [
+          81100,
+          81800
+        ]
+      }
+    },
+    "no_trade_zone": "79200-79700",
+    "confidence": {
+      "sell": "64%",
+      "buy": "59%"
+    },
+    "london_scenarios": {
+      "sell_failed_rebound": {
+        "entry": "79700-80000",
+        "invalidation": 80400,
+        "targets": [
+          79000,
+          78300
+        ]
+      },
+      "buy_sweep_reclaim": {
+        "entry": "79000-79400",
+        "invalidation": 78700,
+        "targets": [
+          80000,
+          80700
+        ]
+      },
+      "sell_breakdown": {
+        "entry": "<78800",
+        "invalidation": 79400,
+        "targets": [
+          78000,
+          77200
+        ]
+      },
+      "buy_breakout": {
+        "entry": ">80200",
+        "invalidation": 79700,
+        "targets": [
+          80900,
+          81700
+        ]
+      }
+    }
+  },
+  "XAUUSD": {
+    "current_ref": "4432.79",
+    "bias": "bullish_recovery",
+    "decision": "WAIT",
+    "asia_reference": {
+      "liquidity_sweep": 4395,
+      "recovery_to": "low_4400s"
+    },
+    "key_levels": {
+      "resistance": [
+        4455,
+        4470,
+        4480,
+        4500
+      ],
+      "support": [
+        4415,
+        4410,
+        4405,
+        4390,
+        4365,
+        4340
+      ]
+    },
+    "scenarios": {
+      "sell_rejection": {
+        "entry": "4435-4455",
+        "invalidation": 4470,
+        "targets": [
+          4415,
+          4390
+        ]
+      },
+      "buy_retest": {
+        "entry": "4405-4415",
+        "invalidation": 4390,
+        "targets": [
+          4440,
+          4460
+        ]
+      },
+      "buy_breakout": {
+        "entry": ">4455",
+        "invalidation": 4440,
+        "targets": [
+          4480,
+          4500
+        ]
+      },
+      "sell_breakdown": {
+        "entry": "<4390",
+        "invalidation": 4410,
+        "targets": [
+          4365,
+          4340
+        ]
+      }
+    },
+    "no_trade_zone": "4425-4440",
+    "confidence": {
+      "buy": "67%",
+      "sell": "61%"
+    },
+    "london_scenarios": {
+      "buy_break_retest": {
+        "entry": "4440-4450",
+        "invalidation": 4425,
+        "targets": [
+          4475,
+          4500
+        ]
+      },
+      "sell_liquidity_rejection": {
+        "entry": "4440-4455",
+        "invalidation": 4470,
+        "targets": [
+          4415,
+          4395
+        ]
+      },
+      "buy_pullback": {
+        "entry": "4410-4420",
+        "invalidation": 4395,
+        "targets": [
+          4445,
+          4470
+        ]
+      }
+    },
+    "asia_outcome": {
+      "support_held": "4405-4415",
+      "breakdown_triggered": false
+    }
+  },
+  "macro": {
+    "treasury_2y": 4.37,
+    "treasury_10y": 4.78,
+    "treasury_30y": 5.24,
+    "treasury_date": "2026-09-05",
+    "treasury_note": "Labor Day closure Mon \u2014 stale until today NY open",
+    "brent": 97.0,
+    "wti": 92.65,
+    "fed_sep_hike_prob": "58%",
+    "btc_etf_weekly_inflow": "986.9m",
+    "key_events": [
+      "US_CPI_2026-09-11",
+      "ECB_2026-09-11",
+      "Fed_2026-09-16"
+    ],
+    "dxy": 98.82,
+    "treasury_10y_change_bp": 0.6,
+    "us_eq_futures": "SP500 -0.1%"
+  },
+  "v2_ranking": [
+    "XAU BUY >4450 + 5m retest",
+    "XAU SELL 4440-4455 rejection",
+    "BTC SELL 79.7-80.0k rejection",
+    "BTC BUY 79.0-79.4k sweep+reclaim",
+    "WAIT both if London stays in range"
+  ]
+}

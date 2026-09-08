@@ -1,0 +1,56 @@
+{
+  "date": "2026-09-07",
+  "source": "chatgpt_three_session_review",
+  "sessions_present": ["asia_open", "london_handover"],
+  "sessions_expected": ["asia_open", "london_handover", "us_open"],
+  "macro": {
+    "fed_hike_probability_sept": 0.58,
+    "us10y_yield": 4.78,
+    "dxy": 99.14,
+    "vix": 14.5,
+    "us_markets_open": false,
+    "note": "US Labor Day — no live Treasury/VIX/equity signal"
+  },
+  "XAUUSD": {
+    "current_price": 4426,
+    "daily_bias": "SELL",
+    "sell_confidence": 0.67,
+    "buy_confidence": 0.63,
+    "key_levels": {
+      "bearish_invalidation": 4470,
+      "sell_zone_high": 4455,
+      "sell_zone_low": 4435,
+      "no_trade_high": 4435,
+      "no_trade_low": 4415,
+      "buy_zone_high": 4420,
+      "buy_zone_low": 4410,
+      "asia_liquidity_low": 4395,
+      "sell_continuation_trigger": 4390
+    },
+    "top_scenario": "SELL_REJECTION",
+    "top_scenario_entry": [4435, 4455],
+    "top_scenario_targets": [4410, 4390],
+    "top_scenario_invalidation": 4470
+  },
+  "BTCUSD": {
+    "current_price": 80100,
+    "daily_bias": "BUY",
+    "buy_confidence": 0.66,
+    "sell_confidence": 0.57,
+    "key_levels": {
+      "bearish_invalidation": 81800,
+      "sell_zone_high": 81300,
+      "sell_zone_low": 80800,
+      "breakout_pivot": 80400,
+      "no_trade_high": 80400,
+      "no_trade_low": 79700,
+      "buy_zone_high": 79700,
+      "buy_zone_low": 79400,
+      "breakdown_trigger": 79000
+    },
+    "top_scenario": "BUY_PULLBACK",
+    "top_scenario_entry": [79400, 79700],
+    "top_scenario_targets": [80500, 81200],
+    "top_scenario_invalidation": 79000
+  }
+}
