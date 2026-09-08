@@ -153,9 +153,9 @@ def derive_stable_parameter_ranges(fold_parameters: list[dict[str, float]]) -> t
     keys = sorted(set().union(*(params.keys() for params in fold_parameters)))
     if not keys:
         return {}, 0.0
-    # Static strategies return identical params every fold — stability is unmeasurable.
+    # Fixed-param strategies have identical params every fold — that is perfect stability (100%).
     if len(fold_parameters) > 1 and all(fp == fold_parameters[0] for fp in fold_parameters):
-        return {}, 0.0
+        return {}, 100.0
     ranges: dict[str, tuple[float, float]] = {}
     stable = 0
     for key in keys:
@@ -171,7 +171,7 @@ def derive_stable_parameter_ranges(fold_parameters: list[dict[str, float]]) -> t
 
 
 def _strategy_parameters(strategy: object) -> dict[str, float]:
-    keys = ["fast_ema", "slow_ema", "rsi_buy_threshold", "rsi_sell_threshold", "atr_multiplier", "reward_risk"]
+    keys = ["fast_ema", "slow_ema", "rsi_buy_level", "rsi_sell_level", "rsi_buy_threshold", "rsi_sell_threshold", "atr_multiplier", "reward_risk"]
     return {key: float(getattr(strategy, key)) for key in keys if isinstance(getattr(strategy, key, None), (int, float))}
 
 
