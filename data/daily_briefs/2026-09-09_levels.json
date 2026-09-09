@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-09",
+  "session": "Asia Open",
+  "macro": {
+    "dxy": 98.9,
+    "us_2y": 4.40,
+    "us_10y": 4.80,
+    "real_yield_10y": 2.45,
+    "vix": 15.7,
+    "brent": 99.5,
+    "fed_sep_hike_prob": 0.60
+  },
+  "instruments": {
+    "XAUUSD": {
+      "reference": 4442.80,
+      "bias": "bearish-neutral",
+      "cleaner": true,
+      "scenarios": {
+        "sell_rejection": {"entry_low": 4425, "entry_high": 4440, "invalid": 4458, "t1": 4400, "t2": 4381},
+        "sell_break": {"entry": "below_4400", "invalid": 4415, "t1": 4381, "t2": 4366},
+        "buy_reversal": {"entry": "above_4458_hold", "invalid": 4435, "t1": 4475, "t2": 4500}
+      },
+      "no_trade_zone": [4400, 4425],
+      "confidence": {"sell": 0.68, "buy": 0.54},
+      "current_call": "WAIT"
+    },
+    "BTCUSD": {
+      "reference": 78300,
+      "bias": "bearish",
+      "cleaner": false,
+      "scenarios": {
+        "sell_rebound": {"entry_low": 78900, "entry_high": 79400, "invalid": 79800, "t1": 78200, "t2": 77500},
+        "sell_break": {"entry": "below_78000", "invalid": 78500, "t1": 77400, "t2": 76800},
+        "buy_reversal": {"entry": "above_79500_hold", "invalid": 78900, "t1": 80200, "t2": 81000}
+      },
+      "no_trade_zone": [78100, 78800],
+      "confidence": {"sell": 0.66, "buy": 0.55},
+      "current_call": "WAIT"
+    }
+  },
+  "v2_ranked_calls": [
+    "XAU SELL on confirmed 4425-4440 rejection",
+    "BTC SELL on confirmed 78.9k-79.4k rejection",
+    "XAU SELL below 4400 after failed reclaim",
+    "BTC SELL below 78k after failed reclaim"
+  ]
+}
