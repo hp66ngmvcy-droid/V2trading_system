@@ -1,0 +1,54 @@
+{
+  "date": "2026-09-10",
+  "session": "Asia Open",
+  "macro": {
+    "BTC": 78300,
+    "XAU_spot": 4414,
+    "DXY": 98.83,
+    "US_2Y_pct": 4.42,
+    "US_10Y_pct": 4.84,
+    "real_yield_10Y_pct": 2.43,
+    "VIX": 16.46,
+    "Brent": 101.21
+  },
+  "BTCUSD": {
+    "current": 78300,
+    "sell_rebound_entry": [78800, 79100],
+    "sell_rebound_invalid": 79500,
+    "sell_rebound_t1": 78200,
+    "sell_rebound_t2": 77600,
+    "sell_breakdown_entry_below": 78000,
+    "sell_breakdown_invalid": 78500,
+    "sell_breakdown_t1": 77400,
+    "sell_breakdown_t2": 76800,
+    "buy_reversal_entry_above": 79500,
+    "buy_reversal_invalid": 78900,
+    "buy_reversal_t1": 80200,
+    "buy_reversal_t2": 81000,
+    "no_trade_zone": [78100, 78700],
+    "judgement_sell_pct": 68,
+    "judgement_buy_pct": 55
+  },
+  "XAUUSD": {
+    "current": 4414,
+    "buy_retest_entry": [4400, 4410],
+    "buy_retest_invalid": 4385,
+    "buy_retest_t1": 4430,
+    "buy_retest_t2": 4450,
+    "sell_rejection_entry": [4435, 4450],
+    "sell_rejection_invalid": 4465,
+    "sell_rejection_t1": 4410,
+    "sell_rejection_t2": 4390,
+    "sell_breakdown_entry_below": 4385,
+    "sell_breakdown_invalid": 4405,
+    "sell_breakdown_t1": 4360,
+    "sell_breakdown_t2": 4340,
+    "no_trade_zone": [4410, 4430],
+    "judgement_buy_pct": 63,
+    "judgement_sell_pct": 61
+  },
+  "key_events": [
+    {"time_uk": "13:30", "event": "US PPI", "date": "2026-09-10"},
+    {"time_uk": "13:30", "event": "US CPI", "date": "2026-09-11"}
+  ]
+}
