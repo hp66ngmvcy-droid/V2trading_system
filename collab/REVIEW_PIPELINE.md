@@ -33,6 +33,35 @@ From Key Stats panel (Gold Regime Tracker):
 - Gold above MA + corr broken → reserve bid possible, dips are bought
 - Gold below MA + MIXED → no structural support, tighter stops
 
+### Opening Type (record per asset per session — first 30 min)
+
+From today's brief (`data/daily_briefs/YYYY-MM-DD.md`):
+
+| Asset | Session | Opening Type | Action |
+|-------|---------|-------------|--------|
+| XAU | Asia | | |
+| XAU | London | | |
+| XAU | US | | |
+| BTC | Asia | | |
+| BTC | London | | |
+| BTC | US | | |
+
+**Opening type × regime cross-check:**
+
+| Opening Type | + Regime | Verdict |
+|-------------|----------|---------|
+| Opening Drive | RESERVE or RATES GOLD | Highest conviction — enter early, trail |
+| Test Drive | Any directional regime | Enter on confirmed pullback hold |
+| Range Rejection | MIXED/UNCLEAR | Wait for sweep completion before entry |
+| Open Auction | MIXED/UNCLEAR | Fade extremes only, no breakout trades |
+| Opening Drive | FEAR GOLD | Caution — fear spikes reverse; size down |
+| Open Auction | RESERVE GOLD | Dip buyer in play — fade sells, not buys |
+
+**BTC-specific notes:**
+- Opening Drive on BTC = ETF inflow day; do not fade, trail aggressively
+- Range Rejection on BTC = Asia liquidity sweep common; wait for 5m close back inside
+- Open Auction on BTC = ETF flows absent; avoid; wait for next session
+
 ---
 
 ## STAGE 3 — Strategy Review
@@ -84,12 +113,15 @@ Complete before closing session:
 
 ```
 Date:
-Regime:          [RATES / DOLLAR / RESERVE / FEAR / MIXED]
-Confidence:      [%]
-Gold vs MA:      [+/- %]
-Strategy:        [name] — [KEEP / REVIEW / HOLD]
-Calendar gate:   [GO / REDUCE / HOLD]
-Final verdict:   [ACTIVE / QUEUE / DEFER]
+Regime:               [RATES / DOLLAR / RESERVE / FEAR / MIXED]
+Confidence:           [%]
+Gold vs MA:           [+/- %]
+XAU opening type:     [Open Auction / Range Rejection / Test Drive / Opening Drive]
+BTC opening type:     [Open Auction / Range Rejection / Test Drive / Opening Drive]
+Opening × regime:     [verdict from cross-check table]
+Strategy:             [name] — [KEEP / REVIEW / HOLD]
+Calendar gate:        [GO / REDUCE / HOLD]
+Final verdict:        [ACTIVE / QUEUE / DEFER]
 Notes:
 ```
 
