@@ -105,10 +105,11 @@ def test_no_bar_ts_returns_dict_regardless(tmp_path: Path) -> None:
 # Level structure: sell_zone 4435-4455, no_trade 4415-4435, buy_zone 4410-4420
 # buy_zone_high (4420) is inside the no-trade zone — both sweeps must bypass the gate.
 
-def _make_strategy(tmp_path: Path) -> KeyLevelSweepV1:
+def _make_strategy(tmp_path: Path, min_reward_risk: float = 0.0) -> KeyLevelSweepV1:
     brief = {**VALID_BRIEF, "issued_at": "2026-09-07T00:00:00Z"}
     _write(tmp_path, "2026-09-07", brief)
-    return KeyLevelSweepV1(symbol="XAUUSD", briefs_dir=tmp_path, min_confidence=0.55)
+    return KeyLevelSweepV1(symbol="XAUUSD", briefs_dir=tmp_path, min_confidence=0.55,
+                           min_reward_risk=min_reward_risk)
 
 
 def _row(close: float, high: float, low: float, open_: float, atr: float = 20.0) -> pd.Series:
@@ -179,9 +180,10 @@ BTC_BRIEF = {
 }
 
 
-def _make_btc_strategy(tmp_path: Path) -> KeyLevelSweepV1:
+def _make_btc_strategy(tmp_path: Path, min_reward_risk: float = 0.0) -> KeyLevelSweepV1:
     (tmp_path / "2026-09-08_levels.json").write_text(json.dumps(BTC_BRIEF))
-    return KeyLevelSweepV1(symbol="BTCUSD", briefs_dir=tmp_path, min_confidence=0.55)
+    return KeyLevelSweepV1(symbol="BTCUSD", briefs_dir=tmp_path, min_confidence=0.55,
+                           min_reward_risk=min_reward_risk)
 
 
 def _btc_row(close: float, high: float, low: float, open_: float, atr: float = 500.0) -> pd.Series:
@@ -215,7 +217,8 @@ def test_btc_buy_stop_derived_from_atr_when_no_anchor(tmp_path: Path) -> None:
         },
     }
     (tmp_path / "2026-09-08_levels.json").write_text(json.dumps(brief))
-    strat = KeyLevelSweepV1(symbol="BTCUSD", briefs_dir=tmp_path, min_confidence=0.55)
+    strat = KeyLevelSweepV1(symbol="BTCUSD", briefs_dir=tmp_path,
+                            min_confidence=0.55, min_reward_risk=0.0)
     row = _btc_row(close=79520, high=79530, low=79150, open_=79510)
     sig = strat.generate_signal(row, "RISK_ON")
     assert sig.side == "BUY"
@@ -231,3 +234,51 @@ def test_btc_old_code_would_have_held(tmp_path: Path) -> None:
     # Before fix: all_low = kl.get("asia_liquidity_low") = None → gate blocked
     # After fix: falls back to breakdown_trigger → BUY fires
     assert strat.generate_signal(row, "RISK_ON").side == "BUY"
+
+
+# ---- R:R gate (MEDIUM #5) ----
+
+def test_low_rr_sell_returns_hold(tmp_path: Path) -> None:
+    """SELL with R:R < min_reward_risk → HOLD with LOW_REWARD_RISK code."""
+    from tar_system import reason_codes as rc
+    strat = _make_strategy(tmp_path, min_reward_risk=1.0)
+    # entry=4430, bi=4470 (risk=40), t1=4410 (reward=20) → rr=0.5 < 1.0
+    row = _row(close=4430, high=4445, low=4428, open_=4432)
+    sig = strat.generate_signal(row, "RISK_ON")
+    assert sig.side == "HOLD"
+    assert sig.reason_code == rc.LOW_REWARD_RISK
+
+
+def test_good_rr_sell_includes_rr_in_metadata(tmp_path: Path) -> None:
+    """SELL with R:R >= 1.0 fires and includes reward_risk in metadata."""
+    # entry=4430, bi=4470 (risk=40), need reward >= 40 → t1 <= 4390
+    # Override targets to give t1=4385 → reward=45, rr=1.125
+    brief = {
+        **VALID_BRIEF,
+        "issued_at": "2026-09-07T00:00:00Z",
+        "XAUUSD": {**VALID_BRIEF["XAUUSD"], "top_scenario_targets": [4385, 4360]},
+    }
+    _write(tmp_path, "2026-09-07", brief)
+    strat = KeyLevelSweepV1(symbol="XAUUSD", briefs_dir=tmp_path,
+                            min_confidence=0.55, min_reward_risk=1.0)
+    row = _row(close=4430, high=4445, low=4428, open_=4432)
+    sig = strat.generate_signal(row, "RISK_ON")
+    assert sig.side == "SELL"
+    assert "reward_risk" in sig.metadata
+    assert sig.metadata["reward_risk"] >= 1.0
+
+
+def test_sell_wick_exceeds_zone_top_still_fires(tmp_path: Path) -> None:
+    """High exceeds sell_zone_high (over-sweep) → still valid if other conditions met."""
+    brief = {
+        **VALID_BRIEF,
+        "issued_at": "2026-09-07T00:00:00Z",
+        "XAUUSD": {**VALID_BRIEF["XAUUSD"], "top_scenario_targets": [4385, 4360]},
+    }
+    _write(tmp_path, "2026-09-07", brief)
+    strat = KeyLevelSweepV1(symbol="XAUUSD", briefs_dir=tmp_path,
+                            min_confidence=0.55, min_reward_risk=1.0)
+    # high=4470 EXCEEDS sell_zone_high=4455 — valid over-sweep
+    # entry=4430, open=4432: upper_wick = 4470 - 4432 = 38; bar_range = 4470-4428 = 42; ratio=0.90
+    row = _row(close=4430, high=4470, low=4428, open_=4432)
+    assert strat.generate_signal(row, "RISK_ON").side == "SELL"

@@ -52,6 +52,7 @@ class KeyLevelSweepV1:
     min_confidence: float = 0.65
     atr_multiplier: float = 2.0
     wick_ratio: float = 0.40
+    min_reward_risk: float = 1.0
     signal_cooldown_minutes: int = 60
     briefs_dir: Path = Path("data/daily_briefs")
     name: str = "key_level_sweep_v1"
@@ -136,35 +137,45 @@ class KeyLevelSweepV1:
                 szh_nt = kl.get("sell_zone_high")
                 bzl_nt = kl.get("buy_zone_low")
                 bzh_nt = kl.get("buy_zone_high")
-                sell_swept = (szl_nt is not None and szh_nt is not None
-                              and float(szl_nt) <= high <= float(szh_nt))
-                buy_swept = (bzl_nt is not None and bzh_nt is not None
-                             and float(bzl_nt) <= low <= float(bzh_nt))
+                # Sweep: bar entered the zone — wick may exceed zone boundary
+                sell_swept = szl_nt is not None and high >= float(szl_nt)
+                buy_swept = bzh_nt is not None and low <= float(bzh_nt)
                 if not sell_swept and not buy_swept:
                     return hold
 
         # SELL signal
+        # Wick rule: high must ENTER the sell zone (>= szl); may exceed szh (over-sweep valid).
+        # Same-bar resolution: engine uses SL priority over TP (conservative).
         if sell_conf >= self.min_confidence:
             szl = kl.get("sell_zone_low")
             szh = kl.get("sell_zone_high")
             bi = kl.get("bearish_invalidation")
-            if szl is not None and szh is not None and bi is not None:
-                szl, szh, bi = float(szl), float(szh), float(bi)
-                if szl <= high <= szh:
+            if szl is not None and bi is not None:
+                szl, bi = float(szl), float(bi)
+                if high >= szl:
                     upper_wick = high - max(open_price, entry)
                     if upper_wick / bar_range >= self.wick_ratio and entry < szl:
                         t1 = float(targets[0]) if len(targets) > 0 else entry - atr * 2
                         t2 = float(targets[1]) if len(targets) > 1 else entry - atr * 4
-                        # Sanity: TP must be below entry for a SELL
                         if t1 >= entry:
                             t1 = entry - atr * 2
                         if t2 >= entry:
                             t2 = entry - atr * 4
+                        risk = bi - entry
+                        reward = entry - t1
+                        rr = round(reward / risk, 2) if risk > 0 else 0.0
+                        if rr < self.min_reward_risk:
+                            return Signal(
+                                side="HOLD", confidence=0.0,
+                                stop_loss=None, take_profit=None,
+                                reason_code=rc.LOW_REWARD_RISK, **base,
+                            )
                         base["metadata"] = {
                             **base["metadata"],
                             "sell_conf": sell_conf,
-                            "sell_zone": [szl, szh],
+                            "sell_zone": [szl, float(szh) if szh is not None else szl],
                             "targets": [t1, t2],
+                            "reward_risk": rr,
                         }
                         self._last_signal_ts = ts
                         return Signal(
@@ -177,25 +188,37 @@ class KeyLevelSweepV1:
                         )
 
         # BUY signal
+        # Wick rule: low must ENTER the buy zone (<= bzh_f); may exceed bzl downward (over-sweep valid).
+        # Same-bar resolution: engine uses SL priority over TP (conservative).
         if buy_conf >= self.min_confidence:
             bzl = kl.get("buy_zone_low")
             bzh = kl.get("buy_zone_high")
-            if bzl is not None and bzh is not None:
-                bzl_f, bzh_f = float(bzl), float(bzh)
+            if bzh is not None:
+                bzl_f = float(bzl) if bzl is not None else 0.0
+                bzh_f = float(bzh)
                 # Stop anchor: XAUUSD uses asia_liquidity_low; BTCUSD uses breakdown_trigger;
                 # if neither is present, derive 1 ATR below buy zone low.
                 raw_anchor = kl.get("asia_liquidity_low") or kl.get("breakdown_trigger")
                 stop_anchor = float(raw_anchor) if raw_anchor is not None else bzl_f - atr
-                if bzl_f <= low <= bzh_f:
+                if low <= bzh_f:
                     lower_wick = min(open_price, entry) - low
                     if lower_wick / bar_range >= self.wick_ratio and entry > bzh_f:
                         stop = stop_anchor - (atr * self.atr_multiplier)
                         szl_fallback = float(kl.get("sell_zone_low", entry + atr * 2))
-                        szh_fallback = float(kl.get("sell_zone_high", entry + atr * 4))
+                        risk = entry - stop
+                        reward = szl_fallback - entry
+                        rr = round(reward / risk, 2) if risk > 0 else 0.0
+                        if rr < self.min_reward_risk:
+                            return Signal(
+                                side="HOLD", confidence=0.0,
+                                stop_loss=None, take_profit=None,
+                                reason_code=rc.LOW_REWARD_RISK, **base,
+                            )
                         base["metadata"] = {
                             **base["metadata"],
                             "buy_conf": buy_conf,
                             "buy_zone": [bzl_f, bzh_f],
+                            "reward_risk": rr,
                         }
                         self._last_signal_ts = ts
                         return Signal(
