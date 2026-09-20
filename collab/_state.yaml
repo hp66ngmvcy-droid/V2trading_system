@@ -8,7 +8,7 @@ updated: 2026-09-20
 agents:
   claude:
     status: idle
-    last_task_id: session-2026-09-20b-fixes-validator
+    last_task_id: session-cutoff-param
     last_activity: 2026-09-20
   codex:
     status: debate-pending
@@ -24,10 +24,6 @@ pending_tasks:
     owner: codex
     priority: 2
     summary: "Decision: leave historical brief T1 unchanged (Path A) vs lower min_rr for historical period (Path B). Do NOT edit brief files. Debate prompt sent."
-  - id: session-cutoff-param
-    owner: claude
-    priority: 3
-    summary: "Add session_end param to generate_signal() — UTC, before zone logic, exclusive. XAUUSD=12:00 default, BTCUSD=None. Resolve open decisions first."
   - id: regime-provenance
     owner: claude
     priority: 4
@@ -97,3 +93,6 @@ completed_tasks:
     completed: 2026-09-20
     note: claude_notes/2026-09-20b_codex-review-fixes-and-validator.md
     result: "3 correctness fixes (fail-closed issued_at, raw R:R comparison, BUY targets from top_scenario_targets). scripts/validate_brief.py built. 10 briefs: 5 PASS / 31 FAIL. 495/495 tests pass."
+  - id: session-cutoff-param
+    completed: 2026-09-20
+    result: "session_end_utc param added to KeyLevelSweepV1. Default 12:00 UTC for XAUUSD, None for BTCUSD. Bars at/after cutoff return SESSION_FILTER_BLOCK. 499/499 tests pass. Commit dee553f."
