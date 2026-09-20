@@ -58,23 +58,32 @@ Codex found 3 bugs (all now fixed), challenged zero-trade claim as insufficient 
 
 Open debate topic sent via `debate print`: whether historical brief T1 correction is legitimate calibration or look-ahead bias. Pending Codex response.
 
-## Test state
+## Open decisions
 
-**495/495 passing** (up from 489 before this session — 6 new tests added for 3 fixes).
+1. **Historical brief T1** — leave unchanged (Path A) or lower min_rr threshold for historical period (Path B)? Do NOT edit brief files. Debate prompt sent to Codex.
+2. **BUY take-profit policy** — `top_scenario_targets[0]` now used (implemented Fix 3). Fallback to `sell_zone_low`.
 
-## Open decisions (need human input)
-
-1. **Historical brief T1** — leave unchanged (Path A) or lower min_rr threshold for historical period (Path B)? Do NOT edit brief files.
-2. **BUY take-profit policy** — `top_scenario_targets[0]` (now implemented) or always `sell_zone_low`? Current: targets when valid, fallback to szl.
-3. **`session_end` defaults** — `XAUUSD=12:00 UTC`, `BTCUSD=None`? Unresolved.
-
-## Next approved steps (from revised plan — not yet built)
+## Remaining approved steps (not yet built)
 
 | Priority | Task | Notes |
 |----------|------|-------|
-| 3 | Session cutoff param in `generate_signal()` | UTC, before zone logic, exclusive, XAUUSD=12:00 default |
-| 4 | Regime provenance — `regime_observed_at` on new briefs only | No historical backfill |
+| 4 | Regime provenance — `regime_observed_at` on new briefs only | No historical backfill — human action |
 | 5 | FVG inline helper — `require_fvg: bool = False` | Needs 30+ trades first; no external dependency |
+
+### 5. Session cutoff param (commit `dee553f`)
+
+Added `session_end_utc: str | None = "12:00"` to `KeyLevelSweepV1` dataclass.
+
+- Parsed at `__post_init__` to `_session_end_minutes: int | None`
+- Checked in `generate_signal()` before zone logic — bar open time (UTC naive) `>= cutoff` → `SESSION_FILTER_BLOCK`
+- Default `"12:00"` UTC for XAUUSD (London AM). Set `None` for BTCUSD or any 24h instrument.
+- Bar timestamps confirmed as opening times (checked `XAUUSD_M15.parquet` — naive UTC)
+- 4 new tests: before cutoff passes, at cutoff blocked, after cutoff blocked, `None` allows all hours
+- **499/499 tests passing**
+
+## Test state
+
+**499/499 passing** (up from 489 at start of this session — 10 new tests total).
 
 ## Brief writing rule going forward
 
