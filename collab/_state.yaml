@@ -3,7 +3,7 @@
 # Note: STATUS.md is the human-readable index; this file is the machine-readable equivalent.
 
 version: 2
-updated: 2026-09-20
+updated: 2026-09-20b
 
 agents:
   claude:
@@ -48,6 +48,28 @@ pending_tasks:
     owner: claude
     priority: 8
     summary: "FVG inline helper (require_fvg=False). Deferred: StatOasis 648-test study found no mechanical edge from FVG alone. Needs 50+ unfiltered signals first. No external dependency."
+
+  # ---- Phase 3 roadmap (after Phase 2 edge confirmed) ----
+  - id: debate-buy-stop-atr-vs-structure
+    owner: codex
+    priority: 9
+    summary: "BUY stop uses ATR (stop_anchor - 2xATR) but SELL stop uses structure (bearish_invalidation). Inconsistent. Debate: change BUY stop to sweep_low - buffer, ATR as floor only."
+  - id: debate-wf-overfitting
+    owner: codex
+    priority: 10
+    summary: "Walk-forward single-window gate can be cherry-picked until it passes. Debate: should CPCV replace or supplement current WF? Ref: arxiv 2512.12924."
+  - id: debate-paper-live-gap
+    owner: codex
+    priority: 11
+    summary: "No spread/commission model in backtester. PF=1.4 paper may be PF=0.9 live. Debate: minimum spread assumption before any paper result is called meaningful."
+  - id: phase3-macro-agent-a
+    owner: human
+    priority: 12
+    summary: "Phase 3 (after edge confirmed): Agent A macro state reader — VIX + 10Y yields + DXY → regime JSON at 07:00 UTC. Replaces manual macro block in brief. DO NOT BUILD until 30+ brief outcomes logged."
+  - id: phase3-event-gate-agent-b
+    owner: human
+    priority: 13
+    summary: "Phase 3: Agent B economic calendar event gate — auto-reads FOMC/NFP/CPI dates, writes event_gate block to brief. Replaces manual event_gate. Gate: after Phase 2 validation."
 
 completed_tasks:
   - id: council-review-all-ideas-2026-07-31

@@ -82,6 +82,33 @@ Gate is correct as brief-writing discipline (forces T1 placement). As a live fil
 **Session filter reassessment:**
 `session_end_utc=12:00` correct for London AM. Blocks NY killzone (13:30–15:00 UTC) which research confirms produces clean Gold sweeps. Add as second window param, not a replacement.
 
+## Additional debates identified (session end)
+
+Six structural debates added to queue for Codex:
+
+**Actionable now:**
+- BUY stop ATR vs structure: SELL uses `bearish_invalidation` (structure), BUY uses `stop_anchor - 2×ATR` (ATR). Inconsistent. Change to `sweep_low - buffer`, ATR as floor.
+
+**After outcomes exist:**
+- WF overfitting: single window cherry-pick risk; CPCV as supplement (arxiv 2512.12924)
+- Paper-live gap: no spread model; XAUUSD ~0.3–0.5pt spread per trade; PF=1.4 may be PF=0.9 live
+- Confidence sizing ruin: uncalibrated confidence in Kelly = overbetting; freeze until Brier score confirms
+- XAUUSD + BTCUSD concentration: correlated in risk-off; max simultaneous positions rule needed
+- Human brief bias: analyst anchoring, round-number preference; minimum auditability = written thesis per brief
+
+## Phase 3 roadmap (do not build until Phase 2 edge confirmed)
+
+VIX + 10Y yields + DXY → auto-regime classification is architecturally sound (confirmed by DRL bot with 140+ macro features, multi-agent arxiv papers). But:
+- Geo/news signals do NOT give M15 edge — spikes reverse within minutes
+- Multi-signal overfitting is severe — GT-Score paper confirms collapse OOS
+- The blocker is Phase 2: brief outcomes must confirm zone identification has edge before automating anything upstream
+
+Phase 3 build order (when ready):
+1. Agent A: macro state reader (VIX + yields + DXY → `regime` JSON, 07:00 UTC daily)
+2. Agent B: economic calendar event gate (auto-reads FOMC/NFP/CPI)
+3. Human zone placement remains — validated with schema hook + validator
+4. Phase 4: ML zone placement only after 100+ outcomes confirm human baseline
+
 ## Open decisions
 
 1. **Historical brief T1** — leave unchanged (Path A) or lower min_rr threshold for historical period (Path B)? Do NOT edit brief files. Debate prompt sent to Codex.
