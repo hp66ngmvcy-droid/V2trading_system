@@ -16,22 +16,38 @@ agents:
     last_activity: 2026-09-20
 
 pending_tasks:
-  - id: populate-regime-opening-type-briefs
+  - id: brief-outcome-logging
     owner: human
     priority: 1
+    summary: "Fill hit_target/hit_stop outcomes in briefs daily. Required before any improvement can be validated. Without this, no feedback loop exists."
+  - id: populate-regime-opening-type-briefs
+    owner: human
+    priority: 2
     summary: "Add regime + opening_type to all 10 existing briefs. Activates scorer multiplier and regime sizer."
+  - id: brief-schema-hook
+    owner: claude
+    priority: 3
+    summary: "JSON schema pre-commit hook (check-jsonschema) for _levels.json files. Enforces required fields, zone ordering, top_scenario_targets. No statistical assumptions."
   - id: debate-historical-brief-t1
     owner: codex
-    priority: 2
-    summary: "Decision: leave historical brief T1 unchanged (Path A) vs lower min_rr for historical period (Path B). Do NOT edit brief files. Debate prompt sent."
-  - id: regime-provenance
-    owner: claude
     priority: 4
-    summary: "Add regime_observed_at timestamp to new briefs only. No historical backfill."
-  - id: fvg-experiment
+    summary: "Decision: leave historical brief T1 unchanged (Path A) vs lower min_rr for historical period (Path B). Do NOT edit brief files. Debate prompt sent 2026-09-20."
+  - id: brier-score-script
     owner: claude
     priority: 5
-    summary: "FVG inline helper (require_fvg=False). Needs 30+ trade sample first. No external dependency — shift(-1) look-ahead leak confirmed in joshyattridge/smc."
+    summary: "Brier score per brief outcome. Measures whether sell_confidence/buy_confidence values are calibrated. Build after 10 outcomes filled."
+  - id: ny-session-window
+    owner: claude
+    priority: 6
+    summary: "Add NY killzone 13:30-15:00 UTC as second session window. Current session_end_utc=12:00 blocks valid NY setups. Implement after sample exists to compare windows."
+  - id: regime-classifier-price-based
+    owner: claude
+    priority: 7
+    summary: "ATR-percentile price-based regime classifier (no FRED dependency). Safer than Gold Regime Tracker for live signals. Build after brief outcomes exist to validate regime win-rate split."
+  - id: fvg-experiment
+    owner: claude
+    priority: 8
+    summary: "FVG inline helper (require_fvg=False). Deferred: StatOasis 648-test study found no mechanical edge from FVG alone. Needs 50+ unfiltered signals first. No external dependency."
 
 completed_tasks:
   - id: council-review-all-ideas-2026-07-31

@@ -58,6 +58,30 @@ Codex found 3 bugs (all now fixed), challenged zero-trade claim as insufficient 
 
 Open debate topic sent via `debate print`: whether historical brief T1 correction is legitimate calibration or look-ahead bias. Pending Codex response.
 
+## Research findings and conflict synthesis
+
+Conducted adversarial research — searched for evidence **against** each proposed improvement.
+
+**Critical finding — ICT/SMC mechanical edge:**
+StatOasis ran 648 mechanical backtests of core ICT entries (order blocks, FVGs, liquidity sweeps, OTE) across SPY/QQQ/DIA/IWM. 0/648 beat buy-and-hold. No statistically significant forward-return edge. XAUUSD may differ (physical commodity, genuine institutional hedging) but brief zone quality is unverified without outcome data.
+
+**Revised priority order from synthesis:**
+
+| Rank | Item | Evidence |
+|------|------|----------|
+| 1 | Brief outcome logging (`hit_target`/`hit_stop`) | Required before any filter improvement is verifiable |
+| 2 | Brief JSON schema hook | Pure integrity — no statistical assumptions |
+| 3 | Brier score (after 10 outcomes) | Validates confidence values are meaningful |
+| 4 | NY session window (13:30–15:00 UTC) | Current 12:00 cutoff blocks documented clean Gold setups |
+| 5 | ATR-percentile regime classifier | Safer than FRED tracker; validate after outcomes |
+| 6 | FVG experiment | Weakest evidence; defer to 50+ signals |
+
+**R:R gate reassessment:**
+Gate is correct as brief-writing discipline (forces T1 placement). As a live filter it conflates geometry with expectancy — a 0.7 R:R setup at 65% WR beats 1.2 R:R at 42% WR. Revisit min_reward_risk after 30+ outcomes.
+
+**Session filter reassessment:**
+`session_end_utc=12:00` correct for London AM. Blocks NY killzone (13:30–15:00 UTC) which research confirms produces clean Gold sweeps. Add as second window param, not a replacement.
+
 ## Open decisions
 
 1. **Historical brief T1** — leave unchanged (Path A) or lower min_rr threshold for historical period (Path B)? Do NOT edit brief files. Debate prompt sent to Codex.
