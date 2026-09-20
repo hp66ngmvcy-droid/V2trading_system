@@ -70,6 +70,14 @@ pending_tasks:
     owner: human
     priority: 13
     summary: "Phase 3: Agent B economic calendar event gate — auto-reads FOMC/NFP/CPI dates, writes event_gate block to brief. Replaces manual event_gate. Gate: after Phase 2 validation."
+  - id: debate-external-data-feeds
+    owner: codex
+    priority: 14
+    summary: "What external data feeds does V2 need for Phase 3? Confirmed free sources: FRED VIXCLS, DGS10, DTWEXBGS; FinnHub economic calendar; GPR index (Dallas Fed). Debate: minimum viable data layer before macro agent is built."
+  - id: debate-confidence-sizing-ruin
+    owner: codex
+    priority: 15
+    summary: "Uncalibrated confidence scores fed into Kelly/regime sizer = overbetting risk. 2x Kelly = same return as not trading. Debate: freeze confidence from position sizing until Brier score confirms calibration."
 
 completed_tasks:
   - id: council-review-all-ideas-2026-07-31

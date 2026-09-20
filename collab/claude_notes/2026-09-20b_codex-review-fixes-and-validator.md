@@ -109,6 +109,24 @@ Phase 3 build order (when ready):
 3. Human zone placement remains — validated with schema hook + validator
 4. Phase 4: ML zone placement only after 100+ outcomes confirm human baseline
 
+## External data feeds identified for Phase 3
+
+All free, no new API keys except FRED (already in Keychain):
+
+| Feed | Source | Lag | Use in V2 |
+|------|--------|-----|-----------|
+| VIX daily | FRED `VIXCLS` | 1-day | Regime gate — fear/greed state |
+| US 10Y yield | FRED `DGS10` | 1-day | Gold directional bias (inverse) |
+| DXY broad | FRED `DTWEXBGS` | 1-day | Gold filter (inverse correlation structural) |
+| Economic calendar | FinnHub free tier | Scheduled | Auto event_gate for FOMC/NFP/CPI |
+| Geopolitical Risk Index | GPR (Dallas Fed / Caldara & Iacoviello) | Monthly, 2-week lag | Geo context — academic standard |
+
+Do NOT use: real-time news scraping, social sentiment (Reddit/X). Both confirmed noise > signal on M15 timeframe.
+
+Two more Codex debates added:
+- `debate-external-data-feeds` (priority 14): minimum viable data layer before macro agent built
+- `debate-confidence-sizing-ruin` (priority 15): freeze confidence from position sizing until Brier confirms calibration
+
 ## Open decisions
 
 1. **Historical brief T1** — leave unchanged (Path A) or lower min_rr threshold for historical period (Path B)? Do NOT edit brief files. Debate prompt sent to Codex.
