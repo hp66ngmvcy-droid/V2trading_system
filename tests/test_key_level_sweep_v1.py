@@ -268,6 +268,93 @@ def test_good_rr_sell_includes_rr_in_metadata(tmp_path: Path) -> None:
     assert sig.metadata["reward_risk"] >= 1.0
 
 
+# ---- Fix 1: fail-closed on bad issued_at ----
+
+def test_malformed_issued_at_returns_none(tmp_path: Path) -> None:
+    """Unparseable issued_at → _get_levels returns None (fail-closed)."""
+    brief = {**VALID_BRIEF, "issued_at": "not-a-timestamp"}
+    _write(tmp_path, "2026-09-07", brief)
+    bar = pd.Timestamp("2026-09-07T09:00:00", tz="UTC")
+    assert _get_levels("2026-09-07", "XAUUSD", tmp_path, bar_ts=bar) is None
+
+
+def test_empty_issued_at_uses_default_gate(tmp_path: Path) -> None:
+    """Empty string issued_at falls back to 07:00 default (not fail-closed — empty != malformed)."""
+    brief = {**VALID_BRIEF, "issued_at": ""}
+    _write(tmp_path, "2026-09-07", brief)
+    bar = pd.Timestamp("2026-09-07T08:00:00", tz="UTC")
+    result = _get_levels("2026-09-07", "XAUUSD", tmp_path, bar_ts=bar)
+    assert result is not None
+
+
+# ---- Fix 2: R:R boundary — compare raw, round only for metadata ----
+
+def test_rr_just_below_threshold_returns_hold(tmp_path: Path) -> None:
+    """R:R 0.994 < 1.0 → HOLD (was rounding to 0.99 and passing before fix)."""
+    from tar_system import reason_codes as rc
+    # entry=4430, bi=4470 (risk=40), need reward=39.76 → t1=4390.24
+    brief = {
+        **VALID_BRIEF,
+        "issued_at": "2026-09-07T00:00:00Z",
+        "XAUUSD": {**VALID_BRIEF["XAUUSD"], "top_scenario_targets": [4390.24, 4370]},
+    }
+    _write(tmp_path, "2026-09-07", brief)
+    strat = KeyLevelSweepV1(symbol="XAUUSD", briefs_dir=tmp_path,
+                            min_confidence=0.55, min_reward_risk=1.0)
+    row = _row(close=4430, high=4445, low=4428, open_=4432)
+    sig = strat.generate_signal(row, "RISK_ON")
+    assert sig.side == "HOLD"
+    assert sig.reason_code == rc.LOW_REWARD_RISK
+
+
+def test_rr_exactly_at_threshold_fires(tmp_path: Path) -> None:
+    """R:R exactly 1.0 → fires (entry - t1 == bi - entry)."""
+    # entry=4430, bi=4470 (risk=40), t1=4390 (reward=40) → rr=1.0
+    brief = {
+        **VALID_BRIEF,
+        "issued_at": "2026-09-07T00:00:00Z",
+        "XAUUSD": {**VALID_BRIEF["XAUUSD"], "top_scenario_targets": [4390, 4360]},
+    }
+    _write(tmp_path, "2026-09-07", brief)
+    strat = KeyLevelSweepV1(symbol="XAUUSD", briefs_dir=tmp_path,
+                            min_confidence=0.55, min_reward_risk=1.0)
+    row = _row(close=4430, high=4445, low=4428, open_=4432)
+    assert strat.generate_signal(row, "RISK_ON").side == "SELL"
+
+
+# ---- Fix 3: BUY uses top_scenario_targets ----
+
+def test_buy_uses_top_scenario_targets(tmp_path: Path) -> None:
+    """BUY take-profit comes from top_scenario_targets[0] when valid."""
+    strat = _make_strategy(tmp_path)
+    # entry=4422 > buy_zone_high=4420; top_scenario_targets=[4410,4390] → 4410 < entry, fallback to szl
+    # Use BTC brief where targets are above entry (BUY direction)
+    brief = {
+        **VALID_BRIEF,
+        "issued_at": "2026-09-07T00:00:00Z",
+        "XAUUSD": {**VALID_BRIEF["XAUUSD"], "top_scenario_targets": [4450, 4470]},
+    }
+    _write(tmp_path, "2026-09-07", brief)
+    strat2 = KeyLevelSweepV1(symbol="XAUUSD", briefs_dir=tmp_path,
+                             min_confidence=0.55, min_reward_risk=0.0)
+    row = _row(close=4422, high=4423, low=4412, open_=4421)
+    sig = strat2.generate_signal(row, "RISK_ON")
+    assert sig.side == "BUY"
+    assert sig.take_profit == 4450.0
+
+
+def test_buy_falls_back_to_szl_when_targets_below_entry(tmp_path: Path) -> None:
+    """BUY falls back to sell_zone_low when top_scenario_targets[0] <= entry."""
+    # XAUUSD targets=[4410,4390] → 4410 < 4422 (entry) → fallback szl=4435
+    strat = _make_strategy(tmp_path)
+    row = _row(close=4422, high=4423, low=4412, open_=4421)
+    sig = strat.generate_signal(row, "RISK_ON")
+    assert sig.side == "BUY"
+    assert sig.take_profit == float(VALID_BRIEF["XAUUSD"]["key_levels"]["sell_zone_low"])
+
+
+# ---- existing test preserved ----
+
 def test_sell_wick_exceeds_zone_top_still_fires(tmp_path: Path) -> None:
     """High exceeds sell_zone_high (over-sweep) → still valid if other conditions met."""
     brief = {

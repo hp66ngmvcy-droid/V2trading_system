@@ -42,7 +42,7 @@ def _get_levels(
         if issued > bar:
             return None
     except Exception:
-        pass
+        return None
     return data
 
 
@@ -163,8 +163,8 @@ class KeyLevelSweepV1:
                             t2 = entry - atr * 4
                         risk = bi - entry
                         reward = entry - t1
-                        rr = round(reward / risk, 2) if risk > 0 else 0.0
-                        if rr < self.min_reward_risk:
+                        rr_raw = reward / risk if risk > 0 else 0.0
+                        if rr_raw < self.min_reward_risk:
                             return Signal(
                                 side="HOLD", confidence=0.0,
                                 stop_loss=None, take_profit=None,
@@ -175,7 +175,7 @@ class KeyLevelSweepV1:
                             "sell_conf": sell_conf,
                             "sell_zone": [szl, float(szh) if szh is not None else szl],
                             "targets": [t1, t2],
-                            "reward_risk": rr,
+                            "reward_risk": round(rr_raw, 2),
                         }
                         self._last_signal_ts = ts
                         return Signal(
@@ -204,11 +204,16 @@ class KeyLevelSweepV1:
                     lower_wick = min(open_price, entry) - low
                     if lower_wick / bar_range >= self.wick_ratio and entry > bzh_f:
                         stop = stop_anchor - (atr * self.atr_multiplier)
+                        # BUY target: top_scenario_targets if available and above entry,
+                        # else fall back to sell_zone_low (always geometrically above entry).
                         szl_fallback = float(kl.get("sell_zone_low", entry + atr * 2))
+                        t1_buy = float(targets[0]) if len(targets) > 0 else szl_fallback
+                        if t1_buy <= entry:
+                            t1_buy = szl_fallback
                         risk = entry - stop
-                        reward = szl_fallback - entry
-                        rr = round(reward / risk, 2) if risk > 0 else 0.0
-                        if rr < self.min_reward_risk:
+                        reward = t1_buy - entry
+                        rr_raw = reward / risk if risk > 0 else 0.0
+                        if rr_raw < self.min_reward_risk:
                             return Signal(
                                 side="HOLD", confidence=0.0,
                                 stop_loss=None, take_profit=None,
@@ -218,14 +223,14 @@ class KeyLevelSweepV1:
                             **base["metadata"],
                             "buy_conf": buy_conf,
                             "buy_zone": [bzl_f, bzh_f],
-                            "reward_risk": rr,
+                            "reward_risk": round(rr_raw, 2),
                         }
                         self._last_signal_ts = ts
                         return Signal(
                             side="BUY",
                             confidence=buy_conf,
                             stop_loss=stop,
-                            take_profit=szl_fallback,
+                            take_profit=t1_buy,
                             reason_code=rc.SIGNAL_BUY,
                             **base,
                         )
