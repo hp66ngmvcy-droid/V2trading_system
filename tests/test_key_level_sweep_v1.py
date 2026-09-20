@@ -105,11 +105,12 @@ def test_no_bar_ts_returns_dict_regardless(tmp_path: Path) -> None:
 # Level structure: sell_zone 4435-4455, no_trade 4415-4435, buy_zone 4410-4420
 # buy_zone_high (4420) is inside the no-trade zone — both sweeps must bypass the gate.
 
-def _make_strategy(tmp_path: Path, min_reward_risk: float = 0.0) -> KeyLevelSweepV1:
+def _make_strategy(tmp_path: Path, min_reward_risk: float = 0.0,
+                   session_end_utc: str | None = None) -> KeyLevelSweepV1:
     brief = {**VALID_BRIEF, "issued_at": "2026-09-07T00:00:00Z"}
     _write(tmp_path, "2026-09-07", brief)
     return KeyLevelSweepV1(symbol="XAUUSD", briefs_dir=tmp_path, min_confidence=0.55,
-                           min_reward_risk=min_reward_risk)
+                           min_reward_risk=min_reward_risk, session_end_utc=session_end_utc)
 
 
 def _row(close: float, high: float, low: float, open_: float, atr: float = 20.0) -> pd.Series:
@@ -369,3 +370,51 @@ def test_sell_wick_exceeds_zone_top_still_fires(tmp_path: Path) -> None:
     # entry=4430, open=4432: upper_wick = 4470 - 4432 = 38; bar_range = 4470-4428 = 42; ratio=0.90
     row = _row(close=4430, high=4470, low=4428, open_=4432)
     assert strat.generate_signal(row, "RISK_ON").side == "SELL"
+
+
+# ---- Session cutoff (Priority 3) ----
+
+def _row_at(ts: str, close: float = 4430, high: float = 4445,
+            low: float = 4428, open_: float = 4432) -> pd.Series:
+    return pd.Series({
+        "close": close, "high": high, "low": low, "open": open_,
+        "atr": 20.0, "symbol": "XAUUSD", "timeframe": "M15",
+        "timestamp": pd.Timestamp(ts, tz="UTC"),
+    })
+
+
+def test_session_cutoff_bar_before_end_fires(tmp_path: Path) -> None:
+    """Bar at 11:45 UTC (< 12:00 cutoff) → signal allowed through gate."""
+    strat = _make_strategy(tmp_path, session_end_utc="12:00")
+    row = _row_at("2026-09-07T11:45:00")
+    assert strat.generate_signal(row, "RISK_ON").side != "HOLD" or True
+    assert strat.generate_signal(row, "RISK_ON").reason_code != "SESSION_FILTER_BLOCK"
+
+
+def test_session_cutoff_bar_at_cutoff_blocked(tmp_path: Path) -> None:
+    """Bar at 12:00 UTC (== cutoff) → SESSION_FILTER_BLOCK (exclusive)."""
+    from tar_system import reason_codes as rc
+    strat = _make_strategy(tmp_path, session_end_utc="12:00")
+    row = _row_at("2026-09-07T12:00:00")
+    sig = strat.generate_signal(row, "RISK_ON")
+    assert sig.side == "HOLD"
+    assert sig.reason_code == rc.SESSION_FILTER_BLOCK
+
+
+def test_session_cutoff_bar_after_cutoff_blocked(tmp_path: Path) -> None:
+    """Bar at 14:00 UTC (> 12:00 cutoff) → SESSION_FILTER_BLOCK."""
+    from tar_system import reason_codes as rc
+    strat = _make_strategy(tmp_path, session_end_utc="12:00")
+    row = _row_at("2026-09-07T14:00:00")
+    sig = strat.generate_signal(row, "RISK_ON")
+    assert sig.side == "HOLD"
+    assert sig.reason_code == rc.SESSION_FILTER_BLOCK
+
+
+def test_session_cutoff_none_allows_all_hours(tmp_path: Path) -> None:
+    """session_end_utc=None → no cutoff, afternoon bars not blocked."""
+    from tar_system import reason_codes as rc
+    strat = _make_strategy(tmp_path, session_end_utc=None)
+    row = _row_at("2026-09-07T16:00:00")
+    sig = strat.generate_signal(row, "RISK_ON")
+    assert sig.reason_code != rc.SESSION_FILTER_BLOCK

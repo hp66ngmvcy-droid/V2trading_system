@@ -54,12 +54,18 @@ class KeyLevelSweepV1:
     wick_ratio: float = 0.40
     min_reward_risk: float = 1.0
     signal_cooldown_minutes: int = 60
+    session_end_utc: str | None = "12:00"
     briefs_dir: Path = Path("data/daily_briefs")
     name: str = "key_level_sweep_v1"
     version: str = "0.1.0"
 
     def __post_init__(self) -> None:
         self._last_signal_ts: pd.Timestamp | None = None
+        if self.session_end_utc is not None:
+            h, m = self.session_end_utc.split(":")
+            self._session_end_minutes: int | None = int(h) * 60 + int(m)
+        else:
+            self._session_end_minutes = None
 
     def generate_signal(self, row: pd.Series, regime: str) -> Signal:
         entry = float(row["close"])
@@ -105,6 +111,17 @@ class KeyLevelSweepV1:
                 reason_code=rc.EVENT_GATE,
                 **base,
             )
+
+        # Session cutoff: block bars at or after session_end_utc (exclusive, bar open time)
+        if self._session_end_minutes is not None:
+            bar_utc = ts.tz_convert("UTC") if ts.tzinfo is not None else ts
+            bar_minutes = bar_utc.hour * 60 + bar_utc.minute
+            if bar_minutes >= self._session_end_minutes:
+                return Signal(
+                    side="HOLD", confidence=0.0,
+                    stop_loss=None, take_profit=None,
+                    reason_code=rc.SESSION_FILTER_BLOCK, **base,
+                )
 
         # Cooldown: suppress signals within signal_cooldown_minutes of last signal
         if self._last_signal_ts is not None:
