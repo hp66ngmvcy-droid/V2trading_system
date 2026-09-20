@@ -1,85 +1,69 @@
 #!/usr/bin/env bash
 # nightly_strategy_review.sh
-# Automated V2 strategy review: run walk-forward + DSR check, log results.
-# Called by auto-builder or launchd on schedule.
+# Walk-forward + DSR check on all COMPLETED candidates nightly.
+# Wired into auto-builder loop via V2 collab/TASKS.md.
 #
 # Usage: bash scripts/nightly_strategy_review.sh [--dry-run]
-#
 # Output: logs/nightly-review-YYYY-MM-DD.log
+#         reports/nightly-wf-YYYY-MM-DD.json
 
 set -euo pipefail
 
 DRY_RUN=false
 for arg in "$@"; do [[ "$arg" == "--dry-run" ]] && DRY_RUN=true; done
 
-LOG_DIR="$(dirname "$0")/../logs"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+LOG_DIR="$PROJECT_ROOT/logs"
 mkdir -p "$LOG_DIR"
-LOG="$LOG_DIR/nightly-review-$(date +%Y-%m-%d).log"
-PYTHON="$(dirname "$0")/../venv/bin/python3.14"
+
+TODAY=$(date +%Y-%m-%d)
+LOG="$LOG_DIR/nightly-review-$TODAY.log"
+
+# Lock guard — prevent duplicate concurrent runs (e.g. two LaunchAgents)
+LOCK="$LOG_DIR/nightly-review-$TODAY.lock"
+if [[ -f "$LOCK" ]]; then
+  echo "[$(date '+%H:%M:%S')] Already ran today ($LOCK exists). Exiting." | tee -a "$LOG"
+  exit 0
+fi
+touch "$LOCK"
+# Remove lock on abnormal exit so the next run can proceed
+trap 'rm -f "$LOCK"' ERR
+
+PYTHON="$PROJECT_ROOT/venv/bin/python3"
 [[ -x "$PYTHON" ]] || PYTHON="python3"
 
 log() { echo "[$(date '+%H:%M:%S')] $*" | tee -a "$LOG"; }
 
-log "=== V2 nightly strategy review start | dry=$DRY_RUN ==="
+log "=== V2 nightly strategy review start | dry=$DRY_RUN | $TODAY ==="
 
-# 1. Health check — verify system is intact
-if [[ -f "$(dirname "$0")/../src/tar_system/validation/bootstrap_ci.py" ]]; then
-  log "bootstrap_ci.py present — DSR available"
-else
-  log "WARNING: bootstrap_ci.py missing"
-fi
-
-# 2. Compile check on core validation files
+# 1. Compile check
 log "Compile check..."
-if "$PYTHON" -m py_compile \
-  "$(dirname "$0")/../src/tar_system/validation/bootstrap_ci.py" \
-  "$(dirname "$0")/../src/tar_system/regime/detector.py" 2>>"$LOG"; then
-  log "Compile: OK"
-else
-  log "ERROR: compile failed — see log"
+if ! "$PYTHON" -m py_compile \
+  "$PROJECT_ROOT/src/tar_system/validation/bootstrap_ci.py" \
+  "$PROJECT_ROOT/src/tar_system/validation/walk_forward.py" \
+  "$PROJECT_ROOT/src/tar_system/cli_walk_forward.py" \
+  "$PROJECT_ROOT/scripts/run_nightly_wf.py" 2>>"$LOG"; then
+  log "ERROR: compile failed — aborting"
   exit 1
 fi
+log "Compile: OK"
 
-# 3. Run queue health check
-CLI="$(dirname "$0")/../src/tar_system/cli.py"
+# 2. Queue health check
+CLI="$PROJECT_ROOT/src/tar_system/cli.py"
 if [[ -f "$CLI" ]]; then
-  log "Checking queue health..."
-  if [[ "$DRY_RUN" == false ]]; then
-    PYTHONPATH="$(dirname "$0")/../src" "$PYTHON" -m tar_system.cli queue-health --limit 5 2>>"$LOG" | tee -a "$LOG" || log "queue-health returned non-zero (review log)"
-  else
-    log "[DRY RUN] Would run: python -m tar_system.cli queue-health --limit 5"
-  fi
+  log "Queue health check..."
+  PYTHONPATH="$PROJECT_ROOT/src" "$PYTHON" -m tar_system.cli queue-health --limit 5 2>>"$LOG" | tee -a "$LOG" || log "queue-health returned non-zero (check log)"
 fi
 
-# 4. DSR spot-check on any staged candidates
-CANDIDATES_DIR="$(dirname "$0")/../data/candidates"
-if [[ -d "$CANDIDATES_DIR" ]]; then
-  count=$(ls "$CANDIDATES_DIR"/*.json 2>/dev/null | wc -l | tr -d ' ')
-  log "Found $count candidate files in data/candidates/"
-  if [[ "$DRY_RUN" == false && "$count" -gt 0 ]]; then
-    "$PYTHON" - <<'PYEOF' 2>>"$LOG" | tee -a "$LOG"
-import json, sys, glob
-from pathlib import Path
+# 3. Walk-forward + DSR on all COMPLETED candidates
+log "Starting WF+DSR run..."
+EXTRA_ARGS=""
+[[ "$DRY_RUN" == true ]] && EXTRA_ARGS="--dry-run"
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-from tar_system.validation.bootstrap_ci import deflated_sharpe_ratio
-
-candidates_dir = Path(__file__).parent.parent / "data" / "candidates"
-files = sorted(candidates_dir.glob("*.json"))
-print(f"  DSR check on {len(files)} candidate(s):")
-for f in files[:20]:  # cap at 20
-    try:
-        data = json.loads(f.read_text())
-        returns = data.get("trade_returns", data.get("returns", []))
-        n_trials = data.get("n_trials", 100)
-        if returns:
-            result = deflated_sharpe_ratio(returns, n_trials=n_trials)
-            verdict = "PASS" if result["dsr_p_value"] < 0.05 else "REVIEW"
-            print(f"  {f.stem}: SR={result['sr']} DSR_p={result['dsr_p_value']} → {verdict}")
-    except Exception as e:
-        print(f"  {f.stem}: error — {e}")
-PYEOF
-  fi
-fi
+PYTHONPATH="$PROJECT_ROOT/src" "$PYTHON" \
+  "$PROJECT_ROOT/scripts/run_nightly_wf.py" \
+  $EXTRA_ARGS \
+  2>>"$LOG" | tee -a "$LOG"
 
 log "=== V2 nightly review done ==="

@@ -12,8 +12,8 @@ Before processing any idea or touching the collab queue:
 
 ## Step 1 — Read system state
 
-Read these files before touching anything:
-- `collab/_state.yaml` — what is currently pending or blocked
+Read system state before touching anything:
+- Run `python3 ~/Dev/shared/tools/state_cli.py status` and read the output.
 - `collab/shared/system_constraints.md` — hard rules
 - `ideas/implemented/` — list of filenames only (do not open each one, just know what exists)
 
@@ -37,15 +37,23 @@ Move by reading the file, writing it to the new path, then deleting the original
 For each APPROVED idea:
 - Write a task note in `collab/claude_notes/` using the format in `collab/PROTOCOL.md`
 - Include YAML frontmatter with a unique task ID, priority, and `depends_on`
-- Add the task row to `collab/STATUS.md` under Active Queue (highest priority first)
-- Add the task entry to `collab/_state.yaml` under `pending_tasks`
+- Register the task in the shared state store:
+
+```bash
+python3 ~/Dev/shared/tools/state_cli.py add-task <id> \
+  --owner codex --priority <N> \
+  --summary "<summary>" \
+  --note "claude_notes/<file>" \
+  --next-action "<action>"
+```
 
 ## Step 4 — Heal the collab queue
 
-Check `collab/_state.yaml` for any inconsistencies:
-- Tasks marked `ready: false` whose dependencies are now in `completed_tasks` → set `ready: true`
-- Tasks in `pending_tasks` whose notes no longer exist → log a warning in `collab/shared/system_constraints.md` under a new "Warnings" section
-- Tasks completed in `task_history.jsonl` but still in `pending_tasks` → move them to `completed_tasks` in `_state.yaml`
+Regenerate `STATUS.md` from the state database. No manual YAML editing is needed:
+
+```bash
+python3 ~/Dev/shared/tools/state_cli.py generate-status
+```
 
 ## Step 5 — Report
 
@@ -60,10 +68,16 @@ After all moves and updates, print a short summary:
   Queue healed: N state fixes applied
 ```
 
+Then regenerate `STATUS.md` once more so the final report leaves the index current:
+
+```bash
+python3 ~/Dev/shared/tools/state_cli.py generate-status
+```
+
 ## Rules
 
 - Do not write any Python or shell code
 - Do not edit files in `ideas/approved/`, `ideas/staging/`, `ideas/rejected/`, or `ideas/implemented/` unless moving a new file in
 - Do not create a collab task note for STAGING or REJECTED ideas
 - If inbox is empty, skip to Step 4 and heal the queue only
-- Always update `collab/STATUS.md` and `collab/_state.yaml` before finishing
+- Always regenerate `collab/STATUS.md` from the database before finishing; do not manually edit `collab/_state.yaml`

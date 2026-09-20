@@ -84,6 +84,7 @@ def optimise_asset(
                 "parameter_stability": wf.parameter_stability,
                 "stable_parameter_ranges": wf.stable_parameter_ranges,
                 "parameter_stability_score": wf.parameter_stability_score,
+                "parameter_sensitivity_measured": wf.parameter_sensitivity_measured,
                 "recommended_search_range": wf.recommended_search_range,
                 "bootstrap_ci": wf.bootstrap_ci,
             }

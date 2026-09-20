@@ -10,6 +10,9 @@ import pandas as pd
 from tar_system.validation.bootstrap_ci import bootstrap_mean_ci
 
 
+MIN_WALK_FORWARD_OOS_TRADES = 20
+
+
 @dataclass
 class WalkForwardSplit:
     train_start: int
@@ -28,12 +31,14 @@ class WalkForwardResult:
     reason_code: str | None = None
     stable_parameter_ranges: dict[str, tuple[float, float]] = field(default_factory=dict)
     parameter_stability_score: float = 0.0
+    parameter_sensitivity_measured: bool = False
     recommended_search_range: dict[str, tuple[float, float]] = field(default_factory=dict)
     bootstrap_ci: dict[str, object] = field(default_factory=dict)
     ran: bool = True
     window_count: int = 0
     wf_verdict: str = "REVIEW"
     wf_reason: str = ""
+    window_tags: list[dict[str, object]] = field(default_factory=list)
 
 
 def rolling_splits(row_count: int, train_window: int, test_window: int) -> list[WalkForwardSplit]:
@@ -96,16 +101,21 @@ def run_walk_forward(
     metrics = stitch_metrics(split_metrics)
     bootstrap_ci = bootstrap_mean_ci(metrics.get("trade_returns", []))
     ranges, stability = derive_stable_parameter_ranges(fold_parameters)
+    sensitivity_measured = _parameter_sensitivity_measured(fold_parameters)
     wf_verdict, wf_reason = _walk_forward_verdict(metrics, len(completed_splits), stability, stopped, bootstrap_ci)
     return WalkForwardResult(
         splits=completed_splits,
         stitched_metrics=metrics,
-        parameter_stability={"status": "stable" if stability >= 70 else "unstable", "stability_score": stability},
+        parameter_stability={
+            "status": "unmeasured" if not sensitivity_measured else "stable" if stability >= 70 else "unstable",
+            "stability_score": stability,
+        },
         stopped=stopped,
         partial=stopped,
         reason_code="STOP_REQUESTED" if stopped else None,
         stable_parameter_ranges=ranges,
         parameter_stability_score=stability,
+        parameter_sensitivity_measured=sensitivity_measured,
         recommended_search_range=ranges,
         bootstrap_ci=bootstrap_ci,
         ran=bool(completed_splits),
@@ -136,7 +146,7 @@ def stitch_metrics(metrics: list[dict[str, object]]) -> dict[str, object]:
     return {
         "total_trades": total_trades,
         "win_rate": wins / total_trades if total_trades else 0.0,
-        "profit_factor": sum(float(item.get("profit_factor", 0.0) or 0.0) for item in metrics) / len(metrics),
+        "profit_factor": _profit_factor_from_returns(trade_returns),
         "max_drawdown": max(float(item.get("max_drawdown", 0.0) or 0.0) for item in metrics),
         "expectancy": weighted_expectancy / total_trades if total_trades else 0.0,
         "average_win": sum(float(item.get("average_win", 0.0) or 0.0) for item in metrics) / len(metrics),
@@ -153,9 +163,9 @@ def derive_stable_parameter_ranges(fold_parameters: list[dict[str, float]]) -> t
     keys = sorted(set().union(*(params.keys() for params in fold_parameters)))
     if not keys:
         return {}, 0.0
-    # Fixed-param strategies have identical params every fold — that is perfect stability (100%).
+    # Repeating one configuration does not measure parameter sensitivity.
     if len(fold_parameters) > 1 and all(fp == fold_parameters[0] for fp in fold_parameters):
-        return {}, 100.0
+        return {}, 0.0
     ranges: dict[str, tuple[float, float]] = {}
     stable = 0
     for key in keys:
@@ -168,6 +178,10 @@ def derive_stable_parameter_ranges(fold_parameters: list[dict[str, float]]) -> t
         if mean == 0 or (high - low) / abs(mean) <= 0.2:
             stable += 1
     return ranges, round(stable / len(ranges) * 100, 2) if ranges else 0.0
+
+
+def _parameter_sensitivity_measured(fold_parameters: list[dict[str, float]]) -> bool:
+    return len(fold_parameters) > 1 and any(params != fold_parameters[0] for params in fold_parameters[1:])
 
 
 def _strategy_parameters(strategy: object) -> dict[str, float]:
@@ -186,8 +200,12 @@ def _walk_forward_verdict(
         return "REVIEW", "Walk-forward stopped before all splits completed."
     if split_count < 3:
         return "REVIEW", f"Only {split_count} walk-forward splits completed; need at least 3 for KEEP."
-    if float(metrics.get("total_trades", 0.0) or 0.0) <= 0:
-        return "REVIEW", "Walk-forward produced no OOS trades."
+    total_trades = float(metrics.get("total_trades", 0.0) or 0.0)
+    if total_trades < MIN_WALK_FORWARD_OOS_TRADES:
+        return "REVIEW", (
+            f"Walk-forward produced {total_trades:g} OOS trades; "
+            f"need at least {MIN_WALK_FORWARD_OOS_TRADES} for KEEP."
+        )
     max_drawdown = float(metrics.get("max_drawdown", 0.0) or 0.0)
     profit_factor = float(metrics.get("profit_factor", 0.0) or 0.0)
     if max_drawdown > 0.20:
@@ -199,6 +217,19 @@ def _walk_forward_verdict(
     if bool(bootstrap_ci.get("spans_zero", True)):
         return "REVIEW", "Walk-forward bootstrap confidence interval spans zero."
     return "KEEP", f"{split_count} walk-forward splits passed validation."
+
+
+def _profit_factor_from_returns(returns: list[float]) -> float:
+    """Compute profit factor from pooled trade returns.
+
+    Using pooled returns is correct: simple-averaging per-window PF values
+    collapses to near-zero whenever many windows produce zero trades (PF=0.0).
+    """
+    gross_win = sum(r for r in returns if r > 0)
+    gross_loss = abs(sum(r for r in returns if r < 0))
+    if gross_loss == 0:
+        return gross_win if gross_win > 0 else 0.0
+    return gross_win / gross_loss
 
 
 def _sharpe(returns: list[float]) -> float:
@@ -217,3 +248,39 @@ def _flatten_numeric(metrics: list[dict[str, object]], key: str) -> list[float]:
         if isinstance(raw, (list, tuple)):
             values.extend(float(value) for value in raw if isinstance(value, (int, float)))
     return values
+
+
+def tag_walk_forward_windows(
+    result: WalkForwardResult,
+    features: pd.DataFrame,
+    symbol: str,
+    briefs_dir: "Path",  # noqa: F821
+) -> WalkForwardResult:
+    """Enrich *result* with regime/opening_type tags per OOS window.
+
+    Reads the daily brief for the first date of each test window.
+    Returns the same result object with ``window_tags`` populated.
+    Call after ``run_walk_forward``; this is a no-op if briefs_dir has no files.
+    """
+    from pathlib import Path as _Path
+
+    from tar_system.data.daily_brief_loader import load_macro, load_opening_type
+
+    briefs_dir = _Path(briefs_dir)
+    tags: list[dict[str, object]] = []
+    ts_col = "timestamp" if "timestamp" in features.columns else None
+
+    for i, split in enumerate(result.splits):
+        tag: dict[str, object] = {"window": i, "regime": None, "opening_type": None,
+                                   "test_start_row": split.test_start, "test_end_row": split.test_end}
+        if ts_col is not None and split.test_start < len(features):
+            first_ts = features.iloc[split.test_start][ts_col]
+            date_str = str(pd.Timestamp(first_ts).date())
+            macro = load_macro(date_str, briefs_dir)
+            tag["regime"] = macro.get("regime")
+            tag["opening_type"] = load_opening_type(date_str, symbol, briefs_dir)
+            tag["date"] = date_str
+        tags.append(tag)
+
+    result.window_tags = tags
+    return result

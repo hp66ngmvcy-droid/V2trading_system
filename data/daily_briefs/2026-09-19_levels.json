@@ -1,0 +1,40 @@
+{
+  "date": "2026-09-19",
+  "source": "manual_three_session_review",
+  "sessions_present": ["asia_open", "london_handover"],
+  "sessions_expected": ["asia_open", "london_handover"],
+  "macro": {
+    "fed_hike_probability_oct": 0.57,
+    "us10y_yield": 5.0,
+    "us2y_yield": 4.74,
+    "dxy": 100.45,
+    "vix": 15.5,
+    "brent": 103.0,
+    "us_markets_open": false,
+    "note": "WEEKEND — reduced liquidity; BTC only active asset; XAU closed; short-liquidation contributed to Friday BTC expansion; $80k retention is the key weekend test",
+    "regime": null,
+    "opening_type": null
+  },
+  "XAUUSD": null,
+  "BTCUSD": {
+    "current_price": 80800,
+    "daily_bias": "BUY",
+    "buy_confidence": 0.62,
+    "sell_confidence": 0.52,
+    "key_levels": {
+      "bearish_invalidation": 82500,
+      "sell_zone_high": 81300,
+      "sell_zone_low": 81000,
+      "breakout_pivot": 80000,
+      "no_trade_high": 80200,
+      "no_trade_low": 79800,
+      "buy_zone_high": 80200,
+      "buy_zone_low": 79800,
+      "breakdown_trigger": 79200
+    },
+    "top_scenario": "BUY_RETEST",
+    "top_scenario_entry": [79800, 80200],
+    "top_scenario_targets": [81150, 82250],
+    "top_scenario_invalidation": 79200
+  }
+}

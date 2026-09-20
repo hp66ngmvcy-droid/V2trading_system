@@ -1,11 +1,4 @@
-"""Strategy registry."""
-
-from __future__ import annotations
-
-import inspect
-
-from .gold_v2 import GoldV2
-from .rsi_reversion_v1 import RsiReversionV1
+"""Strategy registry"""
 from .goldv2_v2 import GoldV2V2
 from .rsi_only_v3 import RSIOnlyV3
 from .ema_volume_v3 import EMAVolumeV3
@@ -14,20 +7,15 @@ from .momentum_crossover_v3 import MomentumCrossoverV3
 from .multi_timeframe_v3 import MultiTimeframeV3
 from .ema_volume_fixed import EMAVolumeFixed
 from .atr_breakout_fixed import ATRBreakoutFixed
-from .liquidity_sweep_v1 import LiquiditySweepV1
-from .rsi_trend_v4 import RSITrendV4
 from .vol_filtered_momentum_v1 import VolFilteredMomentumV1
-from .cross_asset_correlation_v1 import CrossAssetCorrelationV1
-from .cross_asset_correlation_v2 import CrossAssetCorrelationV2
-from .baf_v1 import BafV1
-from .vwmr_v1 import VwmrV1
-from .lsmr_v1 import LsmrV1
+from .gold_v2 import GoldV2
+from .rsi_reversion_v1 import RsiReversionV1
 from .arsb_v1 import ArsbV1
-from .tpbr_v1 import TpbrV1
+from .gold_orb_v1 import GoldOrbV1
+from .rsi_trend_v4 import RSITrendV4
 
+# Canonical strategies — no aliases
 REGISTRY = {
-    "gold_v2": GoldV2,
-    "rsi_reversion_v1": RsiReversionV1,
     "goldv2_v2": GoldV2V2,
     "rsi_only_v3": RSIOnlyV3,
     "ema_volume_v3": EMAVolumeV3,
@@ -36,43 +24,35 @@ REGISTRY = {
     "multi_timeframe_v3": MultiTimeframeV3,
     "ema_volume_fixed": EMAVolumeFixed,
     "atr_breakout_fixed": ATRBreakoutFixed,
-    "liquidity_sweep_v1": LiquiditySweepV1,
-    "rsi_trend_v4": RSITrendV4,
     "vol_filtered_momentum_v1": VolFilteredMomentumV1,
-    "cross_asset_correlation_v1": CrossAssetCorrelationV1,
-    "cross_asset_correlation_v2": CrossAssetCorrelationV2,
-    "baf_v1": BafV1,
-    "vwmr_v1": VwmrV1,
-    "lsmr_v1": LsmrV1,
+    "gold_v2": GoldV2,
+    "rsi_reversion_v1": RsiReversionV1,
     "arsb_v1": ArsbV1,
-    "tpbr_v1": TpbrV1,
+    "gold_orb_v1": GoldOrbV1,
+    "rsi_trend_v4": RSITrendV4,
 }
 
-
+# Short aliases — not in REGISTRY
 ALIASES = {
     "rsi_v3": RSIOnlyV3,
     "ema_vol_v3": EMAVolumeV3,
     "atr_v3": ATRBreakoutV3,
     "momentum_v3": MomentumCrossoverV3,
     "mtf_v3": MultiTimeframeV3,
-    "liquidity_sweep": LiquiditySweepV1,
     "vol_momo_v1": VolFilteredMomentumV1,
 }
 
+# Research-only strategies (not in production rotation)
+RESEARCH_REGISTRY = {"gold_v2", "rsi_reversion_v1"}
 
+# Legacy combined dict for backwards compatibility
 STRATEGIES = {**REGISTRY, **ALIASES}
 
 
-RESEARCH_REGISTRY = {
-    "gold_v2": GoldV2,
-    "rsi_reversion_v1": RsiReversionV1,
-}
+def get_strategy(name, **kwargs):
+    if name in REGISTRY:
+        return REGISTRY[name](**kwargs)
+    if name in ALIASES:
+        return ALIASES[name](**kwargs)
+    raise KeyError(f"Unknown strategy: {name}. Available: {list(REGISTRY.keys())}")
 
-
-def get_strategy(name: str, **parameters: object):
-    if name not in STRATEGIES:
-        raise KeyError(f"Unknown strategy: {name}. Available: {list(STRATEGIES.keys())}")
-    strategy_class = STRATEGIES[name]
-    signature = inspect.signature(strategy_class)
-    accepted = {key: value for key, value in parameters.items() if key in signature.parameters}
-    return strategy_class(**accepted)

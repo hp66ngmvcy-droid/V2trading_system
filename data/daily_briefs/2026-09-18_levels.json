@@ -1,0 +1,63 @@
+{
+  "date": "2026-09-18",
+  "source": "manual_three_session_review",
+  "sessions_present": ["asia_open", "london_handover", "us_open"],
+  "sessions_expected": ["asia_open", "london_handover", "us_open"],
+  "macro": {
+    "fed_hike_probability_oct": 0.55,
+    "us10y_yield": 4.97,
+    "us2y_yield": 4.74,
+    "dxy": 100.45,
+    "vix": 15.2,
+    "brent": 102.0,
+    "us_markets_open": true,
+    "note": "BOJ +25bp to 1.25% (7-2); Ueda cautious; USD/JPY ~158; gold rising despite DXY 7-week high (YIELD_DIVERGENCE strongest evidence); BTC COMPRESSION_EXPANSION confirmed",
+    "event_gate": {
+      "active": true,
+      "event": "FOMC",
+      "window_uk": "19:00-20:30"
+    }
+  },
+  "XAUUSD": {
+    "current_price": 4379,
+    "daily_bias": "BUY",
+    "sell_confidence": 0.53,
+    "buy_confidence": 0.66,
+    "key_levels": {
+      "bearish_invalidation": 4400,
+      "sell_zone_high": 4400,
+      "sell_zone_low": 4385,
+      "no_trade_high": 4380,
+      "no_trade_low": 4360,
+      "buy_zone_high": 4372,
+      "buy_zone_low": 4360,
+      "asia_liquidity_low": 4348,
+      "sell_continuation_trigger": 4345
+    },
+    "top_scenario": "BUY_PULLBACK",
+    "top_scenario_entry": [4360, 4372],
+    "top_scenario_targets": [4395, 4420],
+    "top_scenario_invalidation": 4348
+  },
+  "BTCUSD": {
+    "current_price": 77900,
+    "daily_bias": "BUY",
+    "buy_confidence": 0.63,
+    "sell_confidence": 0.52,
+    "key_levels": {
+      "bearish_invalidation": 79300,
+      "sell_zone_high": 78400,
+      "sell_zone_low": 78000,
+      "breakout_pivot": 76800,
+      "no_trade_high": 78000,
+      "no_trade_low": 77200,
+      "buy_zone_high": 77550,
+      "buy_zone_low": 77200,
+      "breakdown_trigger": 76800
+    },
+    "top_scenario": "BUY_RETEST",
+    "top_scenario_entry": [77200, 77550],
+    "top_scenario_targets": [78300, 79150],
+    "top_scenario_invalidation": 76875
+  }
+}

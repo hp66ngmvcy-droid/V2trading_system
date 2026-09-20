@@ -3,19 +3,31 @@
 # Note: STATUS.md is the human-readable index; this file is the machine-readable equivalent.
 
 version: 2
-updated: 2026-08-15
+updated: 2026-09-20
 
 agents:
   claude:
     status: idle
-    last_task_id: arsb_v1-kill-2026-08-15
-    last_activity: 2026-08-15
+    last_task_id: session-2026-09-20-builds
+    last_activity: 2026-09-20
   codex:
     status: idle
     current_task_id: null
-    last_activity: 2026-08-02
+    last_activity: 2026-09-10
 
-pending_tasks: []
+pending_tasks:
+  - id: populate-regime-opening-type-briefs
+    owner: human
+    priority: 1
+    summary: "Add regime + opening_type to all 10 existing briefs. Activates scorer multiplier and regime sizer."
+  - id: fix-conflicting-filters-high2
+    owner: claude
+    priority: 2
+    summary: "HIGH #2: no-trade zone overlaps buy/sell zones. Define explicit precedence in key_level_sweep_v1."
+  - id: fix-btc-schema-high3
+    owner: claude
+    priority: 2
+    summary: "HIGH #3: asia_liquidity_low absent from BTC briefs. Add fallback or separate BTC logic."
 
 completed_tasks:
   - id: council-review-all-ideas-2026-07-31
@@ -68,3 +80,8 @@ completed_tasks:
   - id: task-20260516-archive-stale-repo
     completed: 2026-05-17
     result: "Safely skipped — stale repo path no longer exists."
+
+  - id: session-2026-09-20-builds
+    completed: 2026-09-20
+    note: claude_notes/2026-09-20_session-builds-and-lookahead-fix.md
+    result: "Opening type (5 steps), regime sizer wired, signal cooldown, M15 data extended to Sep 20, real backtester built, look-ahead fix. 479/479 tests pass."

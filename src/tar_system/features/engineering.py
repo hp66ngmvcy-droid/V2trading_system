@@ -61,6 +61,8 @@ def build_features(
     work["range_compression"] = (work["atr"] / price_range).fillna(0)
     timestamps = pd.to_datetime(work["timestamp"], utc=True)
     work["hour_utc"] = timestamps.dt.hour
+    work["month_of_year"] = timestamps.dt.month
+    work["day_of_week"] = timestamps.dt.dayofweek
     work["session_label"] = work["hour_utc"].map(_session_label)
     work["is_liquid_session"] = work["session_label"].isin({"LONDON", "OVERLAP", "NEW_YORK"})
 
@@ -78,6 +80,18 @@ def build_features(
     asian_daily["asian_range"] = asian_daily["asian_high"] - asian_daily["asian_low"]
     asian_daily["asian_mid"] = (asian_daily["asian_high"] + asian_daily["asian_low"]) / 2
     work = work.merge(asian_daily, on="_date_utc", how="left")
+
+    # Opening Range Breakout (01:00–02:00 UTC) — used by gold_orb_v1
+    # First hour after XAUUSD market open: 4 M15 bars at hour_utc == 1.
+    orb_mask = work["hour_utc"] == 1
+    orb_bars = work[orb_mask].copy()
+    orb_bars["_date_utc"] = pd.to_datetime(orb_bars["timestamp"], utc=True).dt.date
+    orb_daily = orb_bars.groupby("_date_utc").agg(
+        orb_high=("high", "max"),
+        orb_low=("low", "min"),
+    ).reset_index()
+    orb_daily["orb_range"] = orb_daily["orb_high"] - orb_daily["orb_low"]
+    work = work.merge(orb_daily, on="_date_utc", how="left")
     work = work.drop(columns=["_date_utc"])
 
     return work

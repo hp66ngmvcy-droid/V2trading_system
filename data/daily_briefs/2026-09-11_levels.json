@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-11",
+  "source": "manual_three_session_review",
+  "sessions_present": ["us_open"],
+  "sessions_expected": ["asia_open", "london_handover", "us_open"],
+  "macro": {
+    "fed_hike_probability_sept": 0.70,
+    "us10y_yield": 4.98,
+    "dxy": 99.1,
+    "vix": null,
+    "brent": 104.0,
+    "us_markets_open": true,
+    "note": "CPI 13:30 UK dominant catalyst; pre-CPI compression both assets"
+  },
+  "XAUUSD": {
+    "current_price": 4345,
+    "daily_bias": "SELL",
+    "sell_confidence": 0.55,
+    "buy_confidence": 0.52,
+    "key_levels": {
+      "bearish_invalidation": 4382,
+      "sell_zone_high": 4365,
+      "sell_zone_low": 4350,
+      "no_trade_high": 4360,
+      "no_trade_low": 4325,
+      "buy_zone_high": 4335,
+      "buy_zone_low": 4325,
+      "asia_liquidity_low": 4310,
+      "sell_continuation_trigger": 4320
+    },
+    "top_scenario": "SELL_REBOUND_REJECTION",
+    "top_scenario_entry": [4350, 4365],
+    "top_scenario_targets": [4330, 4310],
+    "top_scenario_invalidation": 4382
+  },
+  "BTCUSD": {
+    "current_price": 77200,
+    "daily_bias": "SELL",
+    "sell_confidence": 0.56,
+    "buy_confidence": 0.49,
+    "key_levels": {
+      "bearish_invalidation": 78250,
+      "sell_zone_high": 77900,
+      "sell_zone_low": 77500,
+      "breakout_pivot": 77500,
+      "no_trade_high": 77500,
+      "no_trade_low": 76700,
+      "buy_zone_high": 76800,
+      "buy_zone_low": 76500,
+      "breakdown_trigger": 76700
+    },
+    "top_scenario": "SELL_REBOUND_REJECTION",
+    "top_scenario_entry": [77500, 77900],
+    "top_scenario_targets": [76800, 76200],
+    "top_scenario_invalidation": 78250
+  }
+}

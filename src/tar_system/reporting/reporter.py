@@ -21,6 +21,7 @@ def generate_report(
     output_format: str = "md",
     optimiser: dict[str, object] | None = None,
     positioning: dict[str, object] | None = None,
+    window_tags: list[dict[str, object]] | None = None,
 ) -> Path:
     if positioning is None:
         try:
@@ -72,6 +73,28 @@ def generate_report(
         for source in positioning.get("sources", []) or []:
             if isinstance(source, dict):
                 lines.append(f"- Source {source.get('source')}: {source.get('bias')} score={source.get('positioning_score')}")
+    if window_tags:
+        lines.extend(["", "## Regime Context (Walk-Forward Windows)", ""])
+        tagged = [t for t in window_tags if t.get("regime") or t.get("opening_type")]
+        if tagged:
+            lines.append("| Window | Date | Regime | Opening Type |")
+            lines.append("|--------|------|--------|--------------|")
+            for t in window_tags:
+                lines.append(
+                    f"| {t.get('window','')} | {t.get('date','—')} "
+                    f"| {t.get('regime') or '—'} | {t.get('opening_type') or '—'} |"
+                )
+            from collections import Counter
+            regimes = Counter(str(t.get("regime") or "null") for t in window_tags)
+            otypes = Counter(str(t.get("opening_type") or "null") for t in window_tags)
+            lines.extend(["", "**Regime distribution:**"])
+            for regime, count in regimes.most_common():
+                lines.append(f"- {regime}: {count} window(s)")
+            lines.extend(["", "**Opening type distribution:**"])
+            for ot, count in otypes.most_common():
+                lines.append(f"- {ot}: {count} window(s)")
+        else:
+            lines.append("- No regime/opening_type data in briefs yet — populate `regime` and `opening_type` fields in `_levels.json` to enable pattern discovery.")
     equity_path = Path("data/results") / f"{symbol}_{timeframe}_{strategy}_equity.json"
     if equity_path.exists():
         lines.extend(["", "## Equity Curve", f"- Export: {equity_path}"])

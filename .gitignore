@@ -35,3 +35,5 @@ second_brain/vault/01_hubs/private_trading_memory/
 *.pem
 .local_private/
 .claude/
+collab/state.db
+collab/__pycache__/

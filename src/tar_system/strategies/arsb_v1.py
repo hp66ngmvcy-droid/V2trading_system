@@ -13,15 +13,72 @@ Entry only valid at London open hour (07:00-09:30 UTC).
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import pandas as pd
 
 from tar_system import reason_codes as rc
 from tar_system.strategies.base import Signal
 
+_REPO = Path(__file__).resolve().parents[3]
+_VALIDATED = _REPO / "data" / "validated"
+_D1_TREND_CACHE: dict[str, pd.DataFrame | None] = {}
+
 
 def _f(val, default=0.0):
     return float(val) if val is not None and not pd.isna(val) else float(default)
+
+
+def _load_d1_trend(symbol: str) -> pd.DataFrame | None:
+    key = symbol.upper()
+    if key in _D1_TREND_CACHE:
+        return _D1_TREND_CACHE[key]
+
+    path = _VALIDATED / f"{key}_D1.parquet"
+    if not path.exists():
+        _D1_TREND_CACHE[key] = None
+        return None
+
+    df = pd.read_parquet(path, columns=["timestamp", "close"])
+    if df.empty:
+        _D1_TREND_CACHE[key] = None
+        return None
+
+    df = df.copy()
+    df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.normalize()
+    df["close"] = pd.to_numeric(df["close"], errors="coerce")
+    df = df.dropna(subset=["timestamp", "close"]).sort_values("timestamp")
+    df["ema20"] = df["close"].ewm(span=20, adjust=False).mean()
+    df["ema50"] = df["close"].ewm(span=50, adjust=False).mean()
+    df["close_slope_5"] = df["close"] - df["close"].shift(5)
+    # Daily close is only available from the next trading day; do not use the
+    # current day's unfinished D1 candle for intraday M15 entries.
+    df["available_from"] = df["timestamp"] + pd.Timedelta(days=1)
+    result = df.dropna(subset=["ema20", "ema50", "close_slope_5"])[
+        ["available_from", "ema20", "ema50", "close_slope_5"]
+    ].reset_index(drop=True)
+    _D1_TREND_CACHE[key] = result if not result.empty else None
+    return _D1_TREND_CACHE[key]
+
+
+def _d1_allowed_side(d1_trend: pd.DataFrame | None, ts: pd.Timestamp) -> str | None:
+    if d1_trend is None or d1_trend.empty:
+        return None
+
+    entry_day = pd.Timestamp(ts).normalize()
+    idx = d1_trend["available_from"].searchsorted(entry_day, side="right") - 1
+    if idx < 0:
+        return None
+
+    context = d1_trend.iloc[int(idx)]
+    ema20 = _f(context.get("ema20"))
+    ema50 = _f(context.get("ema50"))
+    slope = _f(context.get("close_slope_5"))
+    if ema20 > ema50 and slope > 0:
+        return "BUY"
+    if ema20 < ema50 and slope < 0:
+        return "SELL"
+    return None
 
 
 @dataclass
@@ -43,6 +100,7 @@ class ArsbV1:
     entry_start_hour: int = 8   # tuned: 08:00 UTC (London core, skip pre-market)
     entry_end_hour: int = 17   # tuned: close at NY overlap end
     atr_cap: float = 11.97     # tuned: 95th percentile ATR filter
+    d1_trend_filter: bool = True
 
     name: str = "arsb_v1"
     version: str = "0.1.0"
@@ -98,9 +156,17 @@ class ArsbV1:
 
         target_distance = asian_range * self.reward_risk
         confidence = min(0.88, 0.65 + (1 - asian_range / max(self.range_max_pts, 1)) * 0.2)
+        allowed_side = (
+            _d1_allowed_side(_load_d1_trend(str(row["symbol"])), base["timestamp"])
+            if self.d1_trend_filter
+            else None
+        )
 
         # Breakout BUY: close above Asian high + buffer
         if entry > breakout_long:
+            if self.d1_trend_filter and allowed_side != "BUY":
+                return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None,
+                             reason_code=rc.SIGNAL_HOLD, **base)
             stop = asian_mid  # stop at box midpoint
             return Signal(
                 side="BUY",
@@ -113,6 +179,9 @@ class ArsbV1:
 
         # Breakout SELL: close below Asian low - buffer
         if entry < breakout_short:
+            if self.d1_trend_filter and allowed_side != "SELL":
+                return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None,
+                             reason_code=rc.SIGNAL_HOLD, **base)
             stop = asian_mid
             return Signal(
                 side="SELL",

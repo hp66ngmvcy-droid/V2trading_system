@@ -224,7 +224,8 @@ def export_mt5_cmd(args: argparse.Namespace) -> None:
 
     features = load_feature_data(args.symbol, args.timeframe)
     latest = features.sort_values("timestamp").iloc[-1]
-    resolved = resolve_strategy(args.strategy, args.symbol, args.timeframe, args.broker, audit=True)
+    broker = getattr(args, "broker", "current_broker_demo")
+    resolved = resolve_strategy(args.strategy, args.symbol, args.timeframe, broker, audit=True)
     strategy = resolved.strategy
     regime = detect_regime(latest).value
     signal = strategy.generate_signal(latest, regime)
@@ -1130,6 +1131,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
                     "parameter_stability": result.parameter_stability,
                     "stable_parameter_ranges": result.stable_parameter_ranges,
                     "parameter_stability_score": result.parameter_stability_score,
+                    "parameter_sensitivity_measured": result.parameter_sensitivity_measured,
                     "recommended_search_range": result.recommended_search_range,
                     "bootstrap_ci": result.bootstrap_ci,
                 }

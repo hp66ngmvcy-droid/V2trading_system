@@ -1,5 +1,38 @@
 # Codex Handoff — 2026-09-08
 
+## Authoritative correction — 2026-09-09 pre-collection validation repair
+
+The earlier statements below that the five-trade bootstrap gate was working
+correctly and identical fold parameters represented perfect stability are now
+superseded. Walk-forward KEEP requires at least 20 stitched out-of-sample
+trades, independently of bootstrap sign. Repeated identical fold parameters
+now produce stability score `0.0` and are labelled `unmeasured`, because no
+parameter sensitivity was tested. The scorer independently emits
+`WF_LOW_TRADE_COUNT` below the same threshold.
+
+Claude recommended `PATCH_NOW`; Codex retained the project's established
+fail-closed `REVIEW` verdict rather than introducing an unsupported `FAIL`
+value. The full project suite passed (432 tests), compilation passed, and the
+prospective reporting prototype has no import/call relationship with
+walk-forward or promotion logic. The authoritative evidence and residual
+limits are in
+[the pre-collection repair note](codex_notes/2026-09-09_pre-10-day-validation-fix_done.md).
+
+## Later build — synthetic post-import prototype
+
+The first isolated manifest-to-report slice is implemented and locally tested:
+[build evidence and limits](codex_notes/2026-09-08_post-import-prototype_done.md).
+It accepts synthetic fixtures only; no importer or scheduler was activated.
+Completion was reconciled on 2026-09-09 as collab task
+`V2-POST-IMPORT-PROTOTYPE-001`: `DONE`, review state `DONE` (independent review
+pending). The final focused verification remains 25 passed plus compileall exit 0.
+Next integration work must identify the active ingestion owner and preserve
+the validation/evidence distinctions from the review below.
+
+## Later review correction — repository debate
+
+Read [the collab reconciliation and Claude debate](codex_notes/2026-09-08_repository-debate-and-handover-review_done.md) before using the validation explanations below. Synthetic diagnostics show that a small bootstrap sample need not span zero, and unchanged parameter values do not establish performance robustness. This correction concerns the explanations and helper semantics; it does not change strategy state or approve a build. The next proposed priority is a focused validation/evidence-record specification ahead of framework imports.
+
 ## What was done this session
 
 ### 1. rsi_trend_v4 Full Parameter Sweep (XAUUSD M15)

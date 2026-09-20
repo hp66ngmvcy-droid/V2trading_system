@@ -2,7 +2,7 @@
   "symbol": "XAUUSD",
   "timeframe": "M15",
   "strategy_name": "arsb_v1",
-  "tuned_at": "2026-07-05T11:29:33Z",
+  "tuned_at": "2026-07-16T21:59:45Z",
   "mt5_ready": true,
   "mt5_block_reason": "",
   "stages": [
@@ -10,45 +10,45 @@
       "stage": "stage1_costs",
       "passed": true,
       "best_config": {
-        "with_costs_pf": 1.652
+        "with_costs_pf": 2.0882
       },
       "metrics": {
-        "total_trades": 53.0,
-        "win_rate": 45.28,
-        "profit_factor": 1.652,
-        "net_profit": 164.4886,
-        "max_drawdown_pct": 0.69,
-        "sharpe_ratio": 3.2591,
-        "expectancy": 3.1036
+        "total_trades": 41.0,
+        "win_rate": 48.78,
+        "profit_factor": 2.0882,
+        "net_profit": 180.4131,
+        "max_drawdown_pct": 0.42,
+        "sharpe_ratio": 5.0603,
+        "expectancy": 4.4003
       },
-      "note": "raw_pf=1.6609 costed_pf=1.652"
+      "note": "raw_pf=2.0981 costed_pf=2.0882"
     },
     {
       "stage": "stage2_atr",
       "passed": true,
       "best_config": {
-        "atr_cap": 4.3464,
-        "percentile": 0.85,
-        "total_trades": 36.0,
-        "win_rate": 44.44,
-        "profit_factor": 1.7284,
-        "net_profit": 94.0819,
-        "max_drawdown_pct": 0.47,
-        "sharpe_ratio": 3.5657,
-        "expectancy": 2.6134
+        "atr_cap": 6.5081,
+        "percentile": 0.95,
+        "total_trades": 39.0,
+        "win_rate": 46.15,
+        "profit_factor": 1.911,
+        "net_profit": 141.1046,
+        "max_drawdown_pct": 0.42,
+        "sharpe_ratio": 4.4669,
+        "expectancy": 3.6181
       },
       "metrics": {
-        "atr_cap": 4.3464,
-        "percentile": 0.85,
-        "total_trades": 36.0,
-        "win_rate": 44.44,
-        "profit_factor": 1.7284,
-        "net_profit": 94.0819,
-        "max_drawdown_pct": 0.47,
-        "sharpe_ratio": 3.5657,
-        "expectancy": 2.6134
+        "atr_cap": 6.5081,
+        "percentile": 0.95,
+        "total_trades": 39.0,
+        "win_rate": 46.15,
+        "profit_factor": 1.911,
+        "net_profit": 141.1046,
+        "max_drawdown_pct": 0.42,
+        "sharpe_ratio": 4.4669,
+        "expectancy": 3.6181
       },
-      "note": "best percentile=0.85 cap=4.3464"
+      "note": "best percentile=0.95 cap=6.5081"
     },
     {
       "stage": "stage3_sessions",
@@ -58,39 +58,39 @@
         "start_utc": 7,
         "end_utc": 16,
         "total_trades": 31.0,
-        "win_rate": 45.16,
-        "profit_factor": 1.7432,
-        "net_profit": 84.545,
-        "max_drawdown_pct": 0.5,
-        "sharpe_ratio": 3.6003,
-        "expectancy": 2.7273
+        "win_rate": 48.39,
+        "profit_factor": 2.7784,
+        "net_profit": 165.9482,
+        "max_drawdown_pct": 0.27,
+        "sharpe_ratio": 6.8641,
+        "expectancy": 5.3532
       },
       "metrics": {
         "start_utc": 7,
         "end_utc": 16,
         "total_trades": 31.0,
-        "win_rate": 45.16,
-        "profit_factor": 1.7432,
-        "net_profit": 84.545,
-        "max_drawdown_pct": 0.5,
-        "sharpe_ratio": 3.6003,
-        "expectancy": 2.7273
+        "win_rate": 48.39,
+        "profit_factor": 2.7784,
+        "net_profit": 165.9482,
+        "max_drawdown_pct": 0.27,
+        "sharpe_ratio": 6.8641,
+        "expectancy": 5.3532
       },
       "note": "best session=7-16 (London+Overlap)"
     }
   ],
   "optimal_config": {
-    "atr_cap": 4.3464,
-    "atr_percentile": 0.85,
+    "atr_cap": 6.5081,
+    "atr_percentile": 0.95,
     "session_start_utc": 7,
     "session_end_utc": 16,
     "session_label": "7-16 (London+Overlap)"
   },
   "summary": {
-    "profit_factor": 1.7432,
-    "sharpe_ratio": 3.6003,
-    "max_drawdown_pct": 0.5,
+    "profit_factor": 2.7784,
+    "sharpe_ratio": 6.8641,
+    "max_drawdown_pct": 0.27,
     "total_trades": 31.0,
-    "win_rate": 45.16
+    "win_rate": 48.39
   }
 }

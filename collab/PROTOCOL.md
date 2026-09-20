@@ -121,6 +121,22 @@ Before Codex implements anything sourced from outside the local codebase (extern
 
 Do not delete notes. They are the audit trail.
 
+## Agent State Commands
+
+When Codex marks a task done:
+
+```bash
+python3 ~/Dev/shared/tools/state_cli.py complete <task-id> --done-note "codex_notes/<file>"
+python3 ~/Dev/shared/tools/state_cli.py generate-status
+```
+
+When Codex kills or parks a strategy:
+
+```bash
+python3 ~/Dev/shared/tools/state_cli.py strategy <name> KILLED --wf-pf <N> --reason "<reason>"
+python3 ~/Dev/shared/tools/state_cli.py generate-status
+```
+
 ## Ownership Rules
 
 - Claude owns `claude_notes/`.

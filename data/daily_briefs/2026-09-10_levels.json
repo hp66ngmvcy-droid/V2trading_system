@@ -1,54 +1,64 @@
 {
   "date": "2026-09-10",
-  "session": "Asia Open",
+  "source": "claude_ai_scheduled_review",
+  "sessions_present": ["asia_open"],
+  "sessions_expected": ["asia_open", "london_handover", "us_open"],
   "macro": {
-    "BTC": 78300,
-    "XAU_spot": 4414,
-    "DXY": 98.83,
-    "US_2Y_pct": 4.42,
-    "US_10Y_pct": 4.84,
-    "real_yield_10Y_pct": 2.43,
-    "VIX": 16.46,
-    "Brent": 101.21
-  },
-  "BTCUSD": {
-    "current": 78300,
-    "sell_rebound_entry": [78800, 79100],
-    "sell_rebound_invalid": 79500,
-    "sell_rebound_t1": 78200,
-    "sell_rebound_t2": 77600,
-    "sell_breakdown_entry_below": 78000,
-    "sell_breakdown_invalid": 78500,
-    "sell_breakdown_t1": 77400,
-    "sell_breakdown_t2": 76800,
-    "buy_reversal_entry_above": 79500,
-    "buy_reversal_invalid": 78900,
-    "buy_reversal_t1": 80200,
-    "buy_reversal_t2": 81000,
-    "no_trade_zone": [78100, 78700],
-    "judgement_sell_pct": 68,
-    "judgement_buy_pct": 55
+    "fed_hike_probability_sept": 0.65,
+    "us10y_yield": 4.84,
+    "dxy": 98.83,
+    "vix": 16.46,
+    "brent": 101.21,
+    "us_markets_open": true,
+    "note": "Asia open; US PPI 13:30 today; CPI 13:30 Fri 11 Sep; FOMC Wed 16 Sep",
+    "regime": null,
+    "opening_type": null,
+    "event_gate": {
+      "active": false,
+      "event": null,
+      "window_uk": null
+    }
   },
   "XAUUSD": {
-    "current": 4414,
-    "buy_retest_entry": [4400, 4410],
-    "buy_retest_invalid": 4385,
-    "buy_retest_t1": 4430,
-    "buy_retest_t2": 4450,
-    "sell_rejection_entry": [4435, 4450],
-    "sell_rejection_invalid": 4465,
-    "sell_rejection_t1": 4410,
-    "sell_rejection_t2": 4390,
-    "sell_breakdown_entry_below": 4385,
-    "sell_breakdown_invalid": 4405,
-    "sell_breakdown_t1": 4360,
-    "sell_breakdown_t2": 4340,
-    "no_trade_zone": [4410, 4430],
-    "judgement_buy_pct": 63,
-    "judgement_sell_pct": 61
+    "current_price": 4414,
+    "daily_bias": "BUY",
+    "sell_confidence": 0.61,
+    "buy_confidence": 0.63,
+    "key_levels": {
+      "bearish_invalidation": 4465,
+      "sell_zone_high": 4450,
+      "sell_zone_low": 4435,
+      "no_trade_high": 4430,
+      "no_trade_low": 4410,
+      "buy_zone_high": 4410,
+      "buy_zone_low": 4400,
+      "asia_liquidity_low": 4385,
+      "sell_continuation_trigger": 4385
+    },
+    "top_scenario": "BUY_PULLBACK",
+    "top_scenario_entry": [4400, 4410],
+    "top_scenario_targets": [4430, 4450],
+    "top_scenario_invalidation": 4385
   },
-  "key_events": [
-    {"time_uk": "13:30", "event": "US PPI", "date": "2026-09-10"},
-    {"time_uk": "13:30", "event": "US CPI", "date": "2026-09-11"}
-  ]
+  "BTCUSD": {
+    "current_price": 78300,
+    "daily_bias": "SELL",
+    "buy_confidence": 0.55,
+    "sell_confidence": 0.68,
+    "key_levels": {
+      "bearish_invalidation": 79500,
+      "sell_zone_high": 79100,
+      "sell_zone_low": 78800,
+      "breakout_pivot": 79500,
+      "no_trade_high": 78700,
+      "no_trade_low": 78100,
+      "buy_zone_high": 78100,
+      "buy_zone_low": 77600,
+      "breakdown_trigger": 78000
+    },
+    "top_scenario": "SELL_REBOUND_REJECTION",
+    "top_scenario_entry": [78800, 79100],
+    "top_scenario_targets": [78200, 77600],
+    "top_scenario_invalidation": 79500
+  }
 }

@@ -209,6 +209,47 @@ References:
 - `PLAN.md` PER-47 note.
 - `collab/linear_ticket_plan_2026-07-05.md`
 
+### PER-55 - Expose multi-agent verdicts in mutate-retest output
+
+Status: Review ticket
+Owner: Codex
+Priority: P2
+Project: V2 Trading
+Labels: `trading`, `multi-agent`, `mutate-retest`, `review`
+
+Description:
+
+Correct the stale B2 ticket. The bounded mutate-retest loop already exists and calls `score_strategy(...)`; `score_strategy(...)` already wires `score_multi_agent(metrics)` indirectly. The remaining gap is visibility: `src/tar_system/optimisation/mutate_loop.py` stores `score`, `verdict`, and `reason_codes`, but does not expose the multi-agent verdict, confidence, dissent flag, or per-agent reasons in the mutate-retest result artifact.
+
+Acceptance criteria:
+
+- Confirm `score_strategy(...)` still attaches `ScoreResult.multi_agent`.
+- Extend mutate-retest iteration output to include multi-agent verdict, confidence, dissent, and concise per-agent verdicts/reasons.
+- Preserve the existing JSON result shape where possible; add fields rather than renaming existing fields.
+- Add/update focused tests for the mutate-retest result structure.
+- Run targeted tests only; do not run live trading or broad optimiser loops.
+
+Suggested files:
+
+- `src/tar_system/optimisation/mutate_loop.py`
+- `src/tar_system/scoring/scorer.py`
+- `src/tar_system/scoring/multi_agent_scorer.py`
+- `tests/test_upgrade_b_optimise_compare.py`
+- `tests/test_multi_agent_scorer.py`
+
+Verification commands:
+
+```bash
+PYTHONPATH=src venv/bin/python -m pytest tests/test_upgrade_b_optimise_compare.py tests/test_multi_agent_scorer.py -q
+```
+
+References:
+
+- `personal-organiser/LINEAR_TICKETS_PENDING.md` stale B2 ticket.
+- `collab/codex_notes/2026-07-05_ordered-work-queue_done.md`
+- `src/tar_system/optimisation/mutate_loop.py`
+- `src/tar_system/scoring/scorer.py`
+
 ## Recommended First Move
 
-Start with PER-48 only. PER-49 is the review gate after fresh evidence. PER-50 and PER-51 should wait until ARSB is no longer consuming the lead review lane.
+Start with PER-48 only. PER-49 is the review gate after fresh evidence. PER-55 is a focused follow-up and should wait until ARSB is no longer consuming the lead review lane unless multi-agent output visibility becomes the immediate blocker.

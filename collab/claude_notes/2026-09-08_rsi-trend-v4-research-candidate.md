@@ -30,6 +30,8 @@ logged: 2026-09-08
 
 ## Why REVIEW not KEEP
 
+Later correction, 2026-09-08: the general claim below that a five-trade bootstrap always spans zero is false. A local synthetic counterexample returned a positive interval. This does not invalidate the recorded result for this candidate or establish sufficient evidence. See [the diagnostic and Claude debate](../codex_notes/2026-09-08_repository-debate-and-handover-review_done.md). Fixed parameters also demonstrate configuration consistency, not measured performance sensitivity. Treat the promotion path below as a proposal needing explicit evidence-lineage and sample-adequacy review; do not silently substitute paper observations into historical metrics.
+
 Bootstrap CI gate correctly blocked promotion. With IS=10000/OOS=2000/splits=5,
 only 5 OOS trades accumulated. A 95% bootstrap CI with n=5 always spans zero
 regardless of PF — insufficient statistical evidence, not a strategy failure.

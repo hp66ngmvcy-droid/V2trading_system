@@ -92,6 +92,10 @@ def test_feature_creation() -> None:
     assert "rsi" in features.columns
     assert "hour_utc" in features.columns
     assert features["hour_utc"].between(0, 23).all()
+    assert "month_of_year" in features.columns
+    assert features["month_of_year"].between(1, 12).all()
+    assert "day_of_week" in features.columns
+    assert features["day_of_week"].between(0, 6).all()
     assert "range_compression" in features.columns
     assert "session_label" in features.columns
     assert "ema_fast_slope" in features.columns
@@ -297,6 +301,21 @@ def test_scorer_can_keep_with_strong_walk_forward() -> None:
     }
     score = score_strategy(metrics, walk_forward, "M15", require_walk_forward=True)
     assert score.verdict == "KEEP"
+
+
+def test_scorer_rejects_low_walk_forward_trade_count_even_with_keep_payload() -> None:
+    metrics = {"win_rate": 0.65, "profit_factor": 2.4, "max_drawdown": 0.08, "total_trades": 60, "expectancy": 12}
+    walk_forward = {
+        "split_count": 3,
+        "ran": True,
+        "wf_verdict": "KEEP",
+        "stitched_metrics": {"total_trades": 19, "profit_factor": 1.4, "max_drawdown": 0.10},
+        "parameter_stability_score": 60.0,
+        "bootstrap_ci": {"spans_zero": False},
+    }
+    score = score_strategy(metrics, walk_forward, "M15", require_walk_forward=True)
+    assert score.verdict == "REVIEW"
+    assert "WF_LOW_TRADE_COUNT" in score.reason_codes
 
 
 def test_structural_gate_blocks_one_trade_winner() -> None:

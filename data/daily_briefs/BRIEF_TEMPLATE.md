@@ -1,25 +1,32 @@
-# V2 Daily Brief — YYYY-MM-DD
+# V2 Daily Brief — YYYY-MM-DD (Session: Asia / London / US)
 Source:
 Status: PAPER USE ONLY — judgement confidence, not backtested win rates
+Brief count: N/10
 
 ---
 
 ## Macro Baseline
-- Treasuries: 2Y | 10Y | 30Y
+- Treasuries: 2Y | 10Y | 30Y | real 10Y
 - DXY:
 - VIX:
 - Equities:
-- Next macro event:
+- Oil (Brent):
+- Fed / central bank stance:
+- BTC ETF flows (last 1–3 sessions):
+- Next major event (time UK):
 
 ---
 
 ## XAUUSD
 
-### Asia Action
+### Session Action
 -
 
 ### Current Price
 ~$
+Execution reference: [Vantage XAUUSD / other — state which feed drives entry levels]
+Context price: [Reuters or public feed + value — for macro narrative only, not execution]
+Note: If feed dispersion >$15, do not mix feeds. State dispersion.
 
 ### Opening Type (first 30 min of session)
 | Session | Opening Type | Notes |
@@ -45,27 +52,38 @@ Status: PAPER USE ONLY — judgement confidence, not backtested win rates
 | | SELL continuation |
 
 ### Scenarios
-| Rank | Scenario | Entry | Invalidation | Targets | R:R |
-|------|----------|-------|--------------|---------|-----|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
+| Rank | Scenario | Entry | Invalidation | T1 | T2 | R:R |
+|------|----------|-------|--------------|----|----|-----|
+| 1 | | | | | | |
+| 2 | | | | | | |
+| 3 | | | | | | |
+| 4 | | | | | | |
+
+**R:R formula (fill before writing stated R:R):**
+R:R = (Target − Entry) / (Entry − Invalidation)
+- Scenario 1: T1 ($___−$___) / ($___−$___) = ___R | T2 ___R
+- Scenario 2: T1 ___R | T2 ___R
+- Scenario 3: T1 ___R | T2 ___R
 
 **Confirmation required:**
 -
 
-**Judgement confidence: SELL % | BUY %**
+**Confidence: BUY ___/100 | SELL ___/100**
+Direction lean: [BUY / SELL / neutral]
+Event gate: [none / state event + time UK — cap confidence ≤65 if active]
 
 ---
 
 ## BTCUSD
 
-### Asia Action
+### Session Action
 -
 
 ### Current Price
 ~$
+Execution reference: [Vantage BTCUSD / other]
+Context price: [source + value]
+Note: BTC public feed dispersion can exceed $500–800. DO NOT use multiple public feeds for execution levels.
 
 ### Opening Type (first 30 min of session)
 | Session | Opening Type | Notes |
@@ -91,20 +109,75 @@ Status: PAPER USE ONLY — judgement confidence, not backtested win rates
 | | Breakdown SELL trigger |
 
 ### Scenarios
-| Rank | Scenario | Entry | Invalidation | Targets | R:R |
-|------|----------|-------|--------------|---------|-----|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
+| Rank | Scenario | Entry | Invalidation | T1 | T2 | R:R |
+|------|----------|-------|--------------|----|----|-----|
+| 1 | | | | | | |
+| 2 | | | | | | |
+| 3 | | | | | | |
+| 4 | | | | | | |
 
-**Judgement confidence: BUY % | SELL %**
-ETF inflows:
+**R:R formula (fill before writing stated R:R):**
+- Scenario 1: T1 ($___−$___) / ($___−$___) = ___R | T2 ___R
+- Scenario 2: T1 ___R | T2 ___R
+- Scenario 3: T1 ___R | T2 ___R
+
+**Confidence: BUY ___/100 | SELL ___/100**
+Direction lean: [BUY / SELL / neutral]
+Event gate: [none / state event + time UK]
+ETF inflows (latest):
 
 ---
 
 ## Session Handover Notes
 -
+
+---
+
+## Pattern Log
+Format: `ASSET | PATTERN_NAME | observed: N | predicted: N | failed: N | status: [WATCH / TEST_CANDIDATE / REPEATED / FAILED]`
+
+Status thresholds:
+- WATCH = observed 1–2 times
+- TEST_CANDIDATE = observed 3+, 0 failures
+- REPEATED = observed 5+, ≤1 failure
+- FAILED = any clean failure with confirmed context
+
+-
+
+---
+
+## Outcome (fill post-session)
+| Setup | Triggered? | Result | Pattern log update |
+|-------|-----------|--------|--------------------|
+| XAU | | | |
+| XAU | | | |
+| BTC | | | |
+| BTC | | | |
+
+---
+
+## _levels.json Schema — opening_type field
+
+When writing the companion `YYYY-MM-DD_levels.json`, set `opening_type` on each asset object to the **primary session's** opening type. Use exact strings below (case-insensitive in loader):
+
+```json
+"XAUUSD": {
+  "current_price": 4380,
+  "opening_type": "OPENING DRIVE",
+  ...
+},
+"BTCUSD": {
+  "current_price": 80000,
+  "opening_type": "RANGE REJECTION",
+  ...
+}
+```
+
+Valid values: `"OPEN AUCTION"` | `"RANGE REJECTION"` | `"TEST DRIVE"` | `"OPENING DRIVE"` | `null`
+
+- Asset-level `opening_type` takes priority over `macro.opening_type`
+- `macro.opening_type` is a session-wide fallback (set when both assets share the same type)
+- Leave `null` when opening type is not yet confirmed (first 30 min not complete)
 
 ---
 

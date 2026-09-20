@@ -9,7 +9,7 @@ from tar_system.optimisation.go_no_go_gate import evaluate_go_no_go
 from tar_system.optimisation.regime_heatmap import build_regime_heatmap
 from tar_system.optimisation.risk_strategy_optimiser import RiskStrategyOptimiser
 from tar_system.optimisation.strategy_improvement_planner import build_improvement_plan, detect_pivot_triggers
-from tar_system.validation.walk_forward import derive_stable_parameter_ranges
+from tar_system.validation.walk_forward import _walk_forward_verdict, derive_stable_parameter_ranges
 
 
 def good_metrics() -> dict[str, float]:
@@ -105,6 +105,26 @@ def test_stable_parameter_ranges_detection() -> None:
     assert stable_score == 100
     assert unstable["fast_ema"] == (8.0, 50.0)
     assert unstable_score == 0
+
+
+def test_identical_fold_parameters_do_not_claim_measured_stability() -> None:
+    ranges, score = derive_stable_parameter_ranges([{"fast_ema": 12}, {"fast_ema": 12}, {"fast_ema": 12}])
+    assert ranges == {}
+    assert score == 0.0
+
+
+def test_walk_forward_requires_twenty_oos_trades_for_keep() -> None:
+    bootstrap = {"spans_zero": False}
+    base = {"max_drawdown": 0.05, "profit_factor": 1.5}
+
+    for trade_count in (5, 19):
+        verdict, reason = _walk_forward_verdict({**base, "total_trades": trade_count}, 3, 80.0, False, bootstrap)
+        assert verdict == "REVIEW"
+        assert "need at least 20" in reason
+
+    verdict, reason = _walk_forward_verdict({**base, "total_trades": 20}, 3, 80.0, False, bootstrap)
+    assert verdict == "KEEP"
+    assert reason == "3 walk-forward splits passed validation."
 
 
 def test_optimiser_review_log_append(tmp_path, monkeypatch) -> None:

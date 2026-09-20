@@ -9,6 +9,9 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from tar_system.scoring.multi_agent_scorer import ConsensusResult
 
+from tar_system.sizing.regime_sizer import regime_size_multiplier
+from tar_system.validation.walk_forward import MIN_WALK_FORWARD_OOS_TRADES
+
 
 @dataclass
 class ScoreResult:
@@ -23,6 +26,8 @@ def score_strategy(
     walk_forward_metrics: dict[str, Any] | None = None,
     timeframe: str = "M15",
     require_walk_forward: bool = False,
+    regime: str | None = None,
+    opening_type: str | None = None,
 ) -> ScoreResult:
     win_rate = _safe(metrics.get("win_rate", 0.0), 0.0)
     profit_factor = _safe(metrics.get("profit_factor", 0.0), 0.0)
@@ -46,6 +51,10 @@ def score_strategy(
         reasons.append("WEAK_PROFIT_FACTOR")
     if require_walk_forward:
         reasons.extend(_walk_forward_reason_codes(walk_forward_metrics))
+    multiplier = regime_size_multiplier(regime, opening_type)
+    if multiplier != 1.0:
+        score *= multiplier
+        reasons.append(f"REGIME_CONTEXT:{multiplier:.2f}x")
     score = max(0.0, min(100.0, score))
     verdict = "KEEP" if score >= 70 and not reasons else "REVIEW" if score >= 45 else "KILL"
     from tar_system.scoring.multi_agent_scorer import score_multi_agent  # noqa: PLC0415
@@ -74,8 +83,11 @@ def _walk_forward_reason_codes(walk_forward_metrics: dict[str, Any] | None) -> l
     if wf_verdict != "KEEP":
         reasons.append("WF_VERDICT_REVIEW")
     stitched = walk_forward_metrics.get("stitched_metrics", walk_forward_metrics)
-    if float(stitched.get("total_trades", 0.0) or 0.0) <= 0:
+    wf_trade_count = float(stitched.get("total_trades", 0.0) or 0.0)
+    if wf_trade_count <= 0:
         reasons.append("WF_NO_TRADES")
+    elif wf_trade_count < MIN_WALK_FORWARD_OOS_TRADES:
+        reasons.append("WF_LOW_TRADE_COUNT")
     if float(stitched.get("max_drawdown", 0.0) or 0.0) > 0.20:
         reasons.append("WF_HIGH_DRAWDOWN")
     if float(stitched.get("profit_factor", 0.0) or 0.0) < 1.10:

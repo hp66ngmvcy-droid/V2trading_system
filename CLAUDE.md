@@ -2,6 +2,14 @@
 
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
+## V2 Quick Menu
+
+When user types a number (1–6) at session start, use `collab/V2_QUICK_MENU.md` to action it. Default bare number → option 1 (status snapshot). Options 2/4 require confirm before running. Full menu at `collab/V2_QUICK_MENU.md`.
+
+## Input Sharpening
+
+All agents follow `~/Dev/shared/policies/INPUT_SHARPENING.md`. Infer intent from vague input, fill gaps from repo context, state interpretation in one line, then act. Do not ask for clarification — choose the best reading and proceed.
+
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
 ## 1. Think Before Coding

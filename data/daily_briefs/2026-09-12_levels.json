@@ -1,0 +1,44 @@
+{
+  "date": "2026-09-12",
+  "source": "claude_ai_scheduled_review",
+  "sessions_present": ["asia_open"],
+  "sessions_expected": ["asia_open", "london_handover"],
+  "macro": {
+    "fed_hike_probability_sept": 0.72,
+    "us10y_yield": 4.97,
+    "dxy": 99.12,
+    "vix": 15.7,
+    "brent": 104.6,
+    "us_markets_open": false,
+    "note": "Weekend Asia — BTC only; XAU closed until Sunday/Monday reopen; FOMC Wed 16 Sep and BoE Thu 17 Sep dominant upcoming events",
+    "regime": null,
+    "opening_type": null,
+    "event_gate": {
+      "active": false,
+      "event": null,
+      "window_uk": null
+    }
+  },
+  "XAUUSD": null,
+  "BTCUSD": {
+    "current_price": 77240,
+    "daily_bias": "SELL",
+    "buy_confidence": 0.52,
+    "sell_confidence": 0.61,
+    "key_levels": {
+      "bearish_invalidation": 78150,
+      "sell_zone_high": 77800,
+      "sell_zone_low": 77400,
+      "breakout_pivot": 77900,
+      "no_trade_high": 77400,
+      "no_trade_low": 76700,
+      "buy_zone_high": 76600,
+      "buy_zone_low": 76300,
+      "breakdown_trigger": 76300
+    },
+    "top_scenario": "SELL_REJECTION",
+    "top_scenario_entry": [77400, 77800],
+    "top_scenario_targets": [76700, 76000],
+    "top_scenario_invalidation": 78150
+  }
+}

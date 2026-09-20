@@ -1,0 +1,58 @@
+{
+  "date": "2026-09-17",
+  "source": "manual_three_session_review",
+  "sessions_present": ["us_open"],
+  "sessions_expected": ["us_open"],
+  "macro": {
+    "fed_hike_probability_oct": 0.53,
+    "us10y_yield": 4.98,
+    "us2y_yield": 4.68,
+    "dxy": null,
+    "vix": 15.5,
+    "brent": 103.5,
+    "us_markets_open": true,
+    "note": "Post-FOMC (3.75-4.00% Wed hike); BoE held 3.75% 6-3 hawkish; gold recovery EVENT_FADE from $4,240 lows; BOJ pending Fri"
+  },
+  "XAUUSD": {
+    "current_price": 4318,
+    "daily_bias": "BUY",
+    "sell_confidence": 0.56,
+    "buy_confidence": 0.66,
+    "key_levels": {
+      "bearish_invalidation": 4340,
+      "sell_zone_high": 4335,
+      "sell_zone_low": 4330,
+      "no_trade_high": 4330,
+      "no_trade_low": 4310,
+      "buy_zone_high": 4318,
+      "buy_zone_low": 4310,
+      "asia_liquidity_low": 4300,
+      "sell_continuation_trigger": 4300
+    },
+    "top_scenario": "BUY_PULLBACK",
+    "top_scenario_entry": [4315, 4320],
+    "top_scenario_targets": [4332, 4355],
+    "top_scenario_invalidation": 4300
+  },
+  "BTCUSD": {
+    "current_price": 76600,
+    "daily_bias": "BUY",
+    "buy_confidence": 0.59,
+    "sell_confidence": 0.58,
+    "key_levels": {
+      "bearish_invalidation": 78250,
+      "sell_zone_high": 76800,
+      "sell_zone_low": 76000,
+      "breakout_pivot": 76800,
+      "no_trade_high": 76800,
+      "no_trade_low": 76000,
+      "buy_zone_high": 76850,
+      "buy_zone_low": 76700,
+      "breakdown_trigger": 76000
+    },
+    "top_scenario": "BUY_BREAKOUT_RETEST",
+    "top_scenario_entry": [76700, 76850],
+    "top_scenario_targets": [77400, 78125],
+    "top_scenario_invalidation": 76200
+  }
+}

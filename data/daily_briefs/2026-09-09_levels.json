@@ -1,47 +1,64 @@
 {
   "date": "2026-09-09",
-  "session": "Asia Open",
+  "source": "claude_ai_scheduled_review",
+  "sessions_present": ["asia_open"],
+  "sessions_expected": ["asia_open", "london_handover", "us_open"],
   "macro": {
+    "fed_hike_probability_sept": 0.60,
+    "us10y_yield": 4.80,
     "dxy": 98.9,
-    "us_2y": 4.40,
-    "us_10y": 4.80,
-    "real_yield_10y": 2.45,
     "vix": 15.7,
     "brent": 99.5,
-    "fed_sep_hike_prob": 0.60
-  },
-  "instruments": {
-    "XAUUSD": {
-      "reference": 4442.80,
-      "bias": "bearish-neutral",
-      "cleaner": true,
-      "scenarios": {
-        "sell_rejection": {"entry_low": 4425, "entry_high": 4440, "invalid": 4458, "t1": 4400, "t2": 4381},
-        "sell_break": {"entry": "below_4400", "invalid": 4415, "t1": 4381, "t2": 4366},
-        "buy_reversal": {"entry": "above_4458_hold", "invalid": 4435, "t1": 4475, "t2": 4500}
-      },
-      "no_trade_zone": [4400, 4425],
-      "confidence": {"sell": 0.68, "buy": 0.54},
-      "current_call": "WAIT"
-    },
-    "BTCUSD": {
-      "reference": 78300,
-      "bias": "bearish",
-      "cleaner": false,
-      "scenarios": {
-        "sell_rebound": {"entry_low": 78900, "entry_high": 79400, "invalid": 79800, "t1": 78200, "t2": 77500},
-        "sell_break": {"entry": "below_78000", "invalid": 78500, "t1": 77400, "t2": 76800},
-        "buy_reversal": {"entry": "above_79500_hold", "invalid": 78900, "t1": 80200, "t2": 81000}
-      },
-      "no_trade_zone": [78100, 78800],
-      "confidence": {"sell": 0.66, "buy": 0.55},
-      "current_call": "WAIT"
+    "us_markets_open": true,
+    "note": "Asia open; XAU bearish-neutral; BTC bearish; CPI Fri 11 Sep approaching",
+    "regime": null,
+    "opening_type": null,
+    "event_gate": {
+      "active": false,
+      "event": null,
+      "window_uk": null
     }
   },
-  "v2_ranked_calls": [
-    "XAU SELL on confirmed 4425-4440 rejection",
-    "BTC SELL on confirmed 78.9k-79.4k rejection",
-    "XAU SELL below 4400 after failed reclaim",
-    "BTC SELL below 78k after failed reclaim"
-  ]
+  "XAUUSD": {
+    "current_price": 4443,
+    "daily_bias": "SELL",
+    "sell_confidence": 0.68,
+    "buy_confidence": 0.54,
+    "key_levels": {
+      "bearish_invalidation": 4458,
+      "sell_zone_high": 4440,
+      "sell_zone_low": 4425,
+      "no_trade_high": 4425,
+      "no_trade_low": 4400,
+      "buy_zone_high": 4400,
+      "buy_zone_low": 4381,
+      "asia_liquidity_low": 4366,
+      "sell_continuation_trigger": 4400
+    },
+    "top_scenario": "SELL_REJECTION",
+    "top_scenario_entry": [4425, 4440],
+    "top_scenario_targets": [4400, 4381],
+    "top_scenario_invalidation": 4458
+  },
+  "BTCUSD": {
+    "current_price": 78300,
+    "daily_bias": "SELL",
+    "buy_confidence": 0.55,
+    "sell_confidence": 0.66,
+    "key_levels": {
+      "bearish_invalidation": 79800,
+      "sell_zone_high": 79400,
+      "sell_zone_low": 78900,
+      "breakout_pivot": 79500,
+      "no_trade_high": 78800,
+      "no_trade_low": 78100,
+      "buy_zone_high": 78100,
+      "buy_zone_low": 77500,
+      "breakdown_trigger": 78000
+    },
+    "top_scenario": "SELL_REBOUND_REJECTION",
+    "top_scenario_entry": [78900, 79400],
+    "top_scenario_targets": [78200, 77500],
+    "top_scenario_invalidation": 79800
+  }
 }

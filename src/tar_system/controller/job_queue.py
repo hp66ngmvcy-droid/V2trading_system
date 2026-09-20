@@ -53,6 +53,8 @@ QUEUE_COLUMNS = [
     "require_walk_forward",
     "require_min_trades",
     "min_trades",
+    "regime",
+    "opening_type",
 ]
 ACTIVE_STATUSES = {"QUEUED", "RUNNING"}
 ActiveJobKey = tuple[str, str, str, str, str, str, str, str]
@@ -70,6 +72,8 @@ QUEUE_COLUMN_TYPES = {
     "require_walk_forward": "BOOLEAN",
     "require_min_trades": "BOOLEAN",
     "min_trades": "INTEGER",
+    "regime": "VARCHAR",
+    "opening_type": "VARCHAR",
 }
 QUEUE_INSERT_SQL = """
 INSERT INTO research_jobs (
@@ -78,9 +82,9 @@ INSERT INTO research_jobs (
     recommendation, cost_sensitive, swap_drag, session_filter_used, from_date,
     to_date, forward_from_date, skip_walk_forward, skip_forward_test,
     max_walk_forward_splits, research_stage, no_live, no_mt5_promotion,
-    require_walk_forward, require_min_trades, min_trades
+    require_walk_forward, require_min_trades, min_trades, regime, opening_type
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 QUEUE_INSERT_OR_REPLACE_SQL = """
 INSERT OR REPLACE INTO research_jobs (
@@ -89,9 +93,9 @@ INSERT OR REPLACE INTO research_jobs (
     recommendation, cost_sensitive, swap_drag, session_filter_used, from_date,
     to_date, forward_from_date, skip_walk_forward, skip_forward_test,
     max_walk_forward_splits, research_stage, no_live, no_mt5_promotion,
-    require_walk_forward, require_min_trades, min_trades
+    require_walk_forward, require_min_trades, min_trades, regime, opening_type
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 QUEUE_UPDATE_SQL = {
     "type": "UPDATE research_jobs SET type = ? WHERE job_id = ?",
@@ -124,6 +128,8 @@ QUEUE_UPDATE_SQL = {
     "require_walk_forward": "UPDATE research_jobs SET require_walk_forward = ? WHERE job_id = ?",
     "require_min_trades": "UPDATE research_jobs SET require_min_trades = ? WHERE job_id = ?",
     "min_trades": "UPDATE research_jobs SET min_trades = ? WHERE job_id = ?",
+    "regime": "UPDATE research_jobs SET regime = ? WHERE job_id = ?",
+    "opening_type": "UPDATE research_jobs SET opening_type = ? WHERE job_id = ?",
 }
 QUEUE_ALTER_SQL = {
     "from_date": "ALTER TABLE research_jobs ADD COLUMN from_date VARCHAR",
@@ -138,6 +144,8 @@ QUEUE_ALTER_SQL = {
     "require_walk_forward": "ALTER TABLE research_jobs ADD COLUMN require_walk_forward BOOLEAN",
     "require_min_trades": "ALTER TABLE research_jobs ADD COLUMN require_min_trades BOOLEAN",
     "min_trades": "ALTER TABLE research_jobs ADD COLUMN min_trades INTEGER",
+    "regime": "ALTER TABLE research_jobs ADD COLUMN regime VARCHAR",
+    "opening_type": "ALTER TABLE research_jobs ADD COLUMN opening_type VARCHAR",
 }
 
 
@@ -163,6 +171,8 @@ def add_job(
     require_walk_forward: bool = True,
     require_min_trades: bool = False,
     min_trades: int = 30,
+    regime: str | None = None,
+    opening_type: str | None = None,
 ) -> dict[str, Any]:
     job = {
         "job_id": uuid.uuid4().hex,
@@ -196,6 +206,8 @@ def add_job(
         "require_walk_forward": require_walk_forward,
         "require_min_trades": require_min_trades,
         "min_trades": min_trades,
+        "regime": regime,
+        "opening_type": opening_type,
     }
     inserted = _insert_duckdb_unless_active_duplicate(job)
     _mirror_jsonl()

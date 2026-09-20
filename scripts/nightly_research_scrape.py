@@ -16,10 +16,11 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import logging
 import os
-import subprocess
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -62,23 +63,26 @@ def load_config(path: Path) -> dict:
         return json.load(f)
 
 
+def _strip_html(raw: str) -> str:
+    raw = re.sub(r"<script[^>]*>.*?</script>", " ", raw, flags=re.DOTALL | re.IGNORECASE)
+    raw = re.sub(r"<style[^>]*>.*?</style>", " ", raw, flags=re.DOTALL | re.IGNORECASE)
+    raw = re.sub(r"<[^>]+>", " ", raw)
+    raw = html.unescape(raw)
+    return re.sub(r"\s{2,}", " ", raw).strip()
+
+
 def scrape(url: str, timeout: int, max_chars: int) -> str | None:
     try:
-        result = subprocess.run(
-            ["webclaw", url, "--format", "text"],
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-        if result.returncode != 0:
-            log.warning("webclaw failed for %s: %s", url, result.stderr[:200])
-            return None
-        return result.stdout[:max_chars].strip() or None
-    except FileNotFoundError:
-        log.error("webclaw not found — install from https://github.com/0xMassi/webclaw")
+        r = httpx.get(url, timeout=timeout, follow_redirects=True,
+                      headers={"User-Agent": "Mozilla/5.0 (research-scraper/1.0)"})
+        r.raise_for_status()
+        text = _strip_html(r.text)
+        return text[:max_chars] or None
+    except httpx.TimeoutException:
+        log.warning("scrape timeout for %s", url)
         return None
-    except subprocess.TimeoutExpired:
-        log.warning("webclaw timeout for %s", url)
+    except Exception as e:
+        log.warning("scrape failed for %s: %s", url, str(e)[:120])
         return None
 
 

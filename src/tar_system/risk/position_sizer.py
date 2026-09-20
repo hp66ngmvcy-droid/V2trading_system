@@ -8,6 +8,7 @@ from tar_system import reason_codes as rc
 from tar_system.assets.profiles import AssetProfile
 from tar_system.brokers.profiles import BrokerProfile, BrokerSymbolProfile
 from tar_system.optimisation.parameter_anchors import ATR_STOP_ANCHORS
+from tar_system.sizing.regime_sizer import regime_size_multiplier
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,8 @@ def size_position(
     avg_win: float = 1.0,
     avg_loss: float = 1.0,
     current_asset_class_exposure: float = 0.0,
+    regime: str | None = None,
+    opening_type: str | None = None,
 ) -> PositionSize:
     symbol_profile = broker_profile.symbol_profile(symbol)
     if current_asset_class_exposure >= equity * 0.3:
@@ -58,6 +61,7 @@ def size_position(
         risk_amount = raw_lot * symbol_profile.contract_size
     else:
         raise ValueError(f"Unknown sizing model: {model}")
+    raw_lot *= regime_size_multiplier(regime, opening_type)
     lot, capped, reason = _apply_caps(raw_lot, price, equity, broker_profile, symbol_profile)
     notional = price * symbol_profile.contract_size * lot
     margin = notional / max(broker_profile.max_leverage, 1.0)

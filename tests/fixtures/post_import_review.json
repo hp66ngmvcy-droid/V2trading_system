@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "evidence_class": "SYNTHETIC",
+  "prompt_version": "daily-v1",
+  "import_completed_at": "2026-01-05T10:31:00Z",
+  "required_dataset_ids": ["demo"],
+  "datasets": [{
+    "dataset_id": "demo", "validation_status": "PASSED", "feature_status": "READY",
+    "feature_version": "fixture-v1", "bar_minutes": 15,
+    "bars": [
+      {"open_time": "2026-01-05T10:00:00Z", "close_time": "2026-01-05T10:15:00Z", "open": 100, "high": 103, "low": 99, "close": 102},
+      {"open_time": "2026-01-05T10:15:00Z", "close_time": "2026-01-05T10:30:00Z", "open": 102, "high": 106, "low": 101, "close": 105}
+    ],
+    "features": {"fixture": true},
+    "data_hash": "1529d1ea6b7beb8b02df7b6433cbb941417195c8f3bb8e24df8b286e3fe8ef15",
+    "feature_source_hash": "1529d1ea6b7beb8b02df7b6433cbb941417195c8f3bb8e24df8b286e3fe8ef15",
+    "feature_hash": "ffbc2dfc402782325da71132100e74ff511d1585dd80e4ea196ed4bcace3fef2"
+  }],
+  "forecasts": [{
+    "forecast_id": "observation-1", "dataset_id": "demo",
+    "frozen_at": "2026-01-05T09:59:00Z", "input_available_at": "2026-01-05T09:58:00Z",
+    "evaluation_start": "2026-01-05T10:00:00Z", "evaluation_end": "2026-01-05T10:30:00Z",
+    "lower_level": 95, "upper_level": 105, "expected_side": "UPPER"
+  }]
+}
