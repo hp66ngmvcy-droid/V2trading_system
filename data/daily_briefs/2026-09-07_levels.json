@@ -1,15 +1,23 @@
 {
+  "issued_at": "2026-09-07T07:00:00Z",
   "date": "2026-09-07",
   "source": "chatgpt_three_session_review",
-  "sessions_present": ["asia_open", "london_handover"],
-  "sessions_expected": ["asia_open", "london_handover", "us_open"],
+  "sessions_present": [
+    "asia_open",
+    "london_handover"
+  ],
+  "sessions_expected": [
+    "asia_open",
+    "london_handover",
+    "us_open"
+  ],
   "macro": {
     "fed_hike_probability_sept": 0.58,
     "us10y_yield": 4.78,
     "dxy": 99.14,
     "vix": 14.5,
     "us_markets_open": false,
-    "note": "US Labor Day — no live Treasury/VIX/equity signal"
+    "note": "US Labor Day \u2014 no live Treasury/VIX/equity signal"
   },
   "XAUUSD": {
     "current_price": 4426,
@@ -28,8 +36,14 @@
       "sell_continuation_trigger": 4390
     },
     "top_scenario": "SELL_REJECTION",
-    "top_scenario_entry": [4435, 4455],
-    "top_scenario_targets": [4410, 4390],
+    "top_scenario_entry": [
+      4435,
+      4455
+    ],
+    "top_scenario_targets": [
+      4410,
+      4390
+    ],
     "top_scenario_invalidation": 4470
   },
   "BTCUSD": {
@@ -49,8 +63,14 @@
       "breakdown_trigger": 79000
     },
     "top_scenario": "BUY_PULLBACK",
-    "top_scenario_entry": [79400, 79700],
-    "top_scenario_targets": [80500, 81200],
+    "top_scenario_entry": [
+      79400,
+      79700
+    ],
+    "top_scenario_targets": [
+      80500,
+      81200
+    ],
     "top_scenario_invalidation": 79000
   }
 }

@@ -1,8 +1,14 @@
 {
+  "issued_at": "2026-09-12T07:00:00Z",
   "date": "2026-09-12",
   "source": "claude_ai_scheduled_review",
-  "sessions_present": ["asia_open"],
-  "sessions_expected": ["asia_open", "london_handover"],
+  "sessions_present": [
+    "asia_open"
+  ],
+  "sessions_expected": [
+    "asia_open",
+    "london_handover"
+  ],
   "macro": {
     "fed_hike_probability_sept": 0.72,
     "us10y_yield": 4.97,
@@ -10,7 +16,7 @@
     "vix": 15.7,
     "brent": 104.6,
     "us_markets_open": false,
-    "note": "Weekend Asia — BTC only; XAU closed until Sunday/Monday reopen; FOMC Wed 16 Sep and BoE Thu 17 Sep dominant upcoming events",
+    "note": "Weekend Asia \u2014 BTC only; XAU closed until Sunday/Monday reopen; FOMC Wed 16 Sep and BoE Thu 17 Sep dominant upcoming events",
     "regime": null,
     "opening_type": null,
     "event_gate": {
@@ -37,8 +43,14 @@
       "breakdown_trigger": 76300
     },
     "top_scenario": "SELL_REJECTION",
-    "top_scenario_entry": [77400, 77800],
-    "top_scenario_targets": [76700, 76000],
+    "top_scenario_entry": [
+      77400,
+      77800
+    ],
+    "top_scenario_targets": [
+      76700,
+      76000
+    ],
     "top_scenario_invalidation": 78150
   }
 }

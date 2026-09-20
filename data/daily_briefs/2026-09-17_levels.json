@@ -1,8 +1,13 @@
 {
+  "issued_at": "2026-09-17T07:00:00Z",
   "date": "2026-09-17",
   "source": "manual_three_session_review",
-  "sessions_present": ["us_open"],
-  "sessions_expected": ["us_open"],
+  "sessions_present": [
+    "us_open"
+  ],
+  "sessions_expected": [
+    "us_open"
+  ],
   "macro": {
     "fed_hike_probability_oct": 0.53,
     "us10y_yield": 4.98,
@@ -30,8 +35,14 @@
       "sell_continuation_trigger": 4300
     },
     "top_scenario": "BUY_PULLBACK",
-    "top_scenario_entry": [4315, 4320],
-    "top_scenario_targets": [4332, 4355],
+    "top_scenario_entry": [
+      4315,
+      4320
+    ],
+    "top_scenario_targets": [
+      4332,
+      4355
+    ],
     "top_scenario_invalidation": 4300
   },
   "BTCUSD": {
@@ -51,8 +62,14 @@
       "breakdown_trigger": 76000
     },
     "top_scenario": "BUY_BREAKOUT_RETEST",
-    "top_scenario_entry": [76700, 76850],
-    "top_scenario_targets": [77400, 78125],
+    "top_scenario_entry": [
+      76700,
+      76850
+    ],
+    "top_scenario_targets": [
+      77400,
+      78125
+    ],
     "top_scenario_invalidation": 76200
   }
 }

@@ -1,8 +1,15 @@
 {
+  "issued_at": "2026-09-08T07:00:00Z",
   "date": "2026-09-08",
   "source": "claude_ai_scheduled_review",
-  "sessions_present": ["london_handover"],
-  "sessions_expected": ["asia_open", "london_handover", "us_open"],
+  "sessions_present": [
+    "london_handover"
+  ],
+  "sessions_expected": [
+    "asia_open",
+    "london_handover",
+    "us_open"
+  ],
   "macro": {
     "fed_hike_probability_sept": 0.58,
     "us10y_yield": 4.78,
@@ -36,8 +43,14 @@
       "sell_continuation_trigger": 4390
     },
     "top_scenario": "BUY_BREAKOUT_RETEST",
-    "top_scenario_entry": [4440, 4450],
-    "top_scenario_targets": [4475, 4500],
+    "top_scenario_entry": [
+      4440,
+      4450
+    ],
+    "top_scenario_targets": [
+      4475,
+      4500
+    ],
     "top_scenario_invalidation": 4425
   },
   "BTCUSD": {
@@ -57,8 +70,14 @@
       "breakdown_trigger": 78800
     },
     "top_scenario": "SELL_REBOUND_REJECTION",
-    "top_scenario_entry": [79700, 80100],
-    "top_scenario_targets": [79000, 78300],
+    "top_scenario_entry": [
+      79700,
+      80100
+    ],
+    "top_scenario_targets": [
+      79000,
+      78300
+    ],
     "top_scenario_invalidation": 80500
   }
 }

@@ -1,16 +1,25 @@
 {
+  "issued_at": "2026-09-14T07:00:00Z",
   "date": "2026-09-14",
   "source": "manual_three_session_review",
-  "sessions_present": ["asia_open", "london_handover", "us_open"],
-  "sessions_expected": ["asia_open", "london_handover", "us_open"],
+  "sessions_present": [
+    "asia_open",
+    "london_handover",
+    "us_open"
+  ],
+  "sessions_expected": [
+    "asia_open",
+    "london_handover",
+    "us_open"
+  ],
   "macro": {
-    "fed_hike_probability_sept": 0.90,
+    "fed_hike_probability_sept": 0.9,
     "us10y_yield": 4.97,
     "dxy": 99.22,
     "vix": 18.0,
     "brent": 108.2,
     "us_markets_open": true,
-    "note": "BREAKING/ABNORMAL — Saudi pipeline attack; YIELD_DIVERGENCE FAILED; gold -$60 on day; DXY/yields dominating"
+    "note": "BREAKING/ABNORMAL \u2014 Saudi pipeline attack; YIELD_DIVERGENCE FAILED; gold -$60 on day; DXY/yields dominating"
   },
   "XAUUSD": {
     "current_price": 4292,
@@ -29,8 +38,14 @@
       "sell_continuation_trigger": 4285
     },
     "top_scenario": "SELL_REBOUND_REJECTION",
-    "top_scenario_entry": [4310, 4325],
-    "top_scenario_targets": [4285, 4260],
+    "top_scenario_entry": [
+      4310,
+      4325
+    ],
+    "top_scenario_targets": [
+      4285,
+      4260
+    ],
     "top_scenario_invalidation": 4340
   },
   "BTCUSD": {
@@ -50,8 +65,14 @@
       "breakdown_trigger": 76900
     },
     "top_scenario": "WAIT",
-    "top_scenario_entry": [77600, 77900],
-    "top_scenario_targets": [77000, 76400],
+    "top_scenario_entry": [
+      77600,
+      77900
+    ],
+    "top_scenario_targets": [
+      77000,
+      76400
+    ],
     "top_scenario_invalidation": 78250
   }
 }

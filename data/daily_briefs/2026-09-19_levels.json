@@ -1,8 +1,15 @@
 {
+  "issued_at": "2026-09-19T07:00:00Z",
   "date": "2026-09-19",
   "source": "manual_three_session_review",
-  "sessions_present": ["asia_open", "london_handover"],
-  "sessions_expected": ["asia_open", "london_handover"],
+  "sessions_present": [
+    "asia_open",
+    "london_handover"
+  ],
+  "sessions_expected": [
+    "asia_open",
+    "london_handover"
+  ],
   "macro": {
     "fed_hike_probability_oct": 0.57,
     "us10y_yield": 5.0,
@@ -11,7 +18,7 @@
     "vix": 15.5,
     "brent": 103.0,
     "us_markets_open": false,
-    "note": "WEEKEND — reduced liquidity; BTC only active asset; XAU closed; short-liquidation contributed to Friday BTC expansion; $80k retention is the key weekend test",
+    "note": "WEEKEND \u2014 reduced liquidity; BTC only active asset; XAU closed; short-liquidation contributed to Friday BTC expansion; $80k retention is the key weekend test",
     "regime": null,
     "opening_type": null
   },
@@ -33,8 +40,14 @@
       "breakdown_trigger": 79200
     },
     "top_scenario": "BUY_RETEST",
-    "top_scenario_entry": [79800, 80200],
-    "top_scenario_targets": [81150, 82250],
+    "top_scenario_entry": [
+      79800,
+      80200
+    ],
+    "top_scenario_targets": [
+      81150,
+      82250
+    ],
     "top_scenario_invalidation": 79200
   }
 }
