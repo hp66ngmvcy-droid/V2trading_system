@@ -77,9 +77,12 @@ class PaperBroker:
         direction = 1 if signal.side == "BUY" else -1
         price = signal.entry + direction * (effective_spread / 2 + slippage)
         units = quantity * (contract_size if contract_size is not None else (symbol_profile.contract_size if symbol_profile else 1.0))
-        spread_cost = abs(effective_spread * units)
+        # Spread/slippage are embedded in the fill price (half-spread + slippage).
+        # Store the embedded amounts for audit but exclude from total_cost to avoid
+        # double-counting when the tracker subtracts total_cost from price-adjusted pnl.
+        spread_cost = abs(effective_spread / 2 * units)
         slippage_cost = abs(slippage * units)
-        total_cost = spread_cost + slippage_cost + self.commission_per_trade
+        total_cost = self.commission_per_trade
         return Fill(
             timestamp=signal.timestamp,
             symbol=signal.symbol,
@@ -96,7 +99,7 @@ class PaperBroker:
             slippage_cost=slippage_cost,
             spread_cost=spread_cost,
             total_cost=total_cost,
-            net_pnl=-total_cost,
+            net_pnl=-self.commission_per_trade,
         )
 
     def close_position(
@@ -116,7 +119,12 @@ class PaperBroker:
         side = "BUY" if position.side == "SELL" else "SELL"
         quantity = position.quantity
         units = quantity * (contract_size if contract_size is not None else (symbol_profile.contract_size if symbol_profile else 1.0))
-        spread_cost = abs(effective_spread * units)
+        # Closing a BUY receives BID (below mid); closing a SELL pays ASK (above mid).
+        # Embed half-spread + slippage in fill price (matching entry convention).
+        close_direction = -1 if position.side == "BUY" else 1
+        adjusted_price = exit_price + close_direction * (effective_spread / 2 + slippage)
+        # Store embedded amounts for audit; exclude from total_cost (already in price).
+        spread_cost = abs(effective_spread / 2 * units)
         slippage_cost = abs(slippage * units)
         swap_cost = 0.0
         if symbol_profile and hasattr(position, "timestamp"):
@@ -124,13 +132,13 @@ class PaperBroker:
             notional = exit_price * units
             swap_cost, _ = self.calculate_swap_cost(symbol_profile, position.side, quantity, notional, timeframe, bars_held)
             swap_cost = abs(swap_cost) * cost_multiplier
-        total_cost = spread_cost + slippage_cost + swap_cost + self.commission_per_trade
+        total_cost = swap_cost + self.commission_per_trade
         return Fill(
             timestamp=timestamp,
             symbol=position.symbol,
             side=side,
             quantity=quantity,
-            price=float(exit_price),
+            price=float(adjusted_price),
             commission=self.commission_per_trade,
             metadata={
                 "spread": float(effective_spread),
@@ -141,7 +149,7 @@ class PaperBroker:
             slippage_cost=slippage_cost,
             spread_cost=spread_cost,
             total_cost=total_cost,
-            net_pnl=-total_cost,
+            net_pnl=-(swap_cost + self.commission_per_trade),
         )
 
     def calculate_swap_cost(self, symbol_profile: BrokerSymbolProfile, side: str, lots: float, notional: float, timeframe: str, bars_held: int) -> tuple[float, float]:
@@ -276,6 +284,8 @@ def pip_size(symbol: str) -> float:
     if symbol.endswith("JPY"):
         return 0.01
     if symbol in {"XAUUSD", "XAGUSD", "USOUSD"}:
+        return 0.01
+    if symbol in {"BTCUSD", "ETHUSD", "XBTUSD"}:
         return 0.01
     return 0.0001
 

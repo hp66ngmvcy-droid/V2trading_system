@@ -154,6 +154,54 @@ def test_spread_applied_on_entry_and_exit() -> None:
     assert sell_fill.spread_cost > 0
 
 
+def test_round_trip_cost_not_double_counted() -> None:
+    # Convention: half-spread + slippage embedded in fill price at each leg.
+    # total_cost = commission only. Tracker subtracts total_cost from
+    # price-adjusted gross_pnl — no double-counting.
+    broker = PaperBroker(default_spread=2.0, slippage_bps=0.0, commission_per_trade=0.0, random_seed=0)
+    entry_signal = Signal(pd.Timestamp("2026-01-01 08:00"), "XAUUSD", "M15", "kls", "0.1", "BUY", 0.8, 4400.0, 4380.0, 4430.0, "BUY")
+    entry_fill = broker.execute(entry_signal, quantity=1.0, contract_size=1.0)
+    # Entry price must be above mid (BUY pays spread/2).
+    assert entry_fill.price > 4400.0
+    # total_cost excludes spread/slippage (already in price).
+    assert entry_fill.total_cost == 0.0
+
+    from tar_system.portfolio.tracker import Position
+    pos = Position("XAUUSD", "BUY", 1.0, entry_fill.price, entry_fill.timestamp, entry_fill.total_cost, contract_size=1.0)
+    exit_fill = broker.close_position(pos, pd.Timestamp("2026-01-01 09:00"), exit_price=4430.0, contract_size=1.0)
+    # Closing a BUY: fill price must be below the nominal exit (receives BID).
+    assert exit_fill.price < 4430.0
+    assert exit_fill.total_cost == 0.0
+
+    gross_pnl = (exit_fill.price - entry_fill.price) * 1.0
+    full_spread = 2.0 * 0.01  # spread=2.0 pips, pip_size=0.01 for XAUUSD
+    # gross_pnl already reflects round-trip spread cost.
+    assert abs(gross_pnl - (4430.0 - 4400.0 - full_spread)) < 1e-9
+
+
+def test_close_position_price_adjusted_below_exit_for_buy() -> None:
+    broker = PaperBroker(default_spread=1.0, slippage_bps=0.0, random_seed=0)
+    from tar_system.portfolio.tracker import Position
+    pos = Position("XAUUSD", "BUY", 1.0, 4400.0, pd.Timestamp("2026-01-01"), 0.0, contract_size=1.0)
+    fill = broker.close_position(pos, pd.Timestamp("2026-01-01 01:00"), exit_price=4420.0, contract_size=1.0)
+    assert fill.price < 4420.0
+
+
+def test_close_position_price_adjusted_above_exit_for_sell() -> None:
+    broker = PaperBroker(default_spread=1.0, slippage_bps=0.0, random_seed=0)
+    from tar_system.portfolio.tracker import Position
+    pos = Position("XAUUSD", "SELL", 1.0, 4400.0, pd.Timestamp("2026-01-01"), 0.0, contract_size=1.0)
+    fill = broker.close_position(pos, pd.Timestamp("2026-01-01 01:00"), exit_price=4380.0, contract_size=1.0)
+    assert fill.price > 4380.0
+
+
+def test_pip_size_btcusd_not_forex_fallback() -> None:
+    from tar_system.execution.paper_broker import pip_size
+    assert pip_size("BTCUSD") == 0.01
+    assert pip_size("ETHUSD") == 0.01
+    assert pip_size("EURUSD") == 0.0001
+
+
 def test_slippage_within_model_range() -> None:
     broker_profile = load_broker_profile("current_broker_demo")
     signal = Signal(pd.Timestamp("2026-01-01"), "EURUSD", "M15", "gold_v2", "0.1", "BUY", 0.8, 1.1000, 1.0, 1.2, "BUY")
