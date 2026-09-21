@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import pandas as pd
 
 from tar_system.backtest.engine import run_backtest
+from tar_system.brokers.registry import load_broker_profile
 from tar_system.data.daily_brief_loader import load_daily_levels
 from tar_system.strategies.key_level_sweep_v1 import KeyLevelSweepV1
 
@@ -63,8 +64,16 @@ def main() -> int:
         return 1
 
     # Run real backtest — TP/SL resolved on actual bar OHLC
-    strategy = KeyLevelSweepV1(symbol=symbol, briefs_dir=BRIEFS_DIR, min_confidence=0.55)
-    result = run_backtest(slice_df, strategy, audit_decisions=False)
+    # BTCUSD has no session cutoff (24h); XAUUSD uses default 12:00 UTC London close.
+    session_end = None if symbol == "BTCUSD" else "12:00"
+    strategy = KeyLevelSweepV1(
+        symbol=symbol,
+        briefs_dir=BRIEFS_DIR,
+        min_confidence=0.55,
+        session_end_utc=session_end,
+    )
+    broker_profile = load_broker_profile("current_broker_demo")
+    result = run_backtest(slice_df, strategy, broker_profile=broker_profile, audit_decisions=False)
 
     m = result.metrics
     trades = result.trades
