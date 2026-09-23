@@ -57,12 +57,15 @@ def size_position(
     elif model == "HALF_KELLY":
         loss_rate = 1 - win_rate
         full_kelly = (win_rate * avg_win - loss_rate * avg_loss) / max(avg_win, 1e-9)
-        raw_lot = max(0.0, equity * (full_kelly * 0.5) / symbol_profile.contract_size)
-        risk_amount = raw_lot * symbol_profile.contract_size
+        risk_amount = equity * max(0.0, full_kelly * 0.5)
+        raw_lot = risk_amount / max(resolved_stop * symbol_profile.contract_size, 1e-9)
     else:
         raise ValueError(f"Unknown sizing model: {model}")
     raw_lot *= regime_size_multiplier(regime, opening_type)
     lot, capped, reason = _apply_caps(raw_lot, price, equity, broker_profile, symbol_profile)
+    if model == "HALF_KELLY" and lot > 0 and resolved_stop > 1e-8:
+        if lot * resolved_stop * symbol_profile.contract_size > risk_amount * 1.01:
+            return PositionSize(0.0, 0.0, 0.0, 0.0, risk_pct, 0.0, model, True, rc.MIN_LOT_EXCEEDS_RISK_BUDGET)
     notional = price * symbol_profile.contract_size * lot
     margin = notional / max(broker_profile.max_leverage, 1.0)
     leverage = notional / equity if equity else 0.0

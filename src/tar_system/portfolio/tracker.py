@@ -114,18 +114,21 @@ class PortfolioTracker:
         self.equity_curve.append((fill.timestamp, self.current_equity))
         self._update_loss_guard()
 
-    def unrealised_pnl(self, mark_price: float | None = None) -> float:
-        if mark_price is None:
+    def unrealised_pnl(self, prices: dict[str, float] | None = None) -> float:
+        if not prices:
             return 0.0
         total = 0.0
         for position in self.open_positions:
-            pnl = (mark_price - position.entry_price) * position.quantity * position.contract_size
+            mark = prices.get(position.symbol)
+            if mark is None:
+                continue
+            pnl = (mark - position.entry_price) * position.quantity * position.contract_size
             total += pnl if position.side == "BUY" else -pnl
         return total
 
-    def drawdown_marked(self, mark_price: float = 0.0) -> float:
-        """Drawdown including open position unrealised PnL at current bar price."""
-        marked_equity = self.initial_capital + self.realised_pnl + self.unrealised_pnl(mark_price)
+    def drawdown_marked(self, prices: dict[str, float] | None = None) -> float:
+        """Drawdown including open position unrealised PnL at current bar close prices."""
+        marked_equity = self.initial_capital + self.realised_pnl + self.unrealised_pnl(prices)
         base_equities = [equity for _, equity in self.equity_curve]
         peak = max(base_equities + [marked_equity]) if base_equities else marked_equity
         return (peak - marked_equity) / peak if peak else 0.0

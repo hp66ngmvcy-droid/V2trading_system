@@ -2,18 +2,21 @@
 # Agents read this before starting work. Update status and ready flags on completion.
 # Note: STATUS.md is the human-readable index; this file is the machine-readable equivalent.
 
-version: 2
-updated: 2026-09-20b
+version: 8
+updated: 2026-09-23
+
+# Queue reconciled 2026-09-23: _state.yaml → state.db synced (scripts/reconcile_queue.py).
+# state.db: 29 PENDING, 4 DONE, 3 REVIEWED. STATUS.md regenerated. TASKS.md untouched (auto-builder only).
 
 agents:
   claude:
     status: idle
-    last_task_id: session-cutoff-param
-    last_activity: 2026-09-20
+    last_task_id: brief-2026-09-23
+    last_activity: 2026-09-23
   codex:
-    status: debate-pending
-    current_task_id: debate-historical-brief-t1
-    last_activity: 2026-09-20
+    status: idle
+    last_task_id: fix-runner-interday-position-continuity
+    last_activity: 2026-09-23
 
 pending_tasks:
   - id: brief-outcome-logging
@@ -78,6 +81,64 @@ pending_tasks:
     owner: codex
     priority: 15
     summary: "Uncalibrated confidence scores fed into Kelly/regime sizer = overbetting risk. 2x Kelly = same return as not trading. Debate: freeze confidence from position sizing until Brier score confirms calibration."
+  - id: debate-xauusd-btcusd-concentration
+    owner: codex
+    priority: 16
+    summary: "XAUUSD and BTCUSD correlated in risk-off regimes. No max-simultaneous-positions rule. Debate: what correlation threshold triggers a position cap, and how to measure it from brief outcomes."
+  - id: debate-human-brief-bias
+    owner: codex
+    priority: 17
+    summary: "Analyst anchoring and round-number preference in brief zone placement are systematic risks. Debate: minimum auditability standard — e.g. written thesis per brief, blind re-draw comparison, or statistical round-number test."
+  - id: outcome-logging-schema
+    owner: claude
+    priority: 0
+    summary: "Design and document the JSON schema for hit_target/hit_stop outcome fields in _levels.json. Required before brief-outcome-logging (priority 1) can start. Defines: field names, types, 'hit' definition, partial outcomes, fill timing. Draft at claude_notes/2026-09-21_outcome-logging-schema.md. Codex recommended separate append-only ledger linked by brief hash — pending schema revision."
+
+  # fix-half-kelly-lot-conversion: DONE 2026-09-23 — see completed_tasks
+  # fix-tracker-multi-symbol-mark-price: DONE 2026-09-23 — see completed_tasks
+
+  # fix-runner-interday-position-continuity: DONE 2026-09-23 — see completed_tasks
+
+  - id: mt5-macos-compatibility
+    owner: human
+    priority: 21
+    summary: "MetaTrader5 Python package publishes Windows x86-64 wheels only — no native macOS wheels. scripts/run_mt5_live_paper.py will not install on Mac Pro without Windows VM or verified compatibility workaround. Blocking for live feed testing. Found by Codex 2026-09-22."
+
+  - id: mt5-live-feed-gaps
+    owner: claude
+    priority: 22
+    summary: "run_mt5_live_paper.py gaps found by Codex 2026-09-22: (1) regime hardcoded to NEUTRAL — full regime workflow not wired; (2) ATR uses EWM, backtester uses rolling mean — parity needed; (3) no position lifecycle/fills/outcomes — logs signals only; (4) no durable bar cursor/restart-safe dedup; (5) data/live_signals/ dir absent — no confirmed run evidence. Fix after macOS compatibility resolved."
+
+  - id: business-model-path1a-pilot
+    owner: human
+    priority: 23
+    summary: "Codex verdict 2026-09-22: Path 1A (workflow education pilot) now. Weeks 1-2: establish minimum required income, offer productised service from existing skills (NOT trade recommendations). Have 10-15 buyer conversations before building. Weeks 3-6: 3-5 paying pilot customers with defined deliverable. UK FCA perimeter review required before any public actionable recommendations."
+
+  - id: IDEA-EXT-REPO-001
+    owner: human
+    priority: 3
+    summary: "Staged import of 8 external repos (Freqtrade, PyPortfolioOpt, Agent Framework pattern). Approved May 2026. 5-week build plan in claude_notes/2026-09-07_external-repo-import-strategy.md. Broad imports not needed for MVP reviewer — earlier approval must not substitute for present dependency/security review."
+
+  - id: IDEA-LIVE-LIB-001
+    owner: human
+    priority: 4
+    summary: "Part A: sealed live/ stubs (safety — already exist). Part B: Local Librarian Skill (Obsidian+DuckDB index — needs Greg sign-off). Details: claude_notes/2026-09-07_live-interface-and-librarian-skill.md. Stubs and Librarian are separate deliverables; reconcile evidence and split tracking."
+
+
+  - id: reviewer-stage0-evidence-contract
+    owner: claude
+    priority: 25
+    summary: "Agree evidence contract before building daily reviewer. Define: (1) immutable brief versioning by content hash; (2) three modes SYNTHETIC/HISTORICAL_REPLAY/PROSPECTIVE_PAPER with separate stats; (3) side-specific entry/stop/target rules and expiry horizons; (4) RETROSPECTIVE vs PROSPECTIVE labelling for after-session pasted briefs. Schema + fixtures reviewed before implementation. See Codex plan 2026-09-23."
+
+  - id: reviewer-stage1-reliable-replay
+    owner: claude
+    priority: 26
+    summary: "Build smallest CLI/JSON replay report for each symbol using existing local bars. Prerequisites: fix cross-day bar continuity (brief_dates filter → gate entries only); resolve EWM vs rolling ATR mismatch; next-bar execution baseline (not close-fill); AMBIGUOUS same-bar stop/target handling; isolated per-symbol ledgers. MT5 not required. See Codex plan 2026-09-23."
+
+  - id: missing-completion-note-key-level-build
+    owner: claude
+    priority: 27
+    summary: "STATUS.md references codex_notes/2026-09-19_key-level-sweep-v1-build.md as a completion note, but this file was not in collab inventory. Verify location or correct the state-store link. Do not invent a replacement record."
 
 completed_tasks:
   - id: council-review-all-ideas-2026-07-31
@@ -142,3 +203,65 @@ completed_tasks:
   - id: session-cutoff-param
     completed: 2026-09-20
     result: "session_end_utc param added to KeyLevelSweepV1. Default 12:00 UTC for XAUUSD, None for BTCUSD. Bars at/after cutoff return SESSION_FILTER_BLOCK. 499/499 tests pass. Commit dee553f."
+
+  - id: brief-2026-09-23
+    completed: 2026-09-23
+    result: "data/daily_briefs/2026-09-23_levels.json added + updated to NY pre-open (issued_at 2026-09-23T12:15:00Z). 3-session brief. EVENT RISK day (flash PMIs). BTC BUY PASS R:R 1.31 (entry 85300, stop 84460, T1 86400); XAU SELL PASS R:R 1.15 (entry 4328, stop 4348, T1 4305). XAU NY levels documentation-only (session_end 12:00 UTC passed). 15 briefs total. Validator: 3 PASS 1 FAIL (XAU BUY 0.305 — expected, bias is SELL)."
+
+  - id: queue-reconciliation
+    completed: 2026-09-23
+    result: "_state.yaml → state.db synced via scripts/reconcile_queue.py. 27 items inserted, 1 already present. STATUS.md regenerated. TASKS.md untouched. state.db now 29 PENDING / 4 DONE / 3 REVIEWED."
+
+  - id: daily-brief-strategy-review-plan-2026-09-23
+    completed: 2026-09-23
+    note: collab/codex_notes/2026-09-23_daily-brief-strategy-review-plan.md
+    result: |
+      4-stage build order: Stage 0 evidence contract → Stage 1 reliable replay CLI → Stage 2 daily UI (Today/Yesterday/Compare) → Stage 3 probability/tuning.
+      9 immediate prerequisites ranked (outcome schema, cross-day continuity, HALF_KELLY, tracker mark, brief-schema-hook, populate-regime restrictions, MT5 gaps).
+      Queue mismatch found: 24 YAML items vs 3 STATUS.md rows vs 0 TASKS.md — human reconciliation required.
+      Missing completion note: codex_notes/2026-09-19_key-level-sweep-v1-build.md referenced but not in file inventory.
+      No code changed, no queue flags altered, no tests run.
+
+  - id: fix-half-kelly-lot-conversion
+    completed: 2026-09-23
+    result: |
+      position_sizer.py HALF_KELLY branch fixed: now computes risk_amount = equity * max(0, full_kelly * 0.5), then lots = risk_amount / (stop * contract_size). Added post-caps rejection: if lot * stop * contract_size > risk_amount * 1.01, return 0 lots with MIN_LOT_EXCEEDS_RISK_BUDGET.
+      MIN_LOT_EXCEEDS_RISK_BUDGET added to reason_codes.py.
+      Old test replaced with two new tests: loss-at-stop invariant and min-lot rejection case. 509 tests pass.
+
+  - id: fix-tracker-multi-symbol-mark-price
+    completed: 2026-09-23
+    result: |
+      portfolio/tracker.py unrealised_pnl() now accepts prices: dict[str, float] | None; looks up position.symbol per position. drawdown_marked() signature updated to match.
+      engine.py updated: drawdown_marked({signal.symbol: float(close)}) — explicit per-symbol price. 509 tests pass.
+
+  - id: fix-runner-interday-position-continuity
+    completed: 2026-09-23
+    done_note: codex_notes/2026-09-23_scheduler-and-replay-review.md
+    result: |
+      Codex fixed scripts/run_key_level_sweep_real_backtest.py: removed brief-date filter, now passes ALL M15 bars sorted chronologically. Strategy gates new entries on brief availability internally (levels_data=None → HOLD). Existing positions resolve on non-brief days.
+      Added tests/test_key_level_sweep_runner.py: 5 tests covering cross-day exits, sort order, empty data rejection.
+      508/508 tests pass (was 503). Incidental finding: nightly runner (scripts/run_nightly_wf.py) has DSR claim without computing DSR, and non-atomic date-file lock — not fixed, reported only.
+
+  - id: business-model-debate-2026-09-22
+    completed: 2026-09-22
+    note: collab/codex_notes/2026-09-22_business-model-debate-response.md
+    result: |
+      Codex verdict: Path 1A (workflow pilot) + Path 5 (existing-skills service) for urgent cash. NOT paid signals. Path 4 (prop) gated.
+      Key corrections: income math wrong (£10-25k at 20% = £2-5k/year not £3-8k); MT5 package Windows-only (no macOS native wheels); 12 briefs = examples only not edge claims.
+      UK FCA compliance flag: actionable recommendations/performance claims may be regulated financial promotions before public publication.
+      MT5 live feed gaps: regime hardcoded NEUTRAL, ATR formula mismatch, no position lifecycle, no confirmed run evidence.
+      Action sequence: weeks 1-2 buyer discovery + service offer; weeks 3-6 narrow paid pilot; months 2-3 review evidence.
+
+  - id: session-2026-09-22-fixes-briefs
+    completed: 2026-09-22
+    note: claude_notes/2026-09-22_session-cost-fix-briefs.md
+    result: |
+      Cost accounting double-count bug fixed (paper_broker.py): spread/slippage embedded in fill price only; total_cost = commission only. pip_size() BTCUSD/ETHUSD returned 0.0001 forex fallback — fixed to 0.01.
+      Runner fixed: broker profile now passed to run_backtest(); BTC session_end_utc set to None (was defaulting to 12:00 UTC cutoff).
+      4 new tests added (round-trip cost convention, close price direction, pip_size crypto). 503/503 tests pass.
+      Commits: 213c37d (cost fix), c6ded72 (runner fix).
+      Briefs added: data/daily_briefs/2026-09-21_levels.json (BTC SELL R:R 1.71 PASS, XAU SELL R:R 2.21 PASS).
+                    data/daily_briefs/2026-09-22_levels.json (BTC BUY R:R 1.18 PASS, XAU SELL R:R 1.93 PASS).
+      Codex 9-debate prompt prepared: collab/claude_notes/2026-09-21_codex-debate-prompt-v2.md.
+      Remaining Codex bugs unfixed: HALF_KELLY lot conversion, tracker multi-symbol mark, runner interday continuity.

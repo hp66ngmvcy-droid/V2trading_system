@@ -103,10 +103,29 @@ def test_atr_sizing_uses_symbol_specific_stop_multiplier() -> None:
     assert btc.recommended_lot == 0.33
 
 
-def test_half_kelly_is_half_full_kelly() -> None:
+def test_half_kelly_loss_at_stop_equals_kelly_risk_amount() -> None:
+    # win=0.6, avg_win=2.0, avg_loss=1.0 → full_kelly=0.4, half=0.2, risk_amount=2000
+    # lots = 2000 / (20 * 100) = 1.0; loss-at-stop = 1.0 * 20 * 100 = 2000
     broker = load_broker_profile("current_broker_demo")
-    size = size_position("HALF_KELLY", "XAUUSD", 10.0, 10000.0, broker, get_asset_profile("XAUUSD"), win_rate=0.6, avg_win=2.0, avg_loss=1.0)
-    assert size.recommended_lot == 20.0
+    asset = get_asset_profile("XAUUSD")
+    size = size_position(
+        "HALF_KELLY", "XAUUSD", 2000.0, 10000.0, broker, asset,
+        stop_distance=20.0, win_rate=0.6, avg_win=2.0, avg_loss=1.0,
+    )
+    contract_size = broker.symbol_profile("XAUUSD").contract_size
+    assert abs(size.recommended_lot * 20.0 * contract_size - size.risk_amount) < 0.01
+
+
+def test_half_kelly_rejects_when_min_lot_exceeds_risk_budget() -> None:
+    # risk_amount = 100 * 0.2 = 20; lots = 20/(50*100)=0.004 → min_lot=0.01
+    # loss-at-stop = 0.01 * 50 * 100 = 50 > 20 → REJECT
+    broker = load_broker_profile("current_broker_demo")
+    size = size_position(
+        "HALF_KELLY", "XAUUSD", 2000.0, 100.0, broker, get_asset_profile("XAUUSD"),
+        stop_distance=50.0, win_rate=0.6, avg_win=2.0, avg_loss=1.0,
+    )
+    assert size.recommended_lot == 0.0
+    assert size.reason == "MIN_LOT_EXCEEDS_RISK_BUDGET"
 
 
 def test_position_size_caps_floor_and_leverage_limit() -> None:

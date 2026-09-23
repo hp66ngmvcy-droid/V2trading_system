@@ -1,0 +1,61 @@
+{
+  "issued_at": "2026-09-22T05:30:00Z",
+  "date": "2026-09-22",
+  "source": "analyst_multi_session_brief",
+  "sessions_present": ["asia_open"],
+  "sessions_expected": ["london_open", "us_open"],
+  "macro": {
+    "fed_funds_rate": 3.875,
+    "us10y_yield": 4.95,
+    "dxy": 100.4,
+    "brent": 100.4,
+    "vix": null,
+    "us_markets_open": false,
+    "note": "Monday risk-on: S&P +1.49%, Nasdaq record close; BTC extended to $87k then pulled back ~2%; XAU broke below $4350, spot $4342; DXY near 7-week high; real 10Y TIPS ~2.65%; Oct hike probability 56%; US-Iran UN talks possible but Houthi risk persists; no binary data release today",
+    "event_gate": {
+      "active": false,
+      "reason": "No CPI/NFP/PCE/GDP; Fed speakers Lagarde 12:00 UK, Williams 15:05 UK, Jefferson 15:20 UK, Barkin 18:00 UK — all post-noon, outside XAUUSD session window"
+    }
+  },
+  "BTCUSD": {
+    "current_price": 85500,
+    "daily_bias": "BUY",
+    "buy_confidence": 0.66,
+    "sell_confidence": 0.54,
+    "key_levels": {
+      "bearish_invalidation": 87800,
+      "sell_zone_high": 87500,
+      "sell_zone_low": 86700,
+      "no_trade_high": 86700,
+      "no_trade_low": 85400,
+      "buy_zone_high": 85200,
+      "buy_zone_low": 84700,
+      "breakdown_trigger": 84100
+    },
+    "top_scenario": "BUY_PULLBACK",
+    "top_scenario_entry": [84700, 85200],
+    "top_scenario_targets": [86550, 87550],
+    "top_scenario_invalidation": 84100
+  },
+  "XAUUSD": {
+    "current_price": 4342,
+    "daily_bias": "SELL",
+    "sell_confidence": 0.68,
+    "buy_confidence": 0.52,
+    "key_levels": {
+      "bearish_invalidation": 4368,
+      "sell_zone_high": 4372,
+      "sell_zone_low": 4354,
+      "no_trade_high": 4354,
+      "no_trade_low": 4340,
+      "buy_zone_high": 4340,
+      "buy_zone_low": 4320,
+      "asia_liquidity_low": 4320,
+      "sell_continuation_trigger": 4300
+    },
+    "top_scenario": "SELL_REJECTION",
+    "top_scenario_entry": [4348, 4358],
+    "top_scenario_targets": [4327, 4302],
+    "top_scenario_invalidation": 4368
+  }
+}

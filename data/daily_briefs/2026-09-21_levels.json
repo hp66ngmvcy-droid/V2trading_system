@@ -1,0 +1,61 @@
+{
+  "issued_at": "2026-09-21T05:30:00Z",
+  "date": "2026-09-21",
+  "source": "analyst_multi_session_brief",
+  "sessions_present": ["asia_open"],
+  "sessions_expected": ["london_open", "us_open"],
+  "macro": {
+    "fed_funds_rate": 3.875,
+    "us10y_yield": 5.0,
+    "dxy": 100.23,
+    "brent": 104.68,
+    "vix": null,
+    "us_markets_open": false,
+    "note": "Fed hiked 3.75-4.00; 10Y ~5%; DXY firm 100.23; Brent +0.78% after Houthi attack on Riyadh; China lending rates unchanged; BTC $80k support FAILED, returning to ~$76.8k origin; XAU rejected $4400, Asian retreat toward $4364",
+    "event_gate": {
+      "active": false,
+      "reason": "No CPI/NFP/PCE; Goolsbee 10:30 UK non-binary; T-bill auctions 15:30 UK minor"
+    }
+  },
+  "BTCUSD": {
+    "current_price": 77000,
+    "daily_bias": "SELL",
+    "sell_confidence": 0.63,
+    "buy_confidence": 0.56,
+    "key_levels": {
+      "bearish_invalidation": 79000,
+      "sell_zone_high": 79300,
+      "sell_zone_low": 78300,
+      "no_trade_high": 78300,
+      "no_trade_low": 77200,
+      "buy_zone_high": 77000,
+      "buy_zone_low": 76700,
+      "breakdown_trigger": 76400
+    },
+    "top_scenario": "SELL_REJECTION",
+    "top_scenario_entry": [78300, 79300],
+    "top_scenario_targets": [77100, 76200],
+    "top_scenario_invalidation": 79000
+  },
+  "XAUUSD": {
+    "current_price": 4364,
+    "daily_bias": "SELL",
+    "sell_confidence": 0.65,
+    "buy_confidence": 0.56,
+    "key_levels": {
+      "bearish_invalidation": 4402,
+      "sell_zone_high": 4390,
+      "sell_zone_low": 4378,
+      "no_trade_high": 4378,
+      "no_trade_low": 4362,
+      "buy_zone_high": 4360,
+      "buy_zone_low": 4350,
+      "asia_liquidity_low": 4334,
+      "sell_continuation_trigger": 4300
+    },
+    "top_scenario": "SELL_REJECTION",
+    "top_scenario_entry": [4378, 4390],
+    "top_scenario_targets": [4325, 4302],
+    "top_scenario_invalidation": 4402
+  }
+}

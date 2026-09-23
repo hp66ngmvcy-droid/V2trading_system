@@ -1,0 +1,61 @@
+{
+  "issued_at": "2026-09-23T12:15:00Z",
+  "date": "2026-09-23",
+  "source": "analyst_multi_session_brief",
+  "sessions_present": ["asia_open", "london_open", "ny_pre_open"],
+  "sessions_expected": ["us_open"],
+  "macro": {
+    "fed_funds_rate": 3.875,
+    "us10y_yield": 4.96,
+    "dxy": 100.57,
+    "brent": 99.0,
+    "vix": 14.2,
+    "us_markets_open": false,
+    "note": "EVENT RISK day: US flash PMIs 13:45 UK (14:45 UTC+1). BTC compression ~$85.1k-$87.4k broke to downside intraday; $85k zone holding at session open. XAU London SELL T1 reached ~$4,316 (multi-session bearish confirmation); rebound expected toward $4,328-$4,342 zone providing NY sell setup. Brent <$99 after Iran Hormuz easing proposal. DXY ~100.57 (dollar strengthening); 10Y ~4.96%; VIX 14.2. BTC ETF inflows: $714.7m Tuesday + $999m Monday = $2.31bn over 4-session run (structural buy support). Oct rate hike prob ~51%; Dec hike ~90%.",
+    "event_gate": {
+      "active": false,
+      "reason": "US PMIs 13:45 UTC+1 = 12:45 UTC. Outside XAUUSD 12:00 UTC session cutoff. BTC has no session cutoff. PMIs are elevated risk but not binary CPI/NFP/FOMC tier; BTC entry gate on brief availability only."
+    }
+  },
+  "BTCUSD": {
+    "current_price": 85800,
+    "daily_bias": "BUY",
+    "buy_confidence": 0.64,
+    "sell_confidence": 0.61,
+    "key_levels": {
+      "bearish_invalidation": 87300,
+      "sell_zone_high": 87300,
+      "sell_zone_low": 87000,
+      "no_trade_high": 86500,
+      "no_trade_low": 85700,
+      "buy_zone_high": 85300,
+      "buy_zone_low": 85000,
+      "breakdown_trigger": 84500
+    },
+    "top_scenario": "BUY_PULLBACK",
+    "top_scenario_entry": [85000, 85300],
+    "top_scenario_targets": [86400, 87100],
+    "top_scenario_invalidation": 84500
+  },
+  "XAUUSD": {
+    "current_price": 4317,
+    "daily_bias": "SELL",
+    "sell_confidence": 0.65,
+    "buy_confidence": 0.52,
+    "key_levels": {
+      "bearish_invalidation": 4348,
+      "sell_zone_high": 4342,
+      "sell_zone_low": 4328,
+      "no_trade_high": 4328,
+      "no_trade_low": 4305,
+      "buy_zone_high": 4310,
+      "buy_zone_low": 4300,
+      "asia_liquidity_low": 4291,
+      "sell_continuation_trigger": 4295
+    },
+    "top_scenario": "SELL_REJECTION",
+    "top_scenario_entry": [4328, 4342],
+    "top_scenario_targets": [4305, 4290],
+    "top_scenario_invalidation": 4348
+  }
+}

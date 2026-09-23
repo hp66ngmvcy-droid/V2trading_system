@@ -2,7 +2,8 @@
 """Real bar-walking backtest for key_level_sweep_v1.
 
 Uses the event-driven backtest engine (TP/SL hit on actual M15 OHLC bars),
-restricted to dates covered by daily brief JSON files.
+preserving all available bars so exits can resolve on days without briefs.
+The strategy gates new entries on brief availability.
 
 Usage:
     secrets_run_trading -- venv/bin/python scripts/run_key_level_sweep_real_backtest.py
@@ -51,16 +52,14 @@ def main() -> int:
 
     print(f"{symbol}: {len(brief_dates)} brief dates — {brief_dates[0]} to {brief_dates[-1]}")
 
-    # Load feature parquet and slice to brief dates only
+    # Keep non-brief days: open positions still need their stop/target checks.
     parquet = FEATURES_DIR / f"{symbol}_{TIMEFRAME}.parquet"
     features = pd.read_parquet(parquet)
-    features["_date"] = features["timestamp"].dt.date.astype(str)
-    slice_df = features[features["_date"].isin(brief_dates)].drop(columns=["_date"]).copy()
-    slice_df = slice_df.reset_index(drop=True)
-    print(f"{symbol}: {len(slice_df)} real M15 bars across brief dates")
+    slice_df = features.sort_values("timestamp").reset_index(drop=True)
+    print(f"{symbol}: {len(slice_df)} real M15 bars; entries require an available brief")
 
     if slice_df.empty:
-        print("ERROR: no bars found for brief dates — check parquet date range")
+        print("ERROR: no feature bars found — check parquet date range")
         return 1
 
     # Run real backtest — TP/SL resolved on actual bar OHLC
