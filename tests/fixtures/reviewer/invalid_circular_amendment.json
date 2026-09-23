@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "record_type": "AMENDMENT",
+  "record_id": "05c5ac9601f53310ed560557171eaa044e26e337d2e6fa5ff3109594a0c4bb7f",
+  "recorded_at": "2026-09-24T08:00:00Z",
+  "supersedes_record_id": "a120cd5cd85632663a596db71ea788e554d65114fab5afb64a663b9380e4d709",
+  "reason_code": "BAD",
+  "evidence_hash": "ed7a3f9c5b2e8d14c6a4f0b3e7d2c9a6b5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0",
+  "replacement_record_id": "a120cd5cd85632663a596db71ea788e554d65114fab5afb64a663b9380e4d709"
+}

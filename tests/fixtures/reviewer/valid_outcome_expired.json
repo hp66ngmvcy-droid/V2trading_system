@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "record_type": "OUTCOME_EVENT",
+  "record_id": "bb5dfe37785e7598c56f8cd4e8f43504b4de811d4796e8e85ede4b156359ebaf",
+  "recorded_at": "2026-09-23T12:01:00Z",
+  "manifest_id": "fdcc1c5b32bd008d976c20671af67384bc0d595cc4b0f8f84691ee9b0d412ff3",
+  "decision_id": "c428b5cf97a905815e32a388c57417223d4eda33a019f999cd8f6848a742281c",
+  "trade_id": null,
+  "entry_fill_id": null,
+  "exit_fill_id": null,
+  "state": "EXPIRED",
+  "exit_reason": "NO_FILL_BEFORE_EXPIRY",
+  "observed_from": "2026-09-23T09:30:00Z",
+  "observed_to": "2026-09-23T12:00:00Z",
+  "target_touched": false,
+  "stop_touched": false,
+  "observed_target_first": null,
+  "assumed_exit": null,
+  "net_pnl": null,
+  "net_r": null,
+  "metric_basis": null,
+  "probability_label": null
+}

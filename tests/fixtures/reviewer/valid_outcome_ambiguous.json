@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "record_type": "OUTCOME_EVENT",
+  "record_id": "60ab0afb139b07ebd2720508340b4573ba91172ae025abe33758741395f81b9e",
+  "recorded_at": "2026-09-23T09:31:00Z",
+  "manifest_id": "fdcc1c5b32bd008d976c20671af67384bc0d595cc4b0f8f84691ee9b0d412ff3",
+  "decision_id": "dce50c5b0a2c42ea578ec412f7a6a648fc4572b7809dcb2caf21a55b366e0692",
+  "trade_id": "ac411887f3daec8d3f9723bc972e2d48b371477b02b7d7c08565526a8dd90013",
+  "entry_fill_id": "ba1c8ab4c208b75ec1cc263d6dda91548ddf64d33b17942414b82b8419b6f39f",
+  "exit_fill_id": "93c2735f5527891a25367906fee4827aafb323a8d3a0e1749df2b21ff71f9a6d",
+  "state": "AMBIGUOUS",
+  "exit_reason": "BOTH_BARRIERS_SAME_BAR",
+  "observed_from": "2026-09-23T09:15:00Z",
+  "observed_to": "2026-09-23T09:30:00Z",
+  "target_touched": true,
+  "stop_touched": true,
+  "observed_target_first": null,
+  "assumed_exit": "STOP_FIRST",
+  "net_pnl": -20.0,
+  "net_r": -1.0,
+  "metric_basis": "CONSERVATIVE_ASSUMPTION",
+  "probability_label": null
+}
