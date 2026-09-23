@@ -21,3 +21,12 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: validate-brief-levels
+        name: Validate daily brief levels JSON
+        language: system
+        entry: venv/bin/check-jsonschema --schemafile data/schemas/brief_levels_schema.json
+        files: ^data/daily_briefs/.*_levels\.json$
+        types: [file]

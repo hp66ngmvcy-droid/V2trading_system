@@ -1,11 +1,13 @@
 ---
 id: outcome-logging-schema
 type: design-proposal
-status: DRAFT — pending human review
+status: APPROVED — append-only JSONL, see data/schemas/human_outcome_record.json
 logged: 2026-09-21
 author: claude-sonnet-4-6
 CLASSIFICATION: PUBLIC_TECHNICAL_ONLY
 ---
+
+> **Immutability rule (2026-09-23):** Outcomes go to `data/outcomes/brief_outcomes.jsonl` as append-only records — NOT inline to `_levels.json` files, which are immutable once issued.
 
 # Outcome Logging Schema — `_levels.json`
 
