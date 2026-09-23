@@ -2,7 +2,7 @@
 # Agents read this before starting work. Update status and ready flags on completion.
 # Note: STATUS.md is the human-readable index; this file is the machine-readable equivalent.
 
-version: 8
+version: 9
 updated: 2026-09-23
 
 # Queue reconciled 2026-09-23: _state.yaml → state.db synced (scripts/reconcile_queue.py).
@@ -11,7 +11,7 @@ updated: 2026-09-23
 agents:
   claude:
     status: idle
-    last_task_id: brief-2026-09-23
+    last_task_id: brief-schema-hook
     last_activity: 2026-09-23
   codex:
     status: idle
@@ -27,14 +27,8 @@ pending_tasks:
     owner: human
     priority: 2
     summary: "Add regime + opening_type to all 10 existing briefs. Activates scorer multiplier and regime sizer."
-  - id: brief-schema-hook
-    owner: claude
-    priority: 3
-    summary: "JSON schema pre-commit hook (check-jsonschema) for _levels.json files. Enforces required fields, zone ordering, top_scenario_targets. No statistical assumptions."
-  - id: debate-historical-brief-t1
-    owner: codex
-    priority: 4
-    summary: "Decision: leave historical brief T1 unchanged (Path A) vs lower min_rr for historical period (Path B). Do NOT edit brief files. Debate prompt sent 2026-09-20."
+  # brief-schema-hook: DONE 2026-09-23 — see completed_tasks
+  # debate-historical-brief-t1: DISPOSED 2026-09-23 — Path A. Originals frozen.
   - id: brier-score-script
     owner: claude
     priority: 5
@@ -53,18 +47,9 @@ pending_tasks:
     summary: "FVG inline helper (require_fvg=False). Deferred: StatOasis 648-test study found no mechanical edge from FVG alone. Needs 50+ unfiltered signals first. No external dependency."
 
   # ---- Phase 3 roadmap (after Phase 2 edge confirmed) ----
-  - id: debate-buy-stop-atr-vs-structure
-    owner: codex
-    priority: 9
-    summary: "BUY stop uses ATR (stop_anchor - 2xATR) but SELL stop uses structure (bearish_invalidation). Inconsistent. Debate: change BUY stop to sweep_low - buffer, ATR as floor only."
-  - id: debate-wf-overfitting
-    owner: codex
-    priority: 10
-    summary: "Walk-forward single-window gate can be cherry-picked until it passes. Debate: should CPCV replace or supplement current WF? Ref: arxiv 2512.12924."
-  - id: debate-paper-live-gap
-    owner: codex
-    priority: 11
-    summary: "No spread/commission model in backtester. PF=1.4 paper may be PF=0.9 live. Debate: minimum spread assumption before any paper result is called meaningful."
+  # debate-buy-stop-atr-vs-structure: DISPOSED 2026-09-23 — experiment ticket EXP-SWEEP-STOP-001 frozen, baseline unchanged.
+  # debate-wf-overfitting: DISPOSED 2026-09-23 — freeze splits/params/costs now; CPCV optional supplement at ~100-200 trades.
+  # debate-paper-live-gap: DISPOSED 2026-09-23 — cost model repaired; need regenerated versioned results with explicit execution assumptions.
   - id: phase3-macro-agent-a
     owner: human
     priority: 12
@@ -73,26 +58,11 @@ pending_tasks:
     owner: human
     priority: 13
     summary: "Phase 3: Agent B economic calendar event gate — auto-reads FOMC/NFP/CPI dates, writes event_gate block to brief. Replaces manual event_gate. Gate: after Phase 2 validation."
-  - id: debate-external-data-feeds
-    owner: codex
-    priority: 14
-    summary: "What external data feeds does V2 need for Phase 3? Confirmed free sources: FRED VIXCLS, DGS10, DTWEXBGS; FinnHub economic calendar; GPR index (Dallas Fed). Debate: minimum viable data layer before macro agent is built."
-  - id: debate-confidence-sizing-ruin
-    owner: codex
-    priority: 15
-    summary: "Uncalibrated confidence scores fed into Kelly/regime sizer = overbetting risk. 2x Kelly = same return as not trading. Debate: freeze confidence from position sizing until Brier score confirms calibration."
-  - id: debate-xauusd-btcusd-concentration
-    owner: codex
-    priority: 16
-    summary: "XAUUSD and BTCUSD correlated in risk-off regimes. No max-simultaneous-positions rule. Debate: what correlation threshold triggers a position cap, and how to measure it from brief outcomes."
-  - id: debate-human-brief-bias
-    owner: codex
-    priority: 17
-    summary: "Analyst anchoring and round-number preference in brief zone placement are systematic risks. Debate: minimum auditability standard — e.g. written thesis per brief, blind re-draw comparison, or statistical round-number test."
-  - id: outcome-logging-schema
-    owner: claude
-    priority: 0
-    summary: "Design and document the JSON schema for hit_target/hit_stop outcome fields in _levels.json. Required before brief-outcome-logging (priority 1) can start. Defines: field names, types, 'hit' definition, partial outcomes, fill timing. Draft at claude_notes/2026-09-21_outcome-logging-schema.md. Codex recommended separate append-only ledger linked by brief hash — pending schema revision."
+  # debate-external-data-feeds: DISPOSED 2026-09-23 — deferred Phase 3; define source/entitlement/timing first.
+  # debate-confidence-sizing-ruin: DISPOSED 2026-09-23 — confidence stays out of sizing. Reviewer MVP must use capped fixed-risk explicitly.
+  # debate-xauusd-btcusd-concentration: DISPOSED 2026-09-23 — isolated per-symbol ledgers for MVP; shared account needs explicit cap.
+  # debate-human-brief-bias: DISPOSED 2026-09-23 — immutable versions; issued_at parseable in all 13 briefs but backdating unproven; hash at ingestion; round-number test deferred 30+ outcomes.
+  # outcome-logging-schema: DONE 2026-09-23 — see completed_tasks
 
   # fix-half-kelly-lot-conversion: DONE 2026-09-23 — see completed_tasks
   # fix-tracker-multi-symbol-mark-price: DONE 2026-09-23 — see completed_tasks
@@ -221,6 +191,24 @@ completed_tasks:
       Queue mismatch found: 24 YAML items vs 3 STATUS.md rows vs 0 TASKS.md — human reconciliation required.
       Missing completion note: codex_notes/2026-09-19_key-level-sweep-v1-build.md referenced but not in file inventory.
       No code changed, no queue flags altered, no tests run.
+
+  - id: outcome-logging-schema
+    completed: 2026-09-23
+    result: "Append-only JSONL design approved. data/schemas/human_outcome_record.json (JSON Schema draft-07). data/outcomes/brief_outcomes.jsonl is target. scripts/log_outcome.py validates + appends. Briefs remain immutable. Draft note updated to APPROVED."
+
+  - id: brief-schema-hook
+    completed: 2026-09-23
+    result: "data/schemas/brief_levels_schema.json (JSON Schema draft-07). Pre-commit local hook added to .pre-commit-config.yaml using check-jsonschema 0.38.2. All 13 current briefs pass. Handles null symbol blocks (Sep 12+19 weekend files)."
+
+  - id: debate-dispositions-2026-09-23
+    completed: 2026-09-23
+    note: collab/codex_notes/2026-09-23_debate-dispositions.md
+    result: "All 8 debates disposed: Path A historical briefs frozen; EXP-SWEEP-STOP-001 experiment ticket frozen (not active); WF splits frozen now; paper-live gap stale premise retired; macro feeds deferred Phase 3; confidence out of sizing indefinitely; isolated per-symbol ledgers for MVP; issued_at parseable but backdating unproven."
+
+  - id: reviewer-design-specs-2026-09-23
+    completed: 2026-09-23
+    note: collab/codex_notes/2026-09-23_reviewer-design-specs.md
+    result: "5 evidence contract schemas (INPUT_MANIFEST, DECISION, SIMULATED_FILL, OUTCOME_EVENT, AMENDMENT) + 7 Stage 1 Python stubs. Storage: data/reviewer/<experiment_id>/<symbol>/events.jsonl. Next-open is NEW labelled experiment, not silent alteration of close-fill baseline. Stage 0 + Stage 1 implementation can now proceed."
 
   - id: fix-half-kelly-lot-conversion
     completed: 2026-09-23
