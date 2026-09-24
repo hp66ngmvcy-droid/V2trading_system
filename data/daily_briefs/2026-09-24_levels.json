@@ -1,0 +1,96 @@
+{
+  "issued_at": "2026-09-24T12:18:00Z",
+  "date": "2026-09-24",
+  "source": "analyst_multi_session_brief",
+  "sessions_present": ["asia_open", "london_open", "ny_pre_open"],
+  "sessions_expected": ["us_open"],
+  "macro": {
+    "fed_funds_rate": 3.875,
+    "us10y_yield": 5.145,
+    "dxy": 101.24,
+    "brent": 105.2,
+    "vix": 15.18,
+    "us_markets_open": false,
+    "note": "EVENT RISK: bond selloff intensified Thursday. US 10Y hit 5.145% (post-GFC high), Japan 10Y 30-year high, European yields rising. DXY ~101.24 (2-month high). Fed Oct hike prob ~69%. BTC fell from ~$84.4k Asia to ~$83.3k London after breaking Asia low $83.74k. XAU broke $4,275 support, London ~$4,262 (T1 from Asia brief reached). 13:30 UK: jobless claims (cons 201k, prev 196k) + building permits. Trump-Xi summit = unscheduled headline risk. SELL lean both assets. Do not enter before 13:30 data.",
+    "event_gate": {
+      "active": true,
+      "reason": "US jobless claims 13:30 UK. Strong labour = yields/DXY higher, BTC/XAU lower. Weak claims = first yield-fade risk and potential squeeze. Wait for print + 5m structure before any entry."
+    },
+    "btc_etf_flows": {
+      "wed_final_usd": 347000000,
+      "note": "Sep-23 final +$347m (IBIT $166m, FBTC $143m). 5th consecutive positive session. BTC fell through $85k and $83.7k anyway — FLOW_DIVERGENCE confirmed."
+    }
+  },
+  "BTCUSD": {
+    "current_price": 83300,
+    "daily_bias": "SELL",
+    "buy_confidence": 0.51,
+    "sell_confidence": 0.66,
+    "key_levels": {
+      "bearish_invalidation": 84800,
+      "structural_invalidation": 85400,
+      "sell_zone_high": 84200,
+      "sell_zone_low": 84000,
+      "no_trade_high": 83700,
+      "no_trade_low": 82900,
+      "buy_zone_high": 83000,
+      "buy_zone_low": 82700,
+      "breakdown_trigger": 82800,
+      "asia_low": 83745,
+      "london_low": 83233
+    },
+    "top_scenario": "SELL_REBOUND_REJECTION",
+    "top_scenario_entry": [83800, 84200],
+    "top_scenario_targets": [82900, 81900],
+    "top_scenario_invalidation": 84800,
+    "alt_scenario_breakdown": {
+      "trigger": 82800,
+      "entry": [82600, 82900],
+      "targets": [81900, 80750],
+      "invalidation": 83600,
+      "confidence": 0.64
+    },
+    "alt_scenario_reversal_buy": {
+      "requires": "83000 sweep then reclaim 83800 then reclaim 84500",
+      "entry": [84300, 84600],
+      "targets": [85150, 86150],
+      "invalidation": 83500,
+      "confidence": 0.51
+    }
+  },
+  "XAUUSD": {
+    "current_price": 4262,
+    "daily_bias": "SELL",
+    "sell_confidence": 0.67,
+    "buy_confidence": 0.49,
+    "key_levels": {
+      "bearish_invalidation": 4300,
+      "sell_zone_high": 4285,
+      "sell_zone_low": 4280,
+      "no_trade_high": 4270,
+      "no_trade_low": 4250,
+      "buy_zone_high": 4260,
+      "buy_zone_low": 4250,
+      "breakdown_trigger": 4250,
+      "london_low": 4258
+    },
+    "top_scenario": "SELL_REBOUND_REJECTION",
+    "top_scenario_entry": [4275, 4285],
+    "top_scenario_targets": [4258, 4235],
+    "top_scenario_invalidation": 4300,
+    "alt_scenario_breakdown": {
+      "trigger": 4250,
+      "entry": [4245, 4252],
+      "targets": [4228, 4205],
+      "invalidation": 4268,
+      "confidence": 0.65
+    },
+    "alt_scenario_reversal_buy": {
+      "requires": "4250 sweep then reclaim 4270 then reclaim 4285",
+      "entry": [4280, 4287],
+      "targets": [4302, 4325],
+      "invalidation": 4255,
+      "confidence": 0.49
+    }
+  }
+}
