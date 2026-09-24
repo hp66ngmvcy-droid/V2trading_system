@@ -67,6 +67,55 @@ def _fred_latest(series_id: str, fred_key: str) -> float | None:
     return None
 
 
+def _btc_derivatives() -> dict:
+    """Fetch BTC options expiry (Deribit) and futures OI percentile (Binance). No auth."""
+    out = {"next_options_expiry": None, "next_options_expiry_btc": None,
+           "futures_oi_btc": None, "futures_oi_pct30": None}
+    try:
+        # Deribit: next weekly expiry and its OI
+        from collections import defaultdict
+        r = httpx.get(
+            "https://www.deribit.com/api/v2/public/get_book_summary_by_currency"
+            "?currency=BTC&kind=option", timeout=12)
+        instruments = r.json().get("result", [])
+        by_expiry: dict[str, float] = defaultdict(float)
+        for b in instruments:
+            name = b.get("instrument_name", "")
+            parts = name.split("-")
+            exp = parts[1] if len(parts) >= 2 else "UNK"
+            by_expiry[exp] += float(b.get("open_interest", 0))
+        if by_expiry:
+            # Sort by expiry date (format: 25SEP26)
+            def _parse_exp(s: str):
+                try:
+                    return datetime.strptime(s, "%d%b%y")
+                except Exception:
+                    return datetime(2099, 1, 1)
+            sorted_exp = sorted(by_expiry.items(), key=lambda x: _parse_exp(x[0]))
+            next_exp, next_oi = sorted_exp[0]
+            out["next_options_expiry"] = next_exp
+            out["next_options_expiry_btc"] = round(next_oi, 0)
+    except Exception:
+        pass
+
+    try:
+        # Binance: futures OI + 30-day percentile
+        r2 = httpx.get(
+            "https://fapi.binance.com/futures/data/openInterestHist"
+            "?symbol=BTCUSDT&period=1d&limit=30", timeout=12)
+        hist = [float(x["sumOpenInterest"]) for x in r2.json()]
+        if hist:
+            oi_now = hist[-1]
+            lo, hi = min(hist), max(hist)
+            pct = round((oi_now - lo) / (hi - lo) * 100) if hi > lo else 50
+            out["futures_oi_btc"] = round(oi_now, 0)
+            out["futures_oi_pct30"] = pct
+    except Exception:
+        pass
+
+    return out
+
+
 def fetch_macro(td_key: str, fred_key: str) -> dict:
     """Fetch macro snapshot. Returns dict with all indicators."""
     # Prices from Twelve Data
@@ -79,28 +128,37 @@ def fetch_macro(td_key: str, fred_key: str) -> dict:
     vixy = prices.get("VIXY")
 
     # DXY approximation from EUR/USD (accurate near 1.05-1.20 range)
-    # Fallback: use FRED DTWEXBGS broad dollar index scaled to DXY range
     if eurusd:
         dxy = round(-100 * eurusd + 215, 2)
     else:
         broad = _fred_latest("DTWEXBGS", fred_key)
-        # DTWEXBGS ~115-125 maps roughly to DXY ~98-108 via linear scale
         dxy = round((broad - 119.5) * 0.55 + 101.0, 2) if broad else None
 
-    # US 10Y yield from FRED (1-day lag acceptable)
+    # FRED rates (1-day lag acceptable for daily brief)
     us10y = _fred_latest("DGS10", fred_key)
+    us10y_real = _fred_latest("DFII10", fred_key)   # 10Y TIPS real yield
+    fed_funds = _fred_latest("DFF", fred_key)         # effective fed funds rate
 
-    # VIX proxy — VIXY typically trades at 55-70% of spot VIX
+    # VIX proxy — VIXY ETF
     vix = round(vixy * 0.88, 1) if vixy else None
+
+    # BTC derivatives (Deribit + Binance, no auth)
+    btc_deriv = _btc_derivatives()
 
     return {
         "xau_price": xau,
         "btc_price": btc,
         "us10y_yield": us10y,
+        "us10y_real_yield": us10y_real,
+        "fed_funds_rate": fed_funds,
         "dxy": dxy,
         "brent": brent,
         "vix": vix,
         "eurusd": eurusd,
+        "btc_next_options_expiry": btc_deriv["next_options_expiry"],
+        "btc_next_options_oi_btc": btc_deriv["next_options_expiry_btc"],
+        "btc_futures_oi_btc": btc_deriv["futures_oi_btc"],
+        "btc_futures_oi_pct30": btc_deriv["futures_oi_pct30"],
     }
 
 
@@ -317,6 +375,17 @@ def build_brief(date_str: str, macro: dict, td_key: str) -> dict:
 
     now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
+    # Build BTC-specific macro note
+    btc_deriv_note = ""
+    if macro.get("btc_next_options_expiry"):
+        oi_btc = macro.get("btc_next_options_oi_btc", 0)
+        oi_usd = round(oi_btc * (macro["btc_price"] or 84000) / 1e9, 1) if oi_btc else "?"
+        btc_deriv_note = (
+            f" BTC options expiry {macro['btc_next_options_expiry']}: ~{oi_usd}bn notional."
+            f" Futures OI: {macro.get('btc_futures_oi_btc','?'):.0f} BTC"
+            f" ({macro.get('btc_futures_oi_pct30','?')}th pct 30d)." if macro.get("btc_futures_oi_btc") else ""
+        )
+
     return {
         "issued_at": now_utc,
         "date": date_str,
@@ -324,18 +393,28 @@ def build_brief(date_str: str, macro: dict, td_key: str) -> dict:
         "sessions_present": ["auto"],
         "sessions_expected": ["us_open"],
         "macro": {
-            "fed_funds_rate": None,
+            "fed_funds_rate": macro["fed_funds_rate"],
             "us10y_yield": macro["us10y_yield"],
+            "us10y_real_yield": macro["us10y_real_yield"],
             "dxy": macro["dxy"],
             "brent": macro["brent"],
             "vix": macro["vix"],
             "us_markets_open": False,
+            "btc_options_next_expiry": macro.get("btc_next_options_expiry"),
+            "btc_options_next_expiry_oi_btc": macro.get("btc_next_options_oi_btc"),
+            "btc_futures_oi_btc": macro.get("btc_futures_oi_btc"),
+            "btc_futures_oi_pct30d": macro.get("btc_futures_oi_pct30"),
             "note": (
                 f"Auto-generated. XAU={macro['xau_price']} BTC={macro['btc_price']} "
-                f"10Y={macro['us10y_yield']}% DXY~{macro['dxy']} "
-                f"Brent={macro['brent']} VIX~{macro['vix']}"
+                f"FedFunds={macro['fed_funds_rate']}% 10Y={macro['us10y_yield']}% "
+                f"RealYield={macro['us10y_real_yield']}% DXY~{macro['dxy']} "
+                f"Brent={macro['brent']} VIX~{macro['vix']}.{btc_deriv_note}"
+                f" CHECK economic calendar manually — Finnhub free tier blocked."
             ),
-            "event_gate": {"active": False, "reason": "No event gate on auto brief — check economic calendar."},
+            "event_gate": {
+                "active": False,
+                "reason": "Check investing.com/economic-calendar manually for today's major releases."
+            },
         },
         "XAUUSD": xau_block,
         "BTCUSD": btc_block,
@@ -383,10 +462,15 @@ def write_session_md(date_str: str, brief: dict, macro: dict):
         "",
         "| Indicator | Value |",
         "|---|---|",
+        f"| Fed funds | {m.get('fed_funds_rate', '?')}% |",
         f"| US 10Y yield | {m.get('us10y_yield', '?')}% |",
+        f"| US 10Y real yield | {m.get('us10y_real_yield', '?')}% |",
         f"| DXY (est) | ~{m.get('dxy', '?')} |",
         f"| Brent | ${m.get('brent', '?')} |",
         f"| VIX (est) | ~{m.get('vix', '?')} |",
+        f"| BTC options expiry | {m.get('btc_options_next_expiry', '?')} ({int(m.get('btc_options_next_expiry_oi_btc') or 0):,} BTC OI) |",
+        f"| BTC futures OI | {int(m.get('btc_futures_oi_btc') or 0):,} BTC — {m.get('btc_futures_oi_pct30d', '?')}th pct 30d |",
+        "| **⚠️ Event gate** | Check investing.com/economic-calendar manually |",
         "",
         "---",
     ]

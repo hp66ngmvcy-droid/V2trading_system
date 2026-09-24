@@ -1,5 +1,5 @@
 {
-  "issued_at": "2026-09-24T21:19:50Z",
+  "issued_at": "2026-09-24T21:33:22Z",
   "date": "2026-09-25",
   "source": "auto_generated_v1",
   "sessions_present": [
@@ -9,20 +9,25 @@
     "us_open"
   ],
   "macro": {
-    "fed_funds_rate": null,
+    "fed_funds_rate": 3.88,
     "us10y_yield": 5.11,
-    "dxy": 101.22,
+    "us10y_real_yield": 2.76,
+    "dxy": 101.21,
     "brent": 105.9,
     "vix": 14.8,
     "us_markets_open": false,
-    "note": "Auto-generated. XAU=4278.62399 BTC=84419.15 10Y=5.11% DXY~101.22 Brent=105.9 VIX~14.8",
+    "btc_options_next_expiry": "25SEP26",
+    "btc_options_next_expiry_oi_btc": 170930.0,
+    "btc_futures_oi_btc": 98503.0,
+    "btc_futures_oi_pct30d": 0,
+    "note": "Auto-generated. XAU=4278.64779 BTC=84482.0 FedFunds=3.88% 10Y=5.11% RealYield=2.76% DXY~101.21 Brent=105.9 VIX~14.8. BTC options expiry 25SEP26: ~14.4bn notional. Futures OI: 98503 BTC (0th pct 30d). CHECK economic calendar manually \u2014 Finnhub free tier blocked.",
     "event_gate": {
       "active": false,
-      "reason": "No event gate on auto brief \u2014 check economic calendar."
+      "reason": "Check investing.com/economic-calendar manually for today's major releases."
     }
   },
   "XAUUSD": {
-    "current_price": 4278.62,
+    "current_price": 4278.65,
     "daily_bias": "NEUTRAL",
     "anti_bias_side": "SELL",
     "anti_bias_rr": 1.57,
@@ -89,7 +94,7 @@
     }
   },
   "BTCUSD": {
-    "current_price": 84419.15,
+    "current_price": 84482.0,
     "daily_bias": "NEUTRAL",
     "anti_bias_side": "SELL",
     "anti_bias_rr": 1.63,
