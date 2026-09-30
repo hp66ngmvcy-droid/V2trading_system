@@ -928,7 +928,8 @@ def build_symbol_block(sym: str, current_price: float, bars: pd.DataFrame,
 
 
 def build_brief(date_str: str, macro: dict, td_key: str,
-                xau_iv_pct: float | None = None) -> dict:
+                xau_iv_pct: float | None = None,
+                intraday: bool = False) -> dict:
     """Assemble the full brief JSON."""
     xau_bars = pd.read_parquet(XAU_PARQUET)
     btc_bars = pd.read_parquet(BTC_PARQUET)
@@ -936,9 +937,10 @@ def build_brief(date_str: str, macro: dict, td_key: str,
     btc_bars = btc_bars.sort_values("timestamp")
     xau_server_utc_offset = _ic_markets_server_utc_offset_hours(date_str)
 
-    # Use data up to (not including) brief date to avoid look-ahead
-    xau_bars = _bars_before_utc_date(xau_bars, date_str, xau_server_utc_offset)
-    btc_bars = _bars_before_utc_date(btc_bars, date_str)
+    if not intraday:
+        # Pre-session: exclude today's bars to avoid look-ahead
+        xau_bars = _bars_before_utc_date(xau_bars, date_str, xau_server_utc_offset)
+        btc_bars = _bars_before_utc_date(btc_bars, date_str)
 
     # Fallback to last M15 close if live price unavailable (market closed)
     xau_price = macro["xau_price"] or round(float(xau_bars["close"].iloc[-1]), 2)
@@ -974,6 +976,7 @@ def build_brief(date_str: str, macro: dict, td_key: str,
     return {
         "issued_at": now_utc,
         "date": date_str,
+        "mode": "intraday" if intraday else "pre_session",
         "source": "auto_generated_v1",
         "sessions_present": ["auto"],
         "sessions_expected": ["us_open"],
@@ -1296,6 +1299,8 @@ def main():
     p.add_argument("--no-extend", action="store_true", help="Skip M15 data extension")
     p.add_argument("--xau-iv", type=float, default=None,
                    help="XAU annualised implied vol %% (e.g. 14.5). Source: GVZ index on TradingView.")
+    p.add_argument("--intraday", action="store_true",
+                   help="Include today's bars (live session review). Skips M15 extension.")
     args = p.parse_args()
 
     td_key = os.environ.get("TWELVE_DATA_KEY")
@@ -1306,8 +1311,8 @@ def main():
     date_str = args.date
     print(f"Generating brief for {date_str} ...")
 
-    # Extend M15 data first (unless skipped)
-    if not args.no_extend:
+    # Extend M15 data first (unless skipped or intraday — no point extending mid-session)
+    if not args.no_extend and not args.intraday:
         print("Extending M15 data ...")
         import subprocess
         result = subprocess.run(
@@ -1327,7 +1332,7 @@ def main():
           f"Brent={macro['brent']} VIX~{macro['vix']}")
 
     print("Computing levels ...")
-    brief = build_brief(date_str, macro, td_key, xau_iv_pct=args.xau_iv)
+    brief = build_brief(date_str, macro, td_key, xau_iv_pct=args.xau_iv, intraday=args.intraday)
 
     brief_path = BRIEFS_DIR / f"{date_str}_levels.json"
 
