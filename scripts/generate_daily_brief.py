@@ -234,6 +234,7 @@ def fetch_macro(td_key: str, fred_key: str) -> dict:
     us10y = _fred_latest("DGS10", fred_key)
     us10y_real = _fred_latest("DFII10", fred_key)   # 10Y TIPS real yield
     fed_funds = _fred_latest("DFF", fred_key)         # effective fed funds rate
+    gvz = _fred_latest("GVZCLS", fred_key)            # CBOE Gold Volatility Index
 
     # VIX proxy — VIXY ETF
     vix = round(vixy * 0.88, 1) if vixy else None
@@ -255,6 +256,7 @@ def fetch_macro(td_key: str, fred_key: str) -> dict:
         "btc_next_options_oi_btc": btc_deriv["next_options_expiry_btc"],
         "btc_futures_oi_btc": btc_deriv["futures_oi_btc"],
         "btc_futures_oi_pct30": btc_deriv["futures_oi_pct30"],
+        "gvz": gvz,
     }
 
 
@@ -949,6 +951,9 @@ def build_brief(date_str: str, macro: dict, td_key: str,
     macro["btc_price"] = btc_price
 
     btc_iv_pct = _fetch_btc_atm_iv(btc_price)
+    # GVZ auto-fetch: use FRED GVZCLS if --xau-iv not supplied manually
+    if xau_iv_pct is None and macro.get("gvz"):
+        xau_iv_pct = macro["gvz"]
 
     xau_block = build_symbol_block(
         "XAUUSD",
