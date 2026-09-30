@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
+from tar_system.assets.profiles import AssetProfile
+from tar_system.brokers.profiles import BrokerProfile
 from tar_system.validation.bootstrap_ci import bootstrap_mean_ci
 
 
@@ -65,6 +67,9 @@ def run_walk_forward(
     test_window: int = 50,
     audit_decisions: bool = True,
     max_splits: int | None = None,
+    broker_profile: BrokerProfile | None = None,
+    asset_profile: AssetProfile | None = None,
+    cost_multiplier: float = 1.0,
 ) -> WalkForwardResult:
     from tar_system.backtest.engine import run_backtest
 
@@ -88,11 +93,25 @@ def run_walk_forward(
     for split in splits:
         # Run on train window to record in-sample behaviour per fold.
         train_df = features.iloc[split.train_start : split.train_end].copy()
-        run_backtest(train_df, strategy, audit_decisions=False)
+        run_backtest(
+            train_df,
+            strategy,
+            audit_decisions=False,
+            broker_profile=broker_profile,
+            asset_profile=asset_profile,
+            cost_multiplier=cost_multiplier,
+        )
         fold_parameters.append(_strategy_parameters(strategy))
         # Evaluate on unseen test window only.
         test_df = features.iloc[split.test_start : split.test_end].copy()
-        result = run_backtest(test_df, strategy, audit_decisions=audit_decisions)
+        result = run_backtest(
+            test_df,
+            strategy,
+            audit_decisions=audit_decisions,
+            broker_profile=broker_profile,
+            asset_profile=asset_profile,
+            cost_multiplier=cost_multiplier,
+        )
         if result.stopped:
             stopped = True
             break
@@ -102,7 +121,7 @@ def run_walk_forward(
     bootstrap_ci = bootstrap_mean_ci(metrics.get("trade_returns", []))
     ranges, stability = derive_stable_parameter_ranges(fold_parameters)
     sensitivity_measured = _parameter_sensitivity_measured(fold_parameters)
-    wf_verdict, wf_reason = _walk_forward_verdict(metrics, len(completed_splits), stability, stopped, bootstrap_ci)
+    wf_verdict, wf_reason = _walk_forward_verdict(metrics, len(completed_splits), stability, sensitivity_measured, stopped, bootstrap_ci)
     return WalkForwardResult(
         splits=completed_splits,
         stitched_metrics=metrics,
@@ -193,6 +212,7 @@ def _walk_forward_verdict(
     metrics: dict[str, object],
     split_count: int,
     stability: float,
+    sensitivity_measured: bool,
     stopped: bool,
     bootstrap_ci: dict[str, object],
 ) -> tuple[str, str]:
@@ -212,6 +232,8 @@ def _walk_forward_verdict(
         return "REVIEW", f"Walk-forward max drawdown {max_drawdown:.1%} exceeds 20%."
     if profit_factor < 1.10:
         return "REVIEW", f"Walk-forward profit factor {profit_factor:.2f} is below 1.10."
+    if not sensitivity_measured:
+        return "REVIEW", "Walk-forward parameter stability is unknown because parameter sensitivity was not measured."
     if stability < 50.0:
         return "REVIEW", f"Walk-forward parameter stability {stability:.1f} is below 50."
     if bool(bootstrap_ci.get("spans_zero", True)):

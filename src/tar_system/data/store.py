@@ -13,12 +13,13 @@ from tar_system.settings import DATA_DIR
 _DATAFRAME_CACHE = MemoryTTLCache(max_entries=32)
 
 
-def _path(kind: str, symbol: str, timeframe: str) -> Path:
-    return Path(DATA_DIR) / kind / f"{symbol}_{timeframe}.parquet"
+def _path(kind: str, symbol: str, timeframe: str, output_suffix: str | None = None) -> Path:
+    suffix = f"_{output_suffix}" if output_suffix else ""
+    return Path(DATA_DIR) / kind / f"{symbol}_{timeframe}{suffix}.parquet"
 
 
-def save_validated_data(df: pd.DataFrame, symbol: str, timeframe: str, data_hash: str) -> Path:
-    output = _path("validated", symbol, timeframe)
+def save_validated_data(df: pd.DataFrame, symbol: str, timeframe: str, data_hash: str, output_suffix: str | None = None) -> Path:
+    output = _path("validated", symbol, timeframe, output_suffix)
     output.parent.mkdir(parents=True, exist_ok=True)
     saved = df.copy()
     saved["data_hash"] = data_hash
@@ -27,20 +28,20 @@ def save_validated_data(df: pd.DataFrame, symbol: str, timeframe: str, data_hash
     return output
 
 
-def load_validated_data(symbol: str, timeframe: str) -> pd.DataFrame:
-    return _load_parquet_cached(_path("validated", symbol, timeframe))
+def load_validated_data(symbol: str, timeframe: str, output_suffix: str | None = None) -> pd.DataFrame:
+    return _load_parquet_cached(_path("validated", symbol, timeframe, output_suffix))
 
 
-def save_feature_data(df: pd.DataFrame, symbol: str, timeframe: str) -> Path:
-    output = _path("features", symbol, timeframe)
+def save_feature_data(df: pd.DataFrame, symbol: str, timeframe: str, output_suffix: str | None = None) -> Path:
+    output = _path("features", symbol, timeframe, output_suffix)
     output.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(output, index=False)
     _DATAFRAME_CACHE.set(str(output), df.copy())
     return output
 
 
-def load_feature_data(symbol: str, timeframe: str) -> pd.DataFrame:
-    return _load_parquet_cached(_path("features", symbol, timeframe))
+def load_feature_data(symbol: str, timeframe: str, output_suffix: str | None = None) -> pd.DataFrame:
+    return _load_parquet_cached(_path("features", symbol, timeframe, output_suffix))
 
 
 def clear_dataframe_cache() -> None:

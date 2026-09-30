@@ -1,0 +1,183 @@
+{
+  "issued_at": "2026-09-25T20:44:42Z",
+  "date": "2026-09-28",
+  "source": "auto_generated_v1",
+  "sessions_present": [
+    "auto"
+  ],
+  "sessions_expected": [
+    "us_open"
+  ],
+  "macro": {
+    "fed_funds_rate": 3.88,
+    "us10y_yield": 5.18,
+    "us10y_real_yield": 2.85,
+    "dxy": 101.01,
+    "brent": null,
+    "vix": null,
+    "us_markets_open": false,
+    "btc_options_next_expiry": "26SEP26",
+    "btc_options_next_expiry_oi_btc": 6108.0,
+    "btc_futures_oi_btc": 95873.0,
+    "btc_futures_oi_pct30d": 0,
+    "note": "Auto-generated. XAU=4285.65 BTC=84098.01 FedFunds=3.88% 10Y=5.18% RealYield=2.85% DXY~101.01 Brent=None VIX~None. BTC options expiry 26SEP26: ~0.5bn notional. Futures OI: 95873 BTC (0th pct 30d). CHECK economic calendar manually \u2014 Finnhub free tier blocked.",
+    "event_gate": {
+      "active": false,
+      "reason": "Check investing.com/economic-calendar manually for today's major releases."
+    }
+  },
+  "XAUUSD": {
+    "current_price": 4285.65,
+    "daily_bias": "NEUTRAL",
+    "anti_bias_side": "SELL",
+    "anti_bias_rr": 1.95,
+    "atr": 5.67,
+    "sell_confidence": 0.55,
+    "buy_confidence": 0.55,
+    "session_context": {
+      "today_asia": {},
+      "yest_asia": {},
+      "yest_london": {},
+      "yest_ny": {},
+      "sell_anchor": 4296.83,
+      "sell_anchor_label": "swing_resist",
+      "buy_anchor": 4257.99,
+      "buy_anchor_label": "swing_support",
+      "asia_range_pts": null
+    },
+    "session_ranges": {
+      "today_asia": {},
+      "yesterday_asia": {},
+      "yesterday_london": {},
+      "yesterday_ny": {}
+    },
+    "key_levels": {
+      "bearish_invalidation": 4308.17,
+      "sell_zone_high": 4298.53,
+      "sell_zone_low": 4291.16,
+      "no_trade_high": 4291.16,
+      "no_trade_low": 4263.66,
+      "buy_zone_high": 4263.66,
+      "buy_zone_low": 4256.29,
+      "breakdown_trigger": 4246.65,
+      "range_mid": 4277.41
+    },
+    "sell_targets": [
+      4257.99,
+      4243.32
+    ],
+    "buy_targets": [
+      4296.83,
+      4315.6
+    ],
+    "top_scenario": "BUY_REJECTION",
+    "top_scenario_entry": [
+      4256.29,
+      4263.66
+    ],
+    "top_scenario_targets": [
+      4296.83,
+      4315.6
+    ],
+    "top_scenario_invalidation": 4246.65,
+    "sell_setup": {
+      "entry": [
+        4291.16,
+        4298.53
+      ],
+      "stop": 4308.17,
+      "t1": 4257.99,
+      "t2": 4243.32,
+      "rr_t1": 1.95,
+      "risk_pts": 17.01
+    },
+    "buy_setup": {
+      "entry": [
+        4256.29,
+        4263.66
+      ],
+      "stop": 4246.65,
+      "t1": 4296.83,
+      "t2": 4315.6,
+      "rr_t1": 1.95,
+      "risk_pts": 17.01
+    }
+  },
+  "BTCUSD": {
+    "current_price": 84098.01,
+    "daily_bias": "NEUTRAL",
+    "anti_bias_side": "SELL",
+    "anti_bias_rr": 2.36,
+    "atr": 141.85,
+    "sell_confidence": 0.55,
+    "buy_confidence": 0.55,
+    "session_context": {
+      "today_asia": {},
+      "yest_asia": {},
+      "yest_london": {},
+      "yest_ny": {},
+      "sell_anchor": 84676.1,
+      "sell_anchor_label": "swing_resist",
+      "buy_anchor": 83529.66,
+      "buy_anchor_label": "swing_support",
+      "asia_range_pts": null
+    },
+    "session_ranges": {
+      "today_asia": {},
+      "yesterday_asia": {},
+      "yesterday_london": {},
+      "yesterday_ny": {}
+    },
+    "key_levels": {
+      "bearish_invalidation": 84959.8,
+      "sell_zone_high": 84718.65,
+      "sell_zone_low": 84534.25,
+      "no_trade_high": 84534.25,
+      "no_trade_low": 83671.51,
+      "buy_zone_high": 83671.51,
+      "buy_zone_low": 83487.11,
+      "breakdown_trigger": 83245.96,
+      "range_mid": 84102.88
+    },
+    "sell_targets": [
+      83529.66,
+      82874.93
+    ],
+    "buy_targets": [
+      84676.1,
+      85255.0
+    ],
+    "top_scenario": "BUY_REJECTION",
+    "top_scenario_entry": [
+      83487.11,
+      83671.51
+    ],
+    "top_scenario_targets": [
+      84676.1,
+      85255.0
+    ],
+    "top_scenario_invalidation": 83245.96,
+    "sell_setup": {
+      "entry": [
+        84534.25,
+        84718.65
+      ],
+      "stop": 84959.8,
+      "t1": 83529.66,
+      "t2": 82874.93,
+      "rr_t1": 2.36,
+      "risk_pts": 425.55
+    },
+    "buy_setup": {
+      "entry": [
+        83487.11,
+        83671.51
+      ],
+      "stop": 83245.96,
+      "t1": 84676.1,
+      "t2": 85255.0,
+      "rr_t1": 2.36,
+      "risk_pts": 425.55
+    }
+  }
+}

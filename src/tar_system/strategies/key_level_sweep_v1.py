@@ -32,8 +32,10 @@ def _get_levels(
     if data is None or bar_ts is None:
         return data
     # Look-ahead gate: only use brief if issued_at <= bar_ts.
-    # Briefs without issued_at default to 07:00 UTC (London open — conservative).
-    issued_raw = data.get("issued_at") or f"{date}T07:00:00+00:00"
+    # Briefs without issued_at have unknown availability; reject to avoid look-ahead.
+    issued_raw = data.get("issued_at")
+    if not issued_raw:
+        return None
     try:
         issued = pd.Timestamp(issued_raw)
         if issued.tzinfo is None:

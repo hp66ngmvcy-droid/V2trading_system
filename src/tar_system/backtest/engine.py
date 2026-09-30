@@ -38,6 +38,9 @@ def run_backtest(
     asset_profile: AssetProfile | None = None,
     cost_multiplier: float = 1.0,
 ) -> BacktestResult:
+    reset = getattr(strategy, "reset_state", None)
+    if callable(reset):
+        reset()
     broker = PaperBroker()
     portfolio = PortfolioTracker(initial_capital)
     risk = RiskEngine()

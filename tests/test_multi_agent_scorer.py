@@ -100,6 +100,13 @@ def test_robustness_agent_kill_on_negative_oos_sharpe():
     v = _robustness_agent(m)
     assert v.verdict == KILL
 
+def test_robustness_agent_reviews_unknown_parameter_stability():
+    m = {**GOOD_METRICS, "param_stability": 0.0, "parameter_sensitivity_measured": False}
+    v = _robustness_agent(m)
+    assert v.verdict == REVIEW
+    assert any("unknown" in reason for reason in v.reasons)
+    assert not any("< 0.5" in reason for reason in v.reasons)
+
 def test_robustness_agent_review_on_low_wf_splits():
     m = {**GOOD_METRICS, "walk_forward_splits": 2}
     v = _robustness_agent(m)

@@ -44,7 +44,7 @@ def _write(briefs_dir: Path, date: str, content: dict) -> None:
     (briefs_dir / f"{date}_levels.json").write_text(json.dumps(content))
 
 
-# ---- no issued_at: default 07:00 UTC gate ----
+# ---- no issued_at: reject (unknown availability) ----
 
 def test_no_issued_at_bar_before_0700_returns_none(tmp_path: Path) -> None:
     _write(tmp_path, "2026-09-07", VALID_BRIEF)
@@ -52,19 +52,18 @@ def test_no_issued_at_bar_before_0700_returns_none(tmp_path: Path) -> None:
     assert _get_levels("2026-09-07", "XAUUSD", tmp_path, bar_ts=bar) is None
 
 
-def test_no_issued_at_bar_after_0700_returns_dict(tmp_path: Path) -> None:
+def test_no_issued_at_bar_after_0700_returns_none(tmp_path: Path) -> None:
+    """Brief without issued_at is always rejected — availability unknown."""
     _write(tmp_path, "2026-09-07", VALID_BRIEF)
     bar = pd.Timestamp("2026-09-07T08:00:00", tz="UTC")
-    result = _get_levels("2026-09-07", "XAUUSD", tmp_path, bar_ts=bar)
-    assert result is not None
-    assert "key_levels" in result
+    assert _get_levels("2026-09-07", "XAUUSD", tmp_path, bar_ts=bar) is None
 
 
-def test_no_issued_at_bar_exactly_0700_returns_dict(tmp_path: Path) -> None:
+def test_no_issued_at_bar_at_0700_returns_none(tmp_path: Path) -> None:
+    """Brief without issued_at is always rejected regardless of bar time."""
     _write(tmp_path, "2026-09-07", VALID_BRIEF)
     bar = pd.Timestamp("2026-09-07T07:00:00", tz="UTC")
-    result = _get_levels("2026-09-07", "XAUUSD", tmp_path, bar_ts=bar)
-    assert result is not None
+    assert _get_levels("2026-09-07", "XAUUSD", tmp_path, bar_ts=bar) is None
 
 
 # ---- explicit issued_at ----
@@ -279,13 +278,22 @@ def test_malformed_issued_at_returns_none(tmp_path: Path) -> None:
     assert _get_levels("2026-09-07", "XAUUSD", tmp_path, bar_ts=bar) is None
 
 
-def test_empty_issued_at_uses_default_gate(tmp_path: Path) -> None:
-    """Empty string issued_at falls back to 07:00 default (not fail-closed — empty != malformed)."""
+def test_empty_issued_at_returns_none(tmp_path: Path) -> None:
+    """Empty string issued_at is treated as missing — availability unknown, reject."""
     brief = {**VALID_BRIEF, "issued_at": ""}
+    _write(tmp_path, "2026-09-07", brief)
+    bar = pd.Timestamp("2026-09-07T08:00:00", tz="UTC")
+    assert _get_levels("2026-09-07", "XAUUSD", tmp_path, bar_ts=bar) is None
+
+
+def test_valid_issued_at_allows_entry(tmp_path: Path) -> None:
+    """Brief with explicit issued_at proceeds normally when bar is after it."""
+    brief = {**VALID_BRIEF, "issued_at": "2026-09-07T07:30:00Z"}
     _write(tmp_path, "2026-09-07", brief)
     bar = pd.Timestamp("2026-09-07T08:00:00", tz="UTC")
     result = _get_levels("2026-09-07", "XAUUSD", tmp_path, bar_ts=bar)
     assert result is not None
+    assert "key_levels" in result
 
 
 # ---- Fix 2: R:R boundary — compare raw, round only for metadata ----

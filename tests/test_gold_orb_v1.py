@@ -135,6 +135,62 @@ def test_sell_tp_3x_range_below_entry() -> None:
     assert sig.take_profit == pytest.approx(2388.0 - 10.0 * 3.0)
 
 
+def test_one_trade_per_day_blocks_second_same_day_signal() -> None:
+    s = GoldOrbV1()
+    first = s.generate_signal(
+        _row(2402.0, orb_high=2400.0, orb_low=2390.0, ts="2026-07-17 10:00:00"),
+        regime="TRENDING",
+    )
+    second = s.generate_signal(
+        _row(2388.0, orb_high=2400.0, orb_low=2390.0, ts="2026-07-17 14:00:00"),
+        regime="TRENDING",
+    )
+    third = s.generate_signal(
+        _row(2388.0, orb_high=2400.0, orb_low=2390.0, ts="2026-07-18 10:00:00"),
+        regime="TRENDING",
+    )
+
+    assert first.side == "BUY"
+    assert second.side == "HOLD"
+    assert third.side == "SELL"
+
+
+def test_one_trade_per_day_can_be_disabled() -> None:
+    s = GoldOrbV1(one_trade_per_day=False)
+    first = s.generate_signal(
+        _row(2402.0, orb_high=2400.0, orb_low=2390.0, ts="2026-07-17 10:00:00"),
+        regime="TRENDING",
+    )
+    second = s.generate_signal(
+        _row(2388.0, orb_high=2400.0, orb_low=2390.0, ts="2026-07-17 14:00:00"),
+        regime="TRENDING",
+    )
+
+    assert first.side == "BUY"
+    assert second.side == "SELL"
+
+
+def test_reset_state_clears_one_trade_per_day_memory() -> None:
+    s = GoldOrbV1()
+    first = s.generate_signal(
+        _row(2402.0, orb_high=2400.0, orb_low=2390.0, ts="2026-07-17 10:00:00"),
+        regime="TRENDING",
+    )
+    blocked = s.generate_signal(
+        _row(2388.0, orb_high=2400.0, orb_low=2390.0, ts="2026-07-17 14:00:00"),
+        regime="TRENDING",
+    )
+    s.reset_state()
+    after_reset = s.generate_signal(
+        _row(2388.0, orb_high=2400.0, orb_low=2390.0, ts="2026-07-17 14:00:00"),
+        regime="TRENDING",
+    )
+
+    assert first.side == "BUY"
+    assert blocked.side == "HOLD"
+    assert after_reset.side == "SELL"
+
+
 # ── Registry ──────────────────────────────────────────────────────────────────
 
 def test_registry_contains_gold_orb_v1() -> None:

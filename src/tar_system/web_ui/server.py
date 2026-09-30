@@ -446,6 +446,7 @@ def _strategy_row_from_metrics(row: dict[str, Any]) -> dict[str, Any]:
     score = _maybe_float(row.get("score"))
     if score is None:
         score = _simple_score(row)
+    stability_unknown = row.get("parameter_sensitivity_measured") is False
     return {
         "strategy": strategy,
         "symbol": symbol,
@@ -461,7 +462,8 @@ def _strategy_row_from_metrics(row: dict[str, Any]) -> dict[str, Any]:
         "net_pnl": _maybe_float(row.get("net_pnl") or row.get("total_pnl")),
         "oos_sharpe": _maybe_float(row.get("oos_sharpe") or row.get("walk_forward_sharpe")),
         "spans_zero": bool(row.get("spans_zero", False)),
-        "param_stab": _maybe_float(row.get("parameter_stability") or row.get("parameter_stability_score")),
+        "param_stab": None if stability_unknown else _maybe_float(row.get("parameter_stability") or row.get("parameter_stability_score")),
+        "param_stab_status": "unknown" if stability_unknown else "measured",
         "has_wf": True,
         "regime": row.get("regime") or "unknown",
         "reason_codes": row.get("reason_codes", []),

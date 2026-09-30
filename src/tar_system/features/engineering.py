@@ -109,9 +109,9 @@ def _session_label(hour: int) -> str:
     return "OFF"
 
 
-def build_and_save_features(df: pd.DataFrame, symbol: str, timeframe: str) -> pd.DataFrame:
+def build_and_save_features(df: pd.DataFrame, symbol: str, timeframe: str, output_suffix: str | None = None) -> pd.DataFrame:
     from tar_system.data.store import save_feature_data
 
     features = build_features(df, symbol, timeframe)
-    save_feature_data(features, symbol, timeframe)
+    save_feature_data(features, symbol, timeframe, output_suffix=output_suffix)
     return features

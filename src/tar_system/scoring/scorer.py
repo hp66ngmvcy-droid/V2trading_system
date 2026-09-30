@@ -92,12 +92,17 @@ def _walk_forward_reason_codes(walk_forward_metrics: dict[str, Any] | None) -> l
         reasons.append("WF_HIGH_DRAWDOWN")
     if float(stitched.get("profit_factor", 0.0) or 0.0) < 1.10:
         reasons.append("WF_WEAK_PROFIT_FACTOR")
-    stability = float(walk_forward_metrics.get("parameter_stability_score", 0.0) or 0.0)
+    sensitivity_measured = walk_forward_metrics.get("parameter_sensitivity_measured")
+    if sensitivity_measured is False:
+        reasons.append("WF_PARAMETER_STABILITY_UNKNOWN")
+        stability = 50.0
+    else:
+        stability = float(walk_forward_metrics.get("parameter_stability_score", 0.0) or 0.0)
     if stability <= 0.0:
         stability_payload = walk_forward_metrics.get("parameter_stability", {})
         if isinstance(stability_payload, dict):
             stability = float(stability_payload.get("stability_score", 0.0) or 0.0)
-    if stability < 50.0:
+    if sensitivity_measured is not False and stability < 50.0:
         reasons.append("WF_UNSTABLE_PARAMETERS")
     # Missing or invalid CI is treated as failing — omitting CI must not be a bypass.
     bootstrap_ci = walk_forward_metrics.get("bootstrap_ci")

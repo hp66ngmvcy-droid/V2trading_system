@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from tar_system.cli import import_csv, run_full_pipeline_cmd
+from tar_system.cli import build_features_cmd, import_csv, run_full_pipeline_cmd, validate_data
 from tar_system.backtest.engine import BacktestResult
 from tar_system.data.csv_importer import load_csv
 from tar_system.data.tick_converter import convert_ticks_file, detect_tick_format
@@ -72,6 +72,23 @@ def test_import_csv_works_with_clean_ohlcv(tmp_path, monkeypatch) -> None:
     df = load_csv(source, "XAUUSD", "M15")
     assert len(df) == 40
     assert Path("data/validated/XAUUSD_M15.parquet").exists()
+
+
+def test_import_validate_and_build_features_with_output_suffix(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    source = Path("data/raw/XAUUSD_M15_clean_candidate_v1.csv")
+    _write_ohlcv(source, rows=40)
+
+    args = argparse.Namespace(file=str(source), symbol="XAUUSD", timeframe="M15", output_suffix="clean_v1")
+    import_csv(args)
+    validate_data(argparse.Namespace(symbol="XAUUSD", timeframe="M15", output_suffix="clean_v1"))
+    build_features_cmd(argparse.Namespace(symbol="XAUUSD", timeframe="M15", output_suffix="clean_v1"))
+
+    assert Path("data/validated/XAUUSD_M15_clean_v1.parquet").exists()
+    assert Path("data/features/XAUUSD_M15_clean_v1.parquet").exists()
+    assert not Path("data/validated/XAUUSD_M15.parquet").exists()
+    assert not Path("data/features/XAUUSD_M15.parquet").exists()
+    assert not Path("data/raw/XAUUSD_M15.csv").exists()
 
 
 def test_run_full_pipeline_creates_outputs(tmp_path, monkeypatch) -> None:

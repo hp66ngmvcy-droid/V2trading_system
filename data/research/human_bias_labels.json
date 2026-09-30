@@ -1,0 +1,60 @@
+{
+  "BTCUSD": {
+    "2026-09-24": {
+      "human_bias": "SELL",
+      "note": null,
+      "auto_bias": "SELL",
+      "labelled_at": "2026-09-26T09:59:15+00:00",
+      "provenance": "RETROSPECTIVE_CONTAMINATED"
+    },
+    "2026-09-07": {
+      "human_bias": "SELL",
+      "note": null,
+      "auto_bias": "NEUTRAL",
+      "labelled_at": "2026-09-26T18:50:04+00:00",
+      "provenance": "RETROSPECTIVE_BLINDED",
+      "as_of_cutoff": "07:45",
+      "visible_snapshot_hash": "4db11afa785dead9"
+    },
+    "2026-09-08": {
+      "human_bias": "NEUTRAL",
+      "note": null,
+      "auto_bias": "SELL",
+      "labelled_at": "2026-09-26T18:58:16+00:00",
+      "provenance": "RETROSPECTIVE_BLINDED",
+      "as_of_cutoff": "07:45",
+      "evidence_hash": "f2cfe01e1d4f7a17",
+      "n_prior_sessions": 1276
+    },
+    "2026-09-09": {
+      "human_bias": "BUY",
+      "note": null,
+      "auto_bias": "NEUTRAL",
+      "labelled_at": "2026-09-26T19:00:00+00:00",
+      "provenance": "RETROSPECTIVE_BLINDED",
+      "as_of_cutoff": "07:45",
+      "evidence_hash": "b112c6f3ea6b1e28",
+      "n_prior_sessions": 1277
+    },
+    "2026-09-02": {
+      "human_bias": "NEUTRAL",
+      "note": null,
+      "auto_bias": "NEUTRAL",
+      "labelled_at": "2026-09-26T19:04:47+00:00",
+      "provenance": "RETROSPECTIVE_BLINDED",
+      "as_of_cutoff": "07:45",
+      "evidence_hash": "c75d9c6aafe0df63",
+      "n_prior_sessions": 1270
+    },
+    "2026-09-03": {
+      "human_bias": "BUY",
+      "note": null,
+      "auto_bias": "NEUTRAL",
+      "labelled_at": "2026-09-26T19:05:38+00:00",
+      "provenance": "RETROSPECTIVE_BLINDED",
+      "as_of_cutoff": "07:45",
+      "evidence_hash": "c980b089042b8dce",
+      "n_prior_sessions": 1271
+    }
+  }
+}

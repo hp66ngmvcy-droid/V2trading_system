@@ -1,0 +1,489 @@
+{
+  "issued_at": "2026-09-29T22:23:41Z",
+  "date": "2026-09-29",
+  "source": "auto_generated_v1",
+  "sessions_present": [
+    "auto"
+  ],
+  "sessions_expected": [
+    "us_open"
+  ],
+  "macro": {
+    "fed_funds_rate": 3.88,
+    "us10y_yield": 5.24,
+    "us10y_real_yield": 2.9,
+    "dxy": 101.58,
+    "brent": 103.14,
+    "vix": 14.7,
+    "us_markets_open": false,
+    "btc_options_next_expiry": "30SEP26",
+    "btc_options_next_expiry_oi_btc": 7219.0,
+    "btc_futures_oi_btc": 92800.0,
+    "btc_futures_oi_pct30d": 0,
+    "note": "Auto-generated. XAU=4182.35048 BTC=83658.01 FedFunds=3.88% 10Y=5.24% RealYield=2.9% DXY~101.58 Brent=103.14 VIX~14.7. BTC options expiry 30SEP26: ~0.6bn notional. Futures OI: 92800 BTC (0th pct 30d). CHECK economic calendar manually \u2014 Finnhub free tier blocked.",
+    "event_gate": {
+      "active": false,
+      "reason": "Check investing.com/economic-calendar manually for today's major releases."
+    }
+  },
+  "XAUUSD": {
+    "current_price": 4182.35,
+    "daily_bias": "NEUTRAL",
+    "anti_bias_side": "SELL",
+    "anti_bias_rr": 2.92,
+    "atr": 3.98,
+    "sell_confidence": 0.55,
+    "buy_confidence": 0.55,
+    "session_context": {
+      "today_asia": {},
+      "yest_asia": {},
+      "yest_london": {},
+      "yest_ny": {},
+      "sell_anchor": 4296.83,
+      "sell_anchor_label": "swing_resist",
+      "buy_anchor": 4257.99,
+      "buy_anchor_label": "swing_support",
+      "asia_range_pts": null,
+      "premarket_high": null,
+      "premarket_low": null,
+      "intraday_high": null,
+      "intraday_low": null
+    },
+    "session_ranges": {
+      "today_asia": {},
+      "yesterday_asia": {},
+      "yesterday_london": {},
+      "yesterday_ny": {}
+    },
+    "key_levels": {
+      "bearish_invalidation": 4304.79,
+      "sell_zone_high": 4298.02,
+      "sell_zone_low": 4292.85,
+      "no_trade_high": 4292.85,
+      "no_trade_low": 4261.97,
+      "buy_zone_high": 4261.97,
+      "buy_zone_low": 4256.8,
+      "breakdown_trigger": 4250.03,
+      "range_mid": 4277.41
+    },
+    "sell_targets": [
+      4257.99,
+      4243.32
+    ],
+    "buy_targets": [
+      4296.83,
+      4315.6
+    ],
+    "top_scenario": "BUY_REJECTION",
+    "top_scenario_entry": [
+      4256.8,
+      4261.97
+    ],
+    "top_scenario_targets": [
+      4296.83,
+      4315.6
+    ],
+    "top_scenario_invalidation": 4250.03,
+    "sell_setup": {
+      "entry": [
+        4292.85,
+        4298.02
+      ],
+      "stop": 4304.79,
+      "t1": 4257.99,
+      "t2": 4243.32,
+      "rr_t1": 2.92,
+      "risk_pts": 11.94
+    },
+    "buy_setup": {
+      "entry": [
+        4256.8,
+        4261.97
+      ],
+      "stop": 4250.03,
+      "t1": 4296.83,
+      "t2": 4315.6,
+      "rr_t1": 2.92,
+      "risk_pts": 11.94
+    },
+    "multi_day": {
+      "prev_day": {
+        "date": "2026-09-25",
+        "open": 4266.31,
+        "high": 4315.6,
+        "low": 4254.78,
+        "close": 4285.86
+      },
+      "prev_3d_high": 4370.17,
+      "prev_3d_low": 4243.32,
+      "prev_5d_high": 4384.53,
+      "prev_5d_low": 4243.32,
+      "week_high": 4384.53,
+      "week_low": 4243.32,
+      "recent_days": [
+        {
+          "date": "2026-09-21",
+          "open": 4372.11,
+          "high": 4384.53,
+          "low": 4321.23,
+          "close": 4370.46
+        },
+        {
+          "date": "2026-09-22",
+          "open": 4369.77,
+          "high": 4375.41,
+          "low": 4290.38,
+          "close": 4364.26
+        },
+        {
+          "date": "2026-09-23",
+          "open": 4364.06,
+          "high": 4370.17,
+          "low": 4270.73,
+          "close": 4290.11
+        },
+        {
+          "date": "2026-09-24",
+          "open": 4290.25,
+          "high": 4304.11,
+          "low": 4243.32,
+          "close": 4266.03
+        },
+        {
+          "date": "2026-09-25",
+          "open": 4266.31,
+          "high": 4315.6,
+          "low": 4254.78,
+          "close": 4285.86
+        }
+      ]
+    },
+    "timeframe_structure": {
+      "h1_structure": "NEUTRAL",
+      "m15_pattern": "RANGE",
+      "combined_verdict": "WAIT"
+    },
+    "scenarios": [
+      {
+        "name": "SELL_RETEST",
+        "condition": "M15 rejection at 4293\u20134298 + 5m lower high",
+        "entry": [
+          4292.85,
+          4298.02
+        ],
+        "stop": 4304.79,
+        "t1": 4254.78,
+        "t2": 4243.32,
+        "rr_t1": 4.35,
+        "rr_t2": 5.57,
+        "risk_pts": 9.35,
+        "confidence_base": 65,
+        "invalidation": "Close above 4305"
+      },
+      {
+        "name": "BUY_EXHAUST",
+        "condition": "M15 higher low at 4257\u20134262 + 5m break above",
+        "entry": [
+          4256.8,
+          4261.97
+        ],
+        "stop": 4250.03,
+        "t1": 4315.6,
+        "t2": 4370.17,
+        "rr_t1": 6.01,
+        "rr_t2": 11.84,
+        "risk_pts": 9.36,
+        "confidence_base": 60,
+        "invalidation": "Close below 4250"
+      },
+      {
+        "name": "BREAKDOWN_CONT",
+        "condition": "<4255 (prev day low) + 30m acceptance + failed reclaim",
+        "entry": [
+          4251.6,
+          4254.38
+        ],
+        "stop": 4256.77,
+        "t1": 4243.32,
+        "t2": 4235.36,
+        "rr_t1": 2.56,
+        "rr_t2": 4.66,
+        "risk_pts": 3.78,
+        "confidence_base": 63,
+        "invalidation": "Reclaim above 4255"
+      },
+      {
+        "name": "BREAKOUT_CONT",
+        "condition": ">4316 (prev day high) + 30m acceptance + successful retest",
+        "entry": [
+          4316.0,
+          4318.78
+        ],
+        "stop": 4313.61,
+        "t1": 4370.17,
+        "t2": 4378.13,
+        "rr_t1": 13.96,
+        "rr_t2": 16.07,
+        "risk_pts": 3.78,
+        "confidence_base": 63,
+        "invalidation": "Fail below 4316"
+      }
+    ],
+    "iv_walls": {
+      "iv_pct": 14.2,
+      "iv_expected_move_daily": 37.41,
+      "iv_high_90": 4243.89,
+      "iv_low_90": 4120.81,
+      "iv_high_68": 4219.76,
+      "iv_low_68": 4144.94
+    },
+    "ema_200": 4288.31,
+    "session_vwap": {},
+    "double_touch_alerts": []
+  },
+  "BTCUSD": {
+    "current_price": 83658.01,
+    "daily_bias": "NEUTRAL",
+    "anti_bias_side": "SELL",
+    "anti_bias_rr": 3.39,
+    "atr": 125.19,
+    "sell_confidence": 0.55,
+    "buy_confidence": 0.55,
+    "session_context": {
+      "today_asia": {},
+      "yest_asia": {
+        "open": 84472.01,
+        "high": 84999.0,
+        "low": 82705.02,
+        "close": 82966.01
+      },
+      "yest_london": {
+        "open": 82966.0,
+        "high": 83631.43,
+        "low": 82597.55,
+        "close": 83579.75
+      },
+      "yest_ny": {
+        "open": 83579.75,
+        "high": 84381.3,
+        "low": 82563.0,
+        "close": 83389.54
+      },
+      "sell_anchor": 84381.3,
+      "sell_anchor_label": "yest_ny_high",
+      "buy_anchor": 82705.02,
+      "buy_anchor_label": "yest_asia_low",
+      "asia_range_pts": null,
+      "premarket_high": null,
+      "premarket_low": null,
+      "intraday_high": null,
+      "intraday_low": null
+    },
+    "session_ranges": {
+      "today_asia": {},
+      "yesterday_asia": {
+        "open": 84472.01,
+        "high": 84999.0,
+        "low": 82705.02,
+        "close": 82966.01
+      },
+      "yesterday_london": {
+        "open": 82966.0,
+        "high": 83631.43,
+        "low": 82597.55,
+        "close": 83579.75
+      },
+      "yesterday_ny": {
+        "open": 83579.75,
+        "high": 84381.3,
+        "low": 82563.0,
+        "close": 83389.54
+      }
+    },
+    "key_levels": {
+      "bearish_invalidation": 84631.68,
+      "sell_zone_high": 84418.86,
+      "sell_zone_low": 84256.11,
+      "no_trade_high": 84256.11,
+      "no_trade_low": 82830.21,
+      "buy_zone_high": 82830.21,
+      "buy_zone_low": 82667.46,
+      "breakdown_trigger": 82454.64,
+      "range_mid": 83910.9
+    },
+    "sell_targets": [
+      82982.41,
+      82563.0
+    ],
+    "buy_targets": [
+      84839.39,
+      85159.03
+    ],
+    "top_scenario": "BUY_REJECTION",
+    "top_scenario_entry": [
+      82667.46,
+      82830.21
+    ],
+    "top_scenario_targets": [
+      84839.39,
+      85159.03
+    ],
+    "top_scenario_invalidation": 82454.64,
+    "sell_setup": {
+      "entry": [
+        84256.11,
+        84418.86
+      ],
+      "stop": 84631.68,
+      "t1": 82982.41,
+      "t2": 82563.0,
+      "rr_t1": 3.39,
+      "risk_pts": 375.57
+    },
+    "buy_setup": {
+      "entry": [
+        82667.46,
+        82830.21
+      ],
+      "stop": 82454.64,
+      "t1": 84839.39,
+      "t2": 85159.03,
+      "rr_t1": 5.35,
+      "risk_pts": 375.57
+    },
+    "multi_day": {
+      "prev_day": {
+        "date": "2026-09-28",
+        "open": 84472.01,
+        "high": 84999.0,
+        "low": 82563.0,
+        "close": 83500.01
+      },
+      "prev_3d_high": 85159.03,
+      "prev_3d_low": 82563.0,
+      "prev_5d_high": 85255.0,
+      "prev_5d_low": 82563.0,
+      "week_high": 84999.0,
+      "week_low": 82563.0,
+      "recent_days": [
+        {
+          "date": "2026-09-24",
+          "open": 84397.6,
+          "high": 84942.45,
+          "low": 82874.93,
+          "close": 84410.24
+        },
+        {
+          "date": "2026-09-25",
+          "open": 84410.24,
+          "high": 85255.0,
+          "low": 83183.0,
+          "close": 84099.99
+        },
+        {
+          "date": "2026-09-26",
+          "open": 84100.0,
+          "high": 84473.58,
+          "low": 83798.0,
+          "close": 84433.1
+        },
+        {
+          "date": "2026-09-27",
+          "open": 84433.11,
+          "high": 85159.03,
+          "low": 84132.0,
+          "close": 84472.0
+        },
+        {
+          "date": "2026-09-28",
+          "open": 84472.01,
+          "high": 84999.0,
+          "low": 82563.0,
+          "close": 83500.01
+        }
+      ]
+    },
+    "timeframe_structure": {
+      "h1_structure": "NEUTRAL",
+      "m15_pattern": "REJECTION",
+      "combined_verdict": "WAIT"
+    },
+    "scenarios": [
+      {
+        "name": "SELL_RETEST",
+        "condition": "M15 rejection at 84256\u201384419 + 5m lower high",
+        "entry": [
+          84256.11,
+          84418.86
+        ],
+        "stop": 84631.68,
+        "t1": 82563.0,
+        "t2": 82563.0,
+        "rr_t1": 6.03,
+        "rr_t2": 6.03,
+        "risk_pts": 294.19,
+        "confidence_base": 65,
+        "invalidation": "Close above 84632"
+      },
+      {
+        "name": "BUY_EXHAUST",
+        "condition": "M15 higher low at 82667\u201382830 + 5m break above",
+        "entry": [
+          82667.46,
+          82830.21
+        ],
+        "stop": 82454.64,
+        "t1": 84999.0,
+        "t2": 85159.03,
+        "rr_t1": 7.65,
+        "rr_t2": 8.19,
+        "risk_pts": 294.2,
+        "confidence_base": 60,
+        "invalidation": "Close below 82455"
+      },
+      {
+        "name": "BREAKDOWN_CONT",
+        "condition": "<82563 (prev day low) + 30m acceptance + failed reclaim",
+        "entry": [
+          82462.85,
+          82550.48
+        ],
+        "stop": 82625.6,
+        "t1": 82250.02,
+        "t2": 81999.64,
+        "rr_t1": 2.16,
+        "rr_t2": 4.26,
+        "risk_pts": 118.93,
+        "confidence_base": 63,
+        "invalidation": "Reclaim above 82563"
+      },
+      {
+        "name": "BREAKOUT_CONT",
+        "condition": ">84999 (prev day high) + 30m acceptance + successful retest",
+        "entry": [
+          85011.52,
+          85099.15
+        ],
+        "stop": 84936.4,
+        "t1": 85159.03,
+        "t2": 85409.41,
+        "rr_t1": 0.87,
+        "rr_t2": 2.98,
+        "risk_pts": 118.93,
+        "confidence_base": 63,
+        "invalidation": "Fail below 84999"
+      }
+    ],
+    "iv_walls": {
+      "iv_pct": 22.44,
+      "iv_expected_move_daily": 1182.58,
+      "iv_high_90": 85603.35,
+      "iv_low_90": 81712.67,
+      "iv_high_68": 84840.59,
+      "iv_low_68": 82475.43
+    },
+    "ema_200": 83813.14,
+    "session_vwap": {},
+    "double_touch_alerts": []
+  }
+}

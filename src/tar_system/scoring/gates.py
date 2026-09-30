@@ -105,11 +105,15 @@ def run_gates(
             soft_fails.append(f"OOS sharpe {oos_sharpe:.2f} < {min_oos_sharpe:.2f}")
             reason_codes.append("SEARCH_OOS_SHARPE_NOT_MET")
 
-    has_stability = "param_stability" in metrics or "parameter_stability" in metrics
+    stability_unknown = metrics.get("parameter_sensitivity_measured") is False
+    has_stability = "param_stability" in metrics or "parameter_stability" in metrics or stability_unknown
     if require_oos or has_stability:
         stability = _metric(metrics, "param_stability", "parameter_stability")
         scores["param_stability"] = stability
-        if stability < min_param_stability:
+        if stability_unknown:
+            soft_fails.append("parameter stability unknown")
+            reason_codes.append("SEARCH_PARAMETER_STABILITY_UNKNOWN")
+        elif stability < min_param_stability:
             soft_fails.append(f"parameter stability {stability:.2f} < {min_param_stability:.2f}")
             reason_codes.append("SEARCH_PARAMETER_STABILITY_NOT_MET")
 

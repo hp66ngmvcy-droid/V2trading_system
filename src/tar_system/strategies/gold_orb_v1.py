@@ -23,7 +23,7 @@ TP:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pandas as pd
 
@@ -50,9 +50,15 @@ class GoldOrbV1:
     # Session: trade after ORB formation + consolidation, through NY close
     entry_start_hour: int = 6    # UTC — after 4-hour consolidation window
     entry_end_hour: int = 20     # UTC — NY session end
+    # ORB is a session thesis; repeated same-day entries can inflate evidence.
+    one_trade_per_day: bool = True
 
     name: str = "gold_orb_v1"
     version: str = "0.1.0"
+    _signal_days: set[tuple[str, object]] = field(default_factory=set, init=False, repr=False)
+
+    def reset_state(self) -> None:
+        self._signal_days.clear()
 
     def generate_signal(self, row: pd.Series, regime: str) -> Signal:
         entry = float(row["close"])
@@ -66,6 +72,7 @@ class GoldOrbV1:
             "entry": entry,
             "metadata": {"regime": regime},
         }
+        session_key = (base["symbol"], base["timestamp"].date())
 
         # ATR cap filter
         if self.atr_cap > 0 and atr > self.atr_cap:
@@ -102,6 +109,10 @@ class GoldOrbV1:
 
         # BUY breakout
         if entry > breakout_long:
+            if self.one_trade_per_day and session_key in self._signal_days:
+                return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None,
+                             reason_code=rc.SIGNAL_HOLD, **base)
+            self._signal_days.add(session_key)
             return Signal(
                 side="BUY",
                 confidence=confidence,
@@ -113,6 +124,10 @@ class GoldOrbV1:
 
         # SELL breakdown
         if entry < breakout_short:
+            if self.one_trade_per_day and session_key in self._signal_days:
+                return Signal(side="HOLD", confidence=0.0, stop_loss=None, take_profit=None,
+                             reason_code=rc.SIGNAL_HOLD, **base)
+            self._signal_days.add(session_key)
             return Signal(
                 side="SELL",
                 confidence=confidence,

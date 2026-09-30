@@ -123,6 +123,7 @@ def _robustness_agent(metrics: dict[str, Any]) -> AgentVerdict:
 
     has_oos = "sharpe_oos" in metrics or "oos_sharpe" in metrics
     has_stability = "param_stability" in metrics or "parameter_stability" in metrics
+    stability_unknown = metrics.get("parameter_sensitivity_measured") is False
 
     if has_oos:
         if sharpe_oos < 0:
@@ -135,7 +136,10 @@ def _robustness_agent(metrics: dict[str, Any]) -> AgentVerdict:
         reviews += 1
         reasons.append("no OOS data — cannot assess out-of-sample robustness")
 
-    if has_stability:
+    if stability_unknown:
+        reviews += 1
+        reasons.append("param_stability unknown; parameter sensitivity not measured")
+    elif has_stability:
         if param_stability < 0.5:
             kills += 1
             reasons.append(f"param_stability {param_stability:.2f} < 0.5")

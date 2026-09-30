@@ -34,7 +34,9 @@ def _finite(v: object, label: str) -> float:
 def _validate_symbol(date: str, symbol: str, sym_data: dict, atr: float, min_rr: float) -> list[dict]:
     rows = []
     kl = sym_data.get("key_levels", {})
-    targets = sym_data.get("top_scenario_targets", [])
+    # Prefer direction-specific targets (new format); fallback to top_scenario_targets
+    sell_tgts = sym_data.get("sell_targets") or sym_data.get("top_scenario_targets", [])
+    buy_tgts  = sym_data.get("buy_targets")  or sym_data.get("top_scenario_targets", [])
 
     # ---- SELL candidate ----
     sell_conf = float(sym_data.get("sell_confidence", 0))
@@ -48,7 +50,7 @@ def _validate_symbol(date: str, symbol: str, sym_data: dict, atr: float, min_rr:
             bi_f = _finite(bi, "bearish_invalidation")
             # Executable entry = sell_zone_low (conservative: bar just enters zone)
             entry = szl_f
-            t1 = float(targets[0]) if len(targets) > 0 else entry - atr * 2
+            t1 = float(sell_tgts[0]) if len(sell_tgts) > 0 else entry - atr * 2
             if t1 >= entry:
                 t1 = entry - atr * 2
             risk = bi_f - entry
@@ -65,7 +67,7 @@ def _validate_symbol(date: str, symbol: str, sym_data: dict, atr: float, min_rr:
                 "risk": round(risk, 2), "reward": round(reward, 2),
                 "rr_raw": round(rr_raw, 3),
                 "confidence": sell_conf,
-                "t1_source": "top_scenario_targets[0]" if len(targets) > 0 and float(targets[0]) < entry else "atr_fallback",
+                "t1_source": "sell_targets[0]" if len(sell_tgts) > 0 and float(sell_tgts[0]) < entry else "atr_fallback",
                 "rejection": rejection,
             })
         except (ValueError, TypeError) as e:
@@ -86,7 +88,7 @@ def _validate_symbol(date: str, symbol: str, sym_data: dict, atr: float, min_rr:
             # Executable entry = buy_zone_high (conservative: bar just enters zone from above)
             entry = bzh_f
             szl_fallback = float(kl.get("sell_zone_low", entry + atr * 2))
-            t1_buy = float(targets[0]) if len(targets) > 0 else szl_fallback
+            t1_buy = float(buy_tgts[0]) if len(buy_tgts) > 0 else szl_fallback
             if t1_buy <= entry:
                 t1_buy = szl_fallback
             risk = entry - stop
@@ -103,7 +105,7 @@ def _validate_symbol(date: str, symbol: str, sym_data: dict, atr: float, min_rr:
                 "risk": round(risk, 2), "reward": round(reward, 2),
                 "rr_raw": round(rr_raw, 3),
                 "confidence": buy_conf,
-                "t1_source": "top_scenario_targets[0]" if len(targets) > 0 and float(targets[0]) > entry else "szl_fallback",
+                "t1_source": "buy_targets[0]" if len(buy_tgts) > 0 and float(buy_tgts[0]) > entry else "szl_fallback",
                 "stop_anchor_source": "asia_liquidity_low" if kl.get("asia_liquidity_low") else (
                     "breakdown_trigger" if kl.get("breakdown_trigger") else "atr_fallback"
                 ),

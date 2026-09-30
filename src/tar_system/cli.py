@@ -38,6 +38,7 @@ def import_csv(args: argparse.Namespace) -> None:
 
     original_path = Path(args.file)
     import_path = original_path
+    output_suffix = getattr(args, "output_suffix", None)
     data_hash = hash_csv_file(import_path)
     if detect_tick_format(import_path):
         append_audit_event("csv_import_schema", "data", args.symbol, args.timeframe, "DETECTED", rc.DATA_TICK_FORMAT_DETECTED, {"file": str(import_path)})
@@ -68,7 +69,7 @@ def import_csv(args: argparse.Namespace) -> None:
         append_audit_event("csv_import_schema", "data", args.symbol, args.timeframe, "DETECTED", rc.DATA_OHLCV_FORMAT_DETECTED, {"file": str(import_path)})
     df = load_csv(import_path, args.symbol, args.timeframe)
     canonical_raw = Path("data/raw") / f"{args.symbol}_{args.timeframe}.csv"
-    if original_path.resolve() != canonical_raw.resolve():
+    if not output_suffix and original_path.resolve() != canonical_raw.resolve():
         save_raw_copy(df, args.symbol, args.timeframe, source_path=import_path)
     result = validate_ohlcv(df, data_hash)
     if not result.passed:
@@ -77,7 +78,7 @@ def import_csv(args: argparse.Namespace) -> None:
     latest_date = df["timestamp"].max().to_pydatetime()
     env = evaluate_environment(args.symbol, latest_date, load_events())
     append_audit_event("csv_import_environment", "data", args.symbol, args.timeframe, env.state, ",".join(env.reason_codes), {"latest_bar": latest_date})
-    path = save_validated_data(df, args.symbol, args.timeframe, data_hash)
+    path = save_validated_data(df, args.symbol, args.timeframe, data_hash, output_suffix=output_suffix)
     print(f"Imported and validated {len(df)} rows to {path}; environment={env.state}")
 
 
@@ -104,7 +105,7 @@ def validate_data(args: argparse.Namespace) -> None:
     from tar_system.data.store import load_validated_data
     from tar_system.data.validator import validate_ohlcv
 
-    df = load_validated_data(args.symbol, args.timeframe)
+    df = load_validated_data(args.symbol, args.timeframe, output_suffix=getattr(args, "output_suffix", None))
     data_hash = str(df["data_hash"].iloc[0]) if "data_hash" in df.columns and len(df) else None
     result = validate_ohlcv(df, data_hash)
     print(json.dumps(result.__dict__, indent=2, default=str))
@@ -116,8 +117,9 @@ def build_features_cmd(args: argparse.Namespace) -> None:
     from tar_system.data.store import load_validated_data
     from tar_system.features.engineering import build_and_save_features
 
-    df = load_validated_data(args.symbol, args.timeframe)
-    features = build_and_save_features(df, args.symbol, args.timeframe)
+    output_suffix = getattr(args, "output_suffix", None)
+    df = load_validated_data(args.symbol, args.timeframe, output_suffix=output_suffix)
+    features = build_and_save_features(df, args.symbol, args.timeframe, output_suffix=output_suffix)
     print(f"Built {len(features.columns)} columns for {len(features)} rows")
 
 
@@ -135,12 +137,30 @@ def run_backtest_cmd(args: argparse.Namespace) -> None:
     strategy = resolved.strategy
     data_hash = str(features["data_hash"].iloc[0]) if "data_hash" in features.columns and len(features) else None
     date_range = (str(features["timestamp"].min()), str(features["timestamp"].max())) if len(features) else (None, None)
-    cache_key = make_cache_key(args.strategy, {}, args.symbol, args.timeframe, data_hash, date_range, "backtest")
+    cache_key = make_cache_key(
+        args.strategy,
+        {
+            "variant": resolved.variant.parameters,
+            "broker_profile": resolved.broker_profile.to_dict(),
+            "asset_profile": resolved.asset_profile.to_dict(),
+            "cost_multiplier": 1.0,
+        },
+        args.symbol,
+        args.timeframe,
+        data_hash,
+        date_range,
+        "backtest",
+    )
     cached = load_cached_result(cache_key, force=args.force)
     if cached:
         print(json.dumps({"cached": True, **cached}, indent=2))
         return
-    result = run_backtest(features, strategy)
+    result = run_backtest(
+        features,
+        strategy,
+        broker_profile=resolved.broker_profile,
+        asset_profile=resolved.asset_profile,
+    )
     if result.stopped:
         raise SystemExit("Backtest stopped before completion; partial result was not cached or reviewed")
     output = Path("data/results")
@@ -271,12 +291,20 @@ def run_walk_forward_cmd(args: argparse.Namespace) -> None:
     from dataclasses import asdict
 
     from tar_system.data.store import load_feature_data
-    from tar_system.strategies.registry import get_strategy
+    from tar_system.strategies.resolver import resolve_strategy
     from tar_system.validation.walk_forward import run_walk_forward
 
     features = load_feature_data(args.symbol, args.timeframe)
-    strategy = get_strategy(args.strategy)
-    result = run_walk_forward(features, strategy, args.train_window, args.test_window)
+    resolved = resolve_strategy(args.strategy, args.symbol, args.timeframe, getattr(args, "broker", "current_broker_demo"), audit=True)
+    strategy = resolved.strategy
+    result = run_walk_forward(
+        features,
+        strategy,
+        args.train_window,
+        args.test_window,
+        broker_profile=resolved.broker_profile,
+        asset_profile=resolved.asset_profile,
+    )
     
     # Save to data/results/
     output = Path("data/results")
@@ -1036,7 +1064,7 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
     from tar_system.scoring.gates import run_gates
     from tar_system.scoring.multi_agent_scorer import score_multi_agent
     from tar_system.scoring.scorer import score_strategy
-    from tar_system.strategies.registry import get_strategy
+    from tar_system.strategies.resolver import resolve_strategy
     from tar_system.validation.walk_forward import run_walk_forward
 
     from tar_system.data.csv_importer import hash_csv_file
@@ -1087,13 +1115,20 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
     )
 
     print("[4/9] Run backtest")
-    strategy = get_strategy(args.strategy)
+    resolved = resolve_strategy(args.strategy, args.symbol, args.timeframe, getattr(args, "broker", "current_broker_demo"), audit=True)
+    strategy = resolved.strategy
 
     def _run_pipeline_backtest() -> dict[str, object]:
         features = filter_by_date_range(load_feature_data(args.symbol, args.timeframe), from_date, to_date)
         if features.empty:
             raise SystemExit("No feature rows found inside the requested backtest date range")
-        result = run_backtest(features, strategy, audit_decisions=False)
+        result = run_backtest(
+            features,
+            strategy,
+            audit_decisions=False,
+            broker_profile=resolved.broker_profile,
+            asset_profile=resolved.asset_profile,
+        )
         if result.stopped:
             raise SystemExit("Backtest stopped before completion; partial result was not scored")
         output = Path("data/results")
@@ -1118,7 +1153,16 @@ def run_full_pipeline_cmd(args: argparse.Namespace) -> None:
         if len(features) >= 250:
             print("[5/9] Run walk-forward")
             def _run_pipeline_walk_forward() -> dict[str, object]:
-                result = run_walk_forward(features, strategy, 200, 50, audit_decisions=False, max_splits=int(getattr(args, "max_walk_forward_splits", 100)))
+                result = run_walk_forward(
+                    features,
+                    strategy,
+                    200,
+                    50,
+                    audit_decisions=False,
+                    max_splits=int(getattr(args, "max_walk_forward_splits", 100)),
+                    broker_profile=resolved.broker_profile,
+                    asset_profile=resolved.asset_profile,
+                )
                 if result.stopped:
                     raise SystemExit("Walk-forward stopped before completion; partial result was not scored")
                 payload = {
@@ -1392,6 +1436,8 @@ def _metrics_with_walk_forward(metrics: dict[str, float], walk_forward: dict[str
         enriched["sharpe_oos"] = float(stitched.get("sharpe_ratio", stitched.get("sharpe", 0.0)) or 0.0)
     raw_stability = float(walk_forward.get("parameter_stability_score", 0.0) or 0.0)
     enriched["param_stability"] = raw_stability / 100.0 if raw_stability > 1.0 else raw_stability
+    if "parameter_sensitivity_measured" in walk_forward:
+        enriched["parameter_sensitivity_measured"] = bool(walk_forward.get("parameter_sensitivity_measured"))
     enriched["walk_forward_splits"] = float(walk_forward.get("split_count", walk_forward.get("window_count", 0)) or 0)
     bootstrap_ci = walk_forward.get("bootstrap_ci", {}) or {}
     if isinstance(bootstrap_ci, dict):
@@ -1416,6 +1462,7 @@ def _write_walk_forward_review_artifact(strategy: str, symbol: str, timeframe: s
                 "parameter_stability": {"status": status, "stability_score": 0.0},
                 "stable_parameter_ranges": {},
                 "parameter_stability_score": 0.0,
+                "parameter_sensitivity_measured": False,
                 "recommended_search_range": {},
                 "bootstrap_ci": {
                     "mean": 0.0,
@@ -1722,6 +1769,7 @@ def build_parser() -> argparse.ArgumentParser:
     import_parser.add_argument("--file", required=True)
     import_parser.add_argument("--symbol", required=True)
     import_parser.add_argument("--timeframe", required=True)
+    import_parser.add_argument("--output-suffix", default=None)
     import_parser.set_defaults(func=import_csv)
 
     convert_parser = subparsers.add_parser("convert-ticks")
@@ -1733,11 +1781,13 @@ def build_parser() -> argparse.ArgumentParser:
     validate_parser = subparsers.add_parser("validate-data")
     validate_parser.add_argument("--symbol", required=True)
     validate_parser.add_argument("--timeframe", required=True)
+    validate_parser.add_argument("--output-suffix", default=None)
     validate_parser.set_defaults(func=validate_data)
 
     features_parser = subparsers.add_parser("build-features")
     features_parser.add_argument("--symbol", required=True)
     features_parser.add_argument("--timeframe", required=True)
+    features_parser.add_argument("--output-suffix", default=None)
     features_parser.set_defaults(func=build_features_cmd)
 
     backtest_parser = subparsers.add_parser("run-backtest")
@@ -1777,6 +1827,7 @@ def build_parser() -> argparse.ArgumentParser:
     walk_parser.add_argument("--strategy", required=True)
     walk_parser.add_argument("--symbol", required=True)
     walk_parser.add_argument("--timeframe", required=True)
+    walk_parser.add_argument("--broker", default="current_broker_demo")
     walk_parser.add_argument("--train-window", type=int, default=200)
     walk_parser.add_argument("--test-window", type=int, default=50)
     walk_parser.set_defaults(func=run_walk_forward_cmd)

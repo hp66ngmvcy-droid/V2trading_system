@@ -68,7 +68,7 @@ def load_promotion_cards() -> list[PromotionCard]:
             cost_sensitive=bool(cost.get("cost_sensitive", False)),
             min_trades=200,
         )
-        walk_forward_pass = bool(wf) and bool(wf.get("parameter_stability_score", 0) >= 60)
+        walk_forward_pass = _walk_forward_pass(wf)
         monte_carlo_pass = bool(mc) and float(mc.get("robustness_score", 0.0)) >= 60.0
         cost_sensitive = bool(cost.get("cost_sensitive", False))
         cards.append(
@@ -81,7 +81,7 @@ def load_promotion_cards() -> list[PromotionCard]:
                 last_tested_date=_mtime(path),
                 walk_forward_pass=walk_forward_pass,
                 monte_carlo_pass=monte_carlo_pass,
-                parameter_stability=str(ps.get("stability_score", wf.get("parameter_stability_score", "missing"))),
+                parameter_stability=_parameter_stability_label(wf, ps),
                 cost_sensitive=cost_sensitive,
                 swap_drag=float(cost.get("swap_drag", 0.0)),
                 realistic_score=float(cost.get("realistic_score", 0.0)),
@@ -199,6 +199,24 @@ def parse_metrics_filename(path: Path) -> tuple[str, str, str] | None:
     if not strategy or not symbol or not timeframe:
         return None
     return strategy, symbol, timeframe
+
+
+def _walk_forward_pass(walk_forward: dict[str, Any]) -> bool:
+    if not walk_forward:
+        return False
+    if walk_forward.get("parameter_sensitivity_measured") is False:
+        return False
+    return bool(walk_forward.get("parameter_stability_score", 0) >= 60)
+
+
+def _parameter_stability_label(walk_forward: dict[str, Any], parameter_sensitivity: dict[str, Any]) -> str:
+    if walk_forward.get("parameter_sensitivity_measured") is False:
+        return "unknown"
+    if parameter_sensitivity:
+        return str(parameter_sensitivity.get("stability_score", "missing"))
+    if walk_forward:
+        return str(walk_forward.get("parameter_stability_score", "missing"))
+    return "missing"
 
 
 def _load_json(path: Path) -> dict[str, Any]:

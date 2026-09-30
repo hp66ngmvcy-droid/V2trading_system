@@ -118,11 +118,11 @@ def test_walk_forward_requires_twenty_oos_trades_for_keep() -> None:
     base = {"max_drawdown": 0.05, "profit_factor": 1.5}
 
     for trade_count in (5, 19):
-        verdict, reason = _walk_forward_verdict({**base, "total_trades": trade_count}, 3, 80.0, False, bootstrap)
+        verdict, reason = _walk_forward_verdict({**base, "total_trades": trade_count}, 3, 80.0, True, False, bootstrap)
         assert verdict == "REVIEW"
         assert "need at least 20" in reason
 
-    verdict, reason = _walk_forward_verdict({**base, "total_trades": 20}, 3, 80.0, False, bootstrap)
+    verdict, reason = _walk_forward_verdict({**base, "total_trades": 20}, 3, 80.0, True, False, bootstrap)
     assert verdict == "KEEP"
     assert reason == "3 walk-forward splits passed validation."
 

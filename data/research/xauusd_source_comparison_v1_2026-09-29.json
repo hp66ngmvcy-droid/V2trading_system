@@ -1,0 +1,399 @@
+{
+  "report": "xauusd_source_comparison",
+  "generated_on": "2026-09-29",
+  "scope": "read_only_local_files",
+  "promotion_eligible": false,
+  "canonical": {
+    "path": "data/validated/XAUUSD_M15_clean_v1.parquet",
+    "sha256": "aa7c5f8c57946e41fce713073660ca87aba2d4446c28fe414dfc5e9fbc00a279",
+    "row_count": 27591,
+    "first_timestamp": "2025-05-12T10:15:00+00:00",
+    "last_timestamp": "2026-07-10T23:45:00+00:00",
+    "saturday_bars": 0,
+    "first_saturday_timestamp": null
+  },
+  "tolerance": 0.01,
+  "comparisons": [
+    {
+      "path": "data/raw/XAUUSD_M15.csv",
+      "sha256": "d6b7ffe388585dce9cdaa8e9d0e1e27744bd33ea9c704898671e43adc5f4e521",
+      "row_count": 34974,
+      "first_timestamp": "2025-05-12T10:15:00+00:00",
+      "last_timestamp": "2026-09-25T21:45:00+00:00",
+      "saturday_bars": 1055,
+      "candidate_status": "HAS_SATURDAY_BARS",
+      "overlap_start": "2025-05-12T10:15:00+00:00",
+      "overlap_end": "2026-07-10T23:45:00+00:00",
+      "overlap_rows": 27591,
+      "missing_in_candidate": 0,
+      "missing_in_canonical": 7383,
+      "ohlc_tolerance": 0.01,
+      "field_mismatch_counts": {
+        "open": 0,
+        "high": 0,
+        "low": 0,
+        "close": 0
+      },
+      "mismatch_rows": 0,
+      "first_mismatch_examples": []
+    },
+    {
+      "path": "data/raw/XAUUSD_M15_202505121015_202607102345.csv",
+      "sha256": "e0d0542abda65c541ba4408a1bc236ec22af68bf00d09d05d98fe3ffd919c582",
+      "row_count": 27591,
+      "first_timestamp": "2025-05-12T10:15:00+00:00",
+      "last_timestamp": "2026-07-10T23:45:00+00:00",
+      "saturday_bars": 0,
+      "candidate_status": "ZERO_SATURDAY_CANDIDATE",
+      "overlap_start": "2025-05-12T10:15:00+00:00",
+      "overlap_end": "2026-07-10T23:45:00+00:00",
+      "overlap_rows": 27591,
+      "missing_in_candidate": 0,
+      "missing_in_canonical": 0,
+      "ohlc_tolerance": 0.01,
+      "field_mismatch_counts": {
+        "open": 0,
+        "high": 0,
+        "low": 0,
+        "close": 0
+      },
+      "mismatch_rows": 0,
+      "first_mismatch_examples": []
+    },
+    {
+      "path": "data/raw/XAUUSD_M15_202605121015_202607102345.csv",
+      "sha256": "8f1cb16d1b3edfed2ecce1b22505bf405ca28f5ac5a1cc84dbfa30b41c7d2121",
+      "row_count": 3969,
+      "first_timestamp": "2026-05-12T10:15:00+00:00",
+      "last_timestamp": "2026-07-10T23:45:00+00:00",
+      "saturday_bars": 0,
+      "candidate_status": "ZERO_SATURDAY_CANDIDATE",
+      "overlap_start": "2026-05-12T10:15:00+00:00",
+      "overlap_end": "2026-07-10T23:45:00+00:00",
+      "overlap_rows": 3969,
+      "missing_in_candidate": 23622,
+      "missing_in_canonical": 0,
+      "ohlc_tolerance": 0.01,
+      "field_mismatch_counts": {
+        "open": 0,
+        "high": 0,
+        "low": 0,
+        "close": 0
+      },
+      "mismatch_rows": 0,
+      "first_mismatch_examples": []
+    },
+    {
+      "path": "data/raw/XAUUSD_M15_202605130100_202607302145.csv",
+      "sha256": "6144fd6194da27d7025990a6a587236366e7e8eddf10048a7bc01e693a8fd7dd",
+      "row_count": 5194,
+      "first_timestamp": "2026-05-13T01:00:00+00:00",
+      "last_timestamp": "2026-07-30T21:45:00+00:00",
+      "saturday_bars": 0,
+      "candidate_status": "ZERO_SATURDAY_CANDIDATE",
+      "overlap_start": "2026-05-13T01:00:00+00:00",
+      "overlap_end": "2026-07-10T23:45:00+00:00",
+      "overlap_rows": 3914,
+      "missing_in_candidate": 23677,
+      "missing_in_canonical": 1280,
+      "ohlc_tolerance": 0.01,
+      "field_mismatch_counts": {
+        "open": 0,
+        "high": 0,
+        "low": 0,
+        "close": 0
+      },
+      "mismatch_rows": 0,
+      "first_mismatch_examples": []
+    },
+    {
+      "path": "data/raw/XAUUSD_M15_clean_candidate_v1.csv",
+      "sha256": "e0d0542abda65c541ba4408a1bc236ec22af68bf00d09d05d98fe3ffd919c582",
+      "row_count": 27591,
+      "first_timestamp": "2025-05-12T10:15:00+00:00",
+      "last_timestamp": "2026-07-10T23:45:00+00:00",
+      "saturday_bars": 0,
+      "candidate_status": "ZERO_SATURDAY_CANDIDATE",
+      "overlap_start": "2025-05-12T10:15:00+00:00",
+      "overlap_end": "2026-07-10T23:45:00+00:00",
+      "overlap_rows": 27591,
+      "missing_in_candidate": 0,
+      "missing_in_canonical": 0,
+      "ohlc_tolerance": 0.01,
+      "field_mismatch_counts": {
+        "open": 0,
+        "high": 0,
+        "low": 0,
+        "close": 0
+      },
+      "mismatch_rows": 0,
+      "first_mismatch_examples": []
+    },
+    {
+      "path": "data/raw/XAUUSD_M15_july2026.csv",
+      "sha256": "8f1cb16d1b3edfed2ecce1b22505bf405ca28f5ac5a1cc84dbfa30b41c7d2121",
+      "row_count": 3969,
+      "first_timestamp": "2026-05-12T10:15:00+00:00",
+      "last_timestamp": "2026-07-10T23:45:00+00:00",
+      "saturday_bars": 0,
+      "candidate_status": "ZERO_SATURDAY_CANDIDATE",
+      "overlap_start": "2026-05-12T10:15:00+00:00",
+      "overlap_end": "2026-07-10T23:45:00+00:00",
+      "overlap_rows": 3969,
+      "missing_in_candidate": 23622,
+      "missing_in_canonical": 0,
+      "ohlc_tolerance": 0.01,
+      "field_mismatch_counts": {
+        "open": 0,
+        "high": 0,
+        "low": 0,
+        "close": 0
+      },
+      "mismatch_rows": 0,
+      "first_mismatch_examples": []
+    },
+    {
+      "path": "data/raw/XAUUSD_M15_merged.csv",
+      "sha256": "fbf9822602bcad75b2495ad1b5c26a2e96d6b4fd387ecf6d4d3140b8590e2a41",
+      "row_count": 100000,
+      "first_timestamp": "2026-02-11T15:59:00+00:00",
+      "last_timestamp": "2026-05-26T11:35:00+00:00",
+      "saturday_bars": 0,
+      "candidate_status": "ZERO_SATURDAY_CANDIDATE",
+      "overlap_start": "2026-02-11T16:00:00+00:00",
+      "overlap_end": "2026-05-26T11:30:00+00:00",
+      "overlap_rows": 6677,
+      "missing_in_candidate": 20914,
+      "missing_in_canonical": 93323,
+      "ohlc_tolerance": 0.01,
+      "field_mismatch_counts": {
+        "open": 0,
+        "high": 5321,
+        "low": 5261,
+        "close": 6670
+      },
+      "mismatch_rows": 6677,
+      "first_mismatch_examples": [
+        {
+          "timestamp": "2026-02-11T16:00:00+00:00",
+          "high": {
+            "canonical": 5077.18,
+            "candidate": 5066.52,
+            "abs_diff": 10.659999999999854
+          },
+          "close": {
+            "canonical": 5074.64,
+            "candidate": 5063.0,
+            "abs_diff": 11.640000000000327
+          }
+        },
+        {
+          "timestamp": "2026-02-11T16:15:00+00:00",
+          "high": {
+            "canonical": 5082.78,
+            "candidate": 5074.78,
+            "abs_diff": 8.0
+          },
+          "low": {
+            "canonical": 5067.52,
+            "candidate": 5071.85,
+            "abs_diff": 4.329999999999927
+          },
+          "close": {
+            "canonical": 5068.12,
+            "candidate": 5073.11,
+            "abs_diff": 4.989999999999782
+          }
+        },
+        {
+          "timestamp": "2026-02-11T16:30:00+00:00",
+          "low": {
+            "canonical": 5035.89,
+            "candidate": 5067.72,
+            "abs_diff": 31.829999999999927
+          },
+          "close": {
+            "canonical": 5040.44,
+            "candidate": 5068.49,
+            "abs_diff": 28.050000000000182
+          }
+        },
+        {
+          "timestamp": "2026-02-11T16:45:00+00:00",
+          "high": {
+            "canonical": 5065.17,
+            "candidate": 5049.36,
+            "abs_diff": 15.8100000000004
+          },
+          "close": {
+            "canonical": 5060.67,
+            "candidate": 5047.97,
+            "abs_diff": 12.699999999999818
+          }
+        },
+        {
+          "timestamp": "2026-02-11T17:00:00+00:00",
+          "high": {
+            "canonical": 5081.85,
+            "candidate": 5061.46,
+            "abs_diff": 20.390000000000327
+          },
+          "low": {
+            "canonical": 5053.75,
+            "candidate": 5054.47,
+            "abs_diff": 0.7200000000002547
+          },
+          "close": {
+            "canonical": 5066.96,
+            "candidate": 5056.82,
+            "abs_diff": 10.140000000000327
+          }
+        },
+        {
+          "timestamp": "2026-02-11T17:15:00+00:00",
+          "low": {
+            "canonical": 5043.6,
+            "candidate": 5066.69,
+            "abs_diff": 23.089999999999236
+          },
+          "close": {
+            "canonical": 5048.25,
+            "candidate": 5071.1,
+            "abs_diff": 22.850000000000364
+          }
+        },
+        {
+          "timestamp": "2026-02-11T17:30:00+00:00",
+          "high": {
+            "canonical": 5057.6,
+            "candidate": 5050.15,
+            "abs_diff": 7.450000000000728
+          },
+          "low": {
+            "canonical": 5039.16,
+            "candidate": 5047.3,
+            "abs_diff": 8.140000000000327
+          },
+          "close": {
+            "canonical": 5048.97,
+            "candidate": 5048.89,
+            "abs_diff": 0.07999999999992724
+          }
+        },
+        {
+          "timestamp": "2026-02-11T17:45:00+00:00",
+          "high": {
+            "canonical": 5063.18,
+            "candidate": 5055.13,
+            "abs_diff": 8.050000000000182
+          },
+          "low": {
+            "canonical": 5044.76,
+            "candidate": 5048.71,
+            "abs_diff": 3.949999999999818
+          },
+          "close": {
+            "canonical": 5058.79,
+            "candidate": 5053.61,
+            "abs_diff": 5.180000000000291
+          }
+        },
+        {
+          "timestamp": "2026-02-11T18:00:00+00:00",
+          "high": {
+            "canonical": 5064.37,
+            "candidate": 5059.89,
+            "abs_diff": 4.479999999999563
+          },
+          "low": {
+            "canonical": 5052.5,
+            "candidate": 5057.33,
+            "abs_diff": 4.829999999999927
+          },
+          "close": {
+            "canonical": 5056.33,
+            "candidate": 5059.89,
+            "abs_diff": 3.5600000000004
+          }
+        },
+        {
+          "timestamp": "2026-02-11T18:15:00+00:00",
+          "high": {
+            "canonical": 5062.36,
+            "candidate": 5058.57,
+            "abs_diff": 3.7899999999999636
+          },
+          "low": {
+            "canonical": 5042.83,
+            "candidate": 5052.43,
+            "abs_diff": 9.600000000000364
+          },
+          "close": {
+            "canonical": 5061.87,
+            "candidate": 5053.5,
+            "abs_diff": 8.36999999999989
+          }
+        }
+      ]
+    },
+    {
+      "path": "data/raw/source_exports/XAUUSD_M15_New 26.csv",
+      "sha256": "30d769122456f65bd16a69f8ca14d16b6caf1a4a9d5111dc0e332e812b5bf695",
+      "row_count": 30971,
+      "first_timestamp": "2025-01-29T01:00:00+00:00",
+      "last_timestamp": "2026-05-21T23:45:00+00:00",
+      "saturday_bars": 0,
+      "candidate_status": "ZERO_SATURDAY_CANDIDATE",
+      "overlap_start": "2025-05-12T10:15:00+00:00",
+      "overlap_end": "2026-05-21T23:45:00+00:00",
+      "overlap_rows": 24321,
+      "missing_in_candidate": 3270,
+      "missing_in_canonical": 6650,
+      "ohlc_tolerance": 0.01,
+      "field_mismatch_counts": {
+        "open": 0,
+        "high": 0,
+        "low": 0,
+        "close": 0
+      },
+      "mismatch_rows": 0,
+      "first_mismatch_examples": []
+    },
+    {
+      "path": "data/raw/source_exports/XAUUSD_M15_merged.csv",
+      "sha256": "09e281c830aa570b556cc516513ffc090e7b7b0eb17139a5e19e0b4c319b8842",
+      "row_count": 101748,
+      "first_timestamp": "2022-01-31T10:00:00+00:00",
+      "last_timestamp": "2026-05-21T23:45:00+00:00",
+      "saturday_bars": 0,
+      "candidate_status": "ZERO_SATURDAY_CANDIDATE",
+      "overlap_start": "2025-05-12T10:15:00+00:00",
+      "overlap_end": "2026-05-21T23:45:00+00:00",
+      "overlap_rows": 24321,
+      "missing_in_candidate": 3270,
+      "missing_in_canonical": 77427,
+      "ohlc_tolerance": 0.01,
+      "field_mismatch_counts": {
+        "open": 0,
+        "high": 0,
+        "low": 0,
+        "close": 0
+      },
+      "mismatch_rows": 0,
+      "first_mismatch_examples": []
+    }
+  ],
+  "summary": {
+    "candidate_count": 9,
+    "zero_saturday_candidates": 8,
+    "zero_saturday_candidates_with_exact_overlap": 7,
+    "best_overlap_rows": 27591,
+    "best_exact_overlap_rows": 27591
+  },
+  "limitations": [
+    "This compares local files only and does not authenticate provider payloads.",
+    "Naive timestamps are interpreted as UTC for comparison.",
+    "OHLC tolerance is \u00b10.01 points.",
+    "No market data is modified or rebuilt."
+  ]
+}

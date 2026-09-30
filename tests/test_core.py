@@ -318,10 +318,48 @@ def test_scorer_rejects_low_walk_forward_trade_count_even_with_keep_payload() ->
     assert "WF_LOW_TRADE_COUNT" in score.reason_codes
 
 
+def test_scorer_labels_unmeasured_parameter_stability_as_unknown() -> None:
+    metrics = {"win_rate": 0.65, "profit_factor": 2.4, "max_drawdown": 0.08, "total_trades": 60, "expectancy": 12}
+    walk_forward = {
+        "split_count": 3,
+        "ran": True,
+        "wf_verdict": "REVIEW",
+        "stitched_metrics": {"total_trades": 30, "profit_factor": 1.4, "max_drawdown": 0.10},
+        "parameter_stability_score": 0.0,
+        "parameter_sensitivity_measured": False,
+        "bootstrap_ci": {"spans_zero": False},
+    }
+    score = score_strategy(metrics, walk_forward, "M15", require_walk_forward=True)
+    assert score.verdict == "REVIEW"
+    assert "WF_PARAMETER_STABILITY_UNKNOWN" in score.reason_codes
+    assert "WF_UNSTABLE_PARAMETERS" not in score.reason_codes
+
+
 def test_structural_gate_blocks_one_trade_winner() -> None:
     gate = run_gates({"total_trades": 1, "win_rate": 1.0, "profit_factor": 100.0, "max_drawdown": 0.0}, "M15")
     assert gate.verdict == "KILL"
     assert gate.failed_gate == "min_trades"
+
+
+def test_structural_gate_labels_unmeasured_parameter_stability_as_unknown() -> None:
+    gate = run_gates(
+        {
+            "total_trades": 60,
+            "win_rate": 0.55,
+            "profit_factor": 1.8,
+            "max_drawdown": 0.05,
+            "sharpe_oos": 1.3,
+            "param_stability": 0.0,
+            "parameter_sensitivity_measured": False,
+            "bootstrap_ci_lower": 0.01,
+            "bootstrap_ci_upper": 0.12,
+            "bootstrap_ci_spans_zero": False,
+        },
+        "M15",
+    )
+    assert gate.verdict == "REVIEW"
+    assert "SEARCH_PARAMETER_STABILITY_UNKNOWN" in gate.reason_codes
+    assert "SEARCH_PARAMETER_STABILITY_NOT_MET" not in gate.reason_codes
 
 
 def test_structural_gate_blocks_directional_failure() -> None:
